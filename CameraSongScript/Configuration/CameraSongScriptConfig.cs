@@ -2,11 +2,11 @@
 using IPA.Config.Stores;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
-namespace Camera2SongScript.Configuration
+namespace CameraSongScript.Configuration
 {
-    internal class SongScriptConfig
+    internal class CameraSongScriptConfig
     {
-        public static SongScriptConfig Instance { get; set; }
+        public static CameraSongScriptConfig Instance { get; set; }
 
         /// <summary>
         /// SongScript機能の有効/無効
@@ -27,6 +27,12 @@ namespace Camera2SongScript.Configuration
         public virtual string TargetCameras { get; set; } = "";
 
         /// <summary>
+        /// ユーザー選択のスクリプトファイル名（ファイル名のみ、パスではない）
+        /// 空文字列 = 自動選択（SongScript.json優先）
+        /// </summary>
+        public virtual string SelectedScriptFile { get; set; } = "";
+
+        /// <summary>
         /// BSIPAが設定ファイルを読み込むたびに呼び出される
         /// </summary>
         public virtual void OnReload()
@@ -43,11 +49,12 @@ namespace Camera2SongScript.Configuration
         /// <summary>
         /// 値をコピー
         /// </summary>
-        public virtual void CopyFrom(SongScriptConfig other)
+        public virtual void CopyFrom(CameraSongScriptConfig other)
         {
             Enabled = other.Enabled;
             UseAudioSync = other.UseAudioSync;
             TargetCameras = other.TargetCameras;
+            SelectedScriptFile = other.SelectedScriptFile;
         }
 
         /// <summary>
