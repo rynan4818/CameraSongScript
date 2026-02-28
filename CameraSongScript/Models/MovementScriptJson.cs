@@ -6,7 +6,7 @@ namespace CameraSongScript.Models
     /// CameraPlus形式のMovementScript JSONデシリアライズ用クラス群
     /// CameraPlusのMovementScriptJson.csからコピー（namespaceのみ変更）
     /// </summary>
-    public class AxizWithFoVElements
+    public class AxisWithFoVElements
     {
         public string x { get; set; }
         public string y { get; set; }
@@ -112,17 +112,17 @@ namespace CameraSongScript.Models
     }
 
     [JsonObject("Movements")]
-    public class JSONMovement
+    public class JsonMovement
     {
         [JsonProperty("StartPos")]
-        public AxizWithFoVElements startPos { get; set; }
+        public AxisWithFoVElements startPos { get; set; }
         [JsonProperty("StartRot")]
         public AxisElements startRot { get; set; }
         [JsonProperty("StartHeadOffset")]
         public AxisElements startHeadOffset { get; set; }
 
         [JsonProperty("EndPos")]
-        public AxizWithFoVElements endPos { get; set; }
+        public AxisWithFoVElements endPos { get; set; }
         [JsonProperty("EndRot")]
         public AxisElements endRot { get; set; }
         [JsonProperty("EndHeadOffset")]
@@ -147,6 +147,6 @@ namespace CameraSongScript.Models
         public string ActiveInPauseMenu { get; set; }
         public string TurnToHeadUseCameraSetting { get; set; }
         [JsonProperty("Movements")]
-        public JSONMovement[] Jsonmovement { get; set; }
+        public JsonMovement[] JsonMovements { get; set; }
     }
 }

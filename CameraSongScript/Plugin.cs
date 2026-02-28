@@ -1,6 +1,7 @@
-﻿using CameraSongScript.Configuration;
-using CameraSongScript.Helpers;
+using System;
+using CameraSongScript.Configuration;
 using CameraSongScript.Installers;
+using CameraSongScript.Interfaces;
 using HarmonyLib;
 using IPA;
 using IPA.Config;
@@ -14,9 +15,11 @@ namespace CameraSongScript
     [Plugin(RuntimeOptions.SingleStartInit)]
     public class Plugin
     {
-        internal static Plugin Instance { get; private set; }
         internal static IPALogger Log { get; private set; }
-        internal static Camera2ReflectionHelper Cam2Helper { get; private set; }
+        internal static ICameraHelper CamHelper { get; private set; }
+        internal static ICameraPlusHelper CamPlusHelper { get; private set; }
+        internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
+        internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
 
         private Harmony _harmony;
         private const string HarmonyId = "com.github.camerasongscript";
@@ -24,7 +27,6 @@ namespace CameraSongScript
         [Init]
         public void Init(IPALogger logger, Config conf, Zenjector zenjector)
         {
-            Instance = this;
             Log = logger;
 
             CameraSongScriptConfig.Instance = conf.Generated<CameraSongScriptConfig>();
@@ -43,21 +45,23 @@ namespace CameraSongScript
             // 1. カメラMod検出
             CameraModDetector.Detect();
 
-            // 2. ヘルパー初期化
+            // 2. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
             if (CameraModDetector.IsCamera2)
             {
-                Cam2Helper = new Camera2ReflectionHelper();
-                if (!Cam2Helper.Initialize())
+                CamHelper = CreateAdapter<ICameraHelper>("CameraSongScript.Cam2", "CameraSongScript.Cam2.Camera2Helper");
+                if (CamHelper == null || !CamHelper.Initialize())
                 {
-                    Log.Error("Camera2ReflectionHelper initialization failed.");
-                    Cam2Helper = null;
+                    Log.Error("Camera2 adapter initialization failed.");
+                    CamHelper = null;
                 }
             }
             else if (CameraModDetector.IsCameraPlus)
             {
-                if (!CameraPlusHarmonyHelper.Initialize())
+                CamPlusHelper = CreateAdapter<ICameraPlusHelper>("CameraSongScript.CamPlus", "CameraSongScript.CamPlus.CameraPlusHelper");
+                if (CamPlusHelper == null || !CamPlusHelper.Initialize())
                 {
-                    Log.Error("CameraPlusHarmonyHelper initialization failed.");
+                    Log.Error("CameraPlus adapter initialization failed.");
+                    CamPlusHelper = null;
                 }
             }
 
@@ -73,6 +77,30 @@ namespace CameraSongScript
         {
             Log.Debug("OnApplicationQuit");
             _harmony?.UnpatchSelf();
+        }
+
+        /// <summary>
+        /// アダプタDLLからインターフェース実装を動的に生成する
+        /// コアプロジェクトがアダプタDLLをコンパイル時に参照しないため循環依存を回避する
+        /// </summary>
+        private static T CreateAdapter<T>(string assemblyName, string typeName) where T : class
+        {
+            try
+            {
+                var assembly = Assembly.Load(assemblyName);
+                var type = assembly.GetType(typeName);
+                if (type == null)
+                {
+                    Log.Error($"Adapter type '{typeName}' not found in assembly '{assemblyName}'.");
+                    return null;
+                }
+                return Activator.CreateInstance(type) as T;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to create adapter '{typeName}': {ex.Message}");
+                return null;
+            }
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
-using CameraSongScript.Helpers;
 using CameraSongScript.Models;
 using HarmonyLib;
 using Newtonsoft.Json;
@@ -45,11 +44,6 @@ namespace CameraSongScript.HarmonyPatches
         public static bool HasSongScript => !string.IsNullOrEmpty(SelectedScriptPath);
 
         /// <summary>
-        /// 後方互換: SongScriptPath プロパティ（SelectedScriptPath と同等）
-        /// </summary>
-        public static string SongScriptPath => SelectedScriptPath;
-
-        /// <summary>
         /// Beat Saberの既知ファイル名（スキップ対象）
         /// </summary>
         private static readonly HashSet<string> _skipFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -83,15 +77,15 @@ namespace CameraSongScript.HarmonyPatches
             SelectedScriptPath = string.Empty;
             AvailableScriptFiles = new List<string>();
 
+            CancellationToken ct;
             lock (_scanLock)
             {
                 // 前回のスキャンをキャンセル
                 _scanCts?.Cancel();
                 _scanCts?.Dispose();
                 _scanCts = new CancellationTokenSource();
+                ct = _scanCts.Token;
             }
-
-            var ct = _scanCts.Token;
 
             Task.Run(() =>
             {
@@ -181,10 +175,7 @@ namespace CameraSongScript.HarmonyPatches
             AvailableScriptFiles = validFiles;
 
             // CameraPlusモード時はパスを反映
-            if (CameraModDetector.IsCameraPlus && HasSongScript && CameraPlusHarmonyHelper.IsInitialized)
-            {
-                CameraPlusHarmonyHelper.SetScriptPath(SelectedScriptPath);
-            }
+            SyncCameraPlusPath();
         }
 
         /// <summary>
@@ -196,10 +187,11 @@ namespace CameraSongScript.HarmonyPatches
             {
                 string json = File.ReadAllText(filePath);
                 var parsed = JsonConvert.DeserializeObject<MovementScriptJson>(json);
-                return parsed?.Jsonmovement != null && parsed.Jsonmovement.Length > 0;
+                return parsed?.JsonMovements != null && parsed.JsonMovements.Length > 0;
             }
-            catch
+            catch (Exception ex)
             {
+                Plugin.Log.Debug($"CameraSongScriptDetector: '{Path.GetFileName(filePath)}' is not a valid MovementScript: {ex.Message}");
                 return false;
             }
         }
@@ -216,13 +208,21 @@ namespace CameraSongScript.HarmonyPatches
             Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {fileName}");
 
             // CameraPlusモード時はパスを反映
-            if (CameraModDetector.IsCameraPlus && CameraPlusHarmonyHelper.IsInitialized)
-            {
-                CameraPlusHarmonyHelper.SetScriptPath(SelectedScriptPath);
-            }
+            SyncCameraPlusPath();
 
             // Configに記録
             CameraSongScriptConfig.Instance.SelectedScriptFile = fileName;
+        }
+
+        /// <summary>
+        /// CameraPlusモード時にスクリプトパスを同期する
+        /// </summary>
+        private static void SyncCameraPlusPath()
+        {
+            if (CameraModDetector.IsCameraPlus && HasSongScript && Plugin.IsCamPlusHelperReady)
+            {
+                Plugin.CamPlusHelper.SetScriptPath(SelectedScriptPath);
+            }
         }
 
         /// <summary>

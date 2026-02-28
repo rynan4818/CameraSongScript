@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="CameraSongScript/CameraSongScript.csproj" Id="ba5bf3d6-9497-4746-a859-6c48914aadfc" />
+  <Project Path="CameraSongScript.Cam2/CameraSongScript.Cam2.csproj" Id="a1b2c3d4-1111-2222-3333-444455556666" />
+  <Project Path="CameraSongScript.CamPlus/CameraSongScript.CamPlus.csproj" Id="b2c3d4e5-2222-3333-4444-555566667777" />
 </Solution>

@@ -121,8 +121,9 @@
     <Compile Include="CameraModDetector.cs" />
     <Compile Include="Configuration\CameraSongScriptConfig.cs" />
     <Compile Include="HarmonyPatches\CameraSongScriptDetector.cs" />
-    <Compile Include="Helpers\Camera2ReflectionHelper.cs" />
-    <Compile Include="Helpers\CameraPlusHarmonyHelper.cs" />
+    <Compile Include="Interfaces\ICameraHelper.cs" />
+    <Compile Include="Interfaces\ICameraPlusHelper.cs" />
+    <Compile Include="Interfaces\ICameraToken.cs" />
     <Compile Include="Installers\CameraSongScriptMenuInstaller.cs" />
     <Compile Include="Installers\CameraSongScriptPlayerInstaller.cs" />
     <Compile Include="Models\MovementScriptJson.cs" />
@@ -143,11 +144,6 @@
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">
       <Version>2.0.0-beta1</Version>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild">
-      <Version>0.4.2</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

@@ -19,7 +19,6 @@ namespace CameraSongScript
 
         public static bool IsCamera2 => DetectedMod == CameraModType.Camera2;
         public static bool IsCameraPlus => DetectedMod == CameraModType.CameraPlus;
-        public static bool HasAnyCameraMod => DetectedMod != CameraModType.None;
 
         /// <summary>
         /// ロード済みアセンブリからカメラModを検出する

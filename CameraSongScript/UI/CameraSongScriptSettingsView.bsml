@@ -26,6 +26,21 @@
       </horizontal>
     </macro.if>
 
+    <macro.if value="show-cameraplus-settings">
+      <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="曲スクリプト検出時に切り替えるCameraPlusプロファイル"/>
+
+      <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行（CameraPlus）"/>
+
+      <string-setting text="Script Cameras" value="song-specific-script-cameras" apply-on-change="true" hover-hint="songSpecificScriptを有効にするカメラ名（カンマ区切り）"/>
+
+      <horizontal pad-top="1">
+        <text text="Camera Status:" font-size="3.5" color="#AAAAAA"/>
+      </horizontal>
+      <horizontal>
+        <text text="~song-specific-script-status" font-size="3" italics="true"/>
+      </horizontal>
+    </macro.if>
+
     <horizontal pad-top="2">
       <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
