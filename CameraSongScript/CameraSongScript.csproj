@@ -8,8 +8,8 @@
     <ProjectGuid>{BA5BF3D6-9497-4746-A859-6C48914AADFC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Camera2SongScript</RootNamespace>
-    <AssemblyName>Camera2SongScript</AssemblyName>
+    <RootNamespace>CameraSongScript</RootNamespace>
+    <AssemblyName>CameraSongScript</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <DebugSymbols>true</DebugSymbols>
@@ -44,11 +44,6 @@
     <Reference Include="BSML, Version=1.6.10.0, Culture=neutral, processorArchitecture=MSIL">
       <Private>False</Private>
       <HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Camera2, Version=0.6.108.0, Culture=neutral, processorArchitecture=AMD64">
-      <Private>False</Private>
-      <HintPath>$(BeatSaberDir)\Plugins\Camera2.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
@@ -123,26 +118,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Configuration\PluginConfig.cs" />
-    <Compile Include="HarmonyPatches\SongScriptDetector.cs" />
-    <Compile Include="Installers\Camera2SongScriptAppInstaller.cs" />
-    <Compile Include="Installers\Camera2SongScriptMenuInstaller.cs" />
-    <Compile Include="Installers\Camera2SongScriptPlayerInstaller.cs" />
+    <Compile Include="CameraModDetector.cs" />
+    <Compile Include="Configuration\CameraSongScriptConfig.cs" />
+    <Compile Include="HarmonyPatches\CameraSongScriptDetector.cs" />
+    <Compile Include="Helpers\Camera2ReflectionHelper.cs" />
+    <Compile Include="Helpers\CameraPlusHarmonyHelper.cs" />
+    <Compile Include="Installers\CameraSongScriptMenuInstaller.cs" />
+    <Compile Include="Installers\CameraSongScriptPlayerInstaller.cs" />
     <Compile Include="Models\MovementScriptJson.cs" />
-    <Compile Include="Models\SongScriptData.cs" />
+    <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SongScriptController.cs" />
-    <Compile Include="SongScriptUnsupportedFeatureDetector.cs" />
-    <Compile Include="UI\SongScriptSettingsView.cs" />
+    <Compile Include="CameraSongScriptController.cs" />
+    <Compile Include="UI\CameraSongScriptSettingsView.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />
-    <EmbeddedResource Include="UI\SongScriptSettingsView.bsml" />
+    <EmbeddedResource Include="UI\CameraSongScriptSettingsView.bsml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" />
-    <None Include="Camera2SongScript.csproj.user" Condition="Exists('Camera2SongScript.csproj.user')" />
+    <None Include="CameraSongScript.csproj.user" Condition="Exists('CameraSongScript.csproj.user')" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">

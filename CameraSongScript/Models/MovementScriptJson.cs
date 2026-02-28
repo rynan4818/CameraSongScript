@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Camera2SongScript.Models
+namespace CameraSongScript.Models
 {
     /// <summary>
     /// CameraPlus形式のMovementScript JSONデシリアライズ用クラス群
