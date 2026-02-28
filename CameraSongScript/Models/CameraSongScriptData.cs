@@ -57,56 +57,70 @@ namespace CameraSongScript.Models
                 Plugin.Log.Error($"SongScript JSON syntax error. {ex.Message}");
             }
 
-            if (movementScriptJson != null && movementScriptJson.Jsonmovement != null)
+            if (movementScriptJson != null && movementScriptJson.JsonMovements != null)
             {
-                if (movementScriptJson.ActiveInPauseMenu != null)
-                    ActiveInPauseMenu = Convert.ToBoolean(movementScriptJson.ActiveInPauseMenu);
-                if (movementScriptJson.TurnToHeadUseCameraSetting != null)
-                    TurnToHeadUseCameraSetting = Convert.ToBoolean(movementScriptJson.TurnToHeadUseCameraSetting);
-
-                foreach (JSONMovement jsonmovement in movementScriptJson.Jsonmovement)
+                try
                 {
-                    CameraSongScriptMovement newMovement = new CameraSongScriptMovement();
+                    if (movementScriptJson.ActiveInPauseMenu != null)
+                        ActiveInPauseMenu = Convert.ToBoolean(movementScriptJson.ActiveInPauseMenu);
+                    if (movementScriptJson.TurnToHeadUseCameraSetting != null)
+                        TurnToHeadUseCameraSetting = Convert.ToBoolean(movementScriptJson.TurnToHeadUseCameraSetting);
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SongScript: Failed to parse global settings: {ex.Message}");
+                }
 
-                    // StartPos / StartFOV
-                    ParsePosRotOffset(
-                        jsonmovement.startPos, jsonmovement.startRot, jsonmovement.startHeadOffset,
-                        out newMovement.StartPos, out newMovement.StartRot, out newMovement.StartHeadOffset, out newMovement.StartFOV);
+                foreach (JsonMovement jsonmovement in movementScriptJson.JsonMovements)
+                {
+                    try
+                    {
+                        CameraSongScriptMovement newMovement = new CameraSongScriptMovement();
 
-                    // EndPos / EndFOV
-                    ParsePosRotOffset(
-                        jsonmovement.endPos, jsonmovement.endRot, jsonmovement.endHeadOffset,
-                        out newMovement.EndPos, out newMovement.EndRot, out newMovement.EndHeadOffset, out newMovement.EndFOV);
+                        // StartPos / StartFOV
+                        ParsePosRotOffset(
+                            jsonmovement.startPos, jsonmovement.startRot, jsonmovement.startHeadOffset,
+                            out newMovement.StartPos, out newMovement.StartRot, out newMovement.StartHeadOffset, out newMovement.StartFOV);
 
-                    // VisibleObject
-                    if (jsonmovement.visibleObject != null)
-                        newMovement.SectionVisibleObject = jsonmovement.visibleObject;
+                        // EndPos / EndFOV
+                        ParsePosRotOffset(
+                            jsonmovement.endPos, jsonmovement.endRot, jsonmovement.endHeadOffset,
+                            out newMovement.EndPos, out newMovement.EndRot, out newMovement.EndHeadOffset, out newMovement.EndFOV);
 
-                    // TurnToHead
-                    if (jsonmovement.TurnToHead != null)
-                        newMovement.TurnToHead = Convert.ToBoolean(jsonmovement.TurnToHead);
-                    if (jsonmovement.TurnToHeadHorizontal != null)
-                        newMovement.TurnToHeadHorizontal = Convert.ToBoolean(jsonmovement.TurnToHeadHorizontal);
+                        // VisibleObject
+                        if (jsonmovement.visibleObject != null)
+                            newMovement.SectionVisibleObject = jsonmovement.visibleObject;
 
-                    // Duration / Delay
-                    if (jsonmovement.Duration != null)
-                        newMovement.Duration = Mathf.Clamp(ParseFloat(jsonmovement.Duration), MinDuration, float.MaxValue);
-                    if (jsonmovement.Delay != null)
-                        newMovement.Delay = ParseFloat(jsonmovement.Delay);
+                        // TurnToHead
+                        if (jsonmovement.TurnToHead != null)
+                            newMovement.TurnToHead = Convert.ToBoolean(jsonmovement.TurnToHead);
+                        if (jsonmovement.TurnToHeadHorizontal != null)
+                            newMovement.TurnToHeadHorizontal = Convert.ToBoolean(jsonmovement.TurnToHeadHorizontal);
 
-                    // EaseTransition
-                    if (jsonmovement.EaseTransition != null)
-                        newMovement.EaseTransition = Convert.ToBoolean(jsonmovement.EaseTransition);
+                        // Duration / Delay
+                        if (jsonmovement.Duration != null)
+                            newMovement.Duration = Mathf.Clamp(ParseFloat(jsonmovement.Duration), MinDuration, float.MaxValue);
+                        if (jsonmovement.Delay != null)
+                            newMovement.Delay = ParseFloat(jsonmovement.Delay);
 
-                    // CameraEffect（存在チェックのみ）
-                    if (jsonmovement.cameraEffect != null)
-                        ContainsCameraEffect = true;
+                        // EaseTransition
+                        if (jsonmovement.EaseTransition != null)
+                            newMovement.EaseTransition = Convert.ToBoolean(jsonmovement.EaseTransition);
 
-                    // WindowControl（存在チェックのみ）
-                    if (jsonmovement.windowControl != null)
-                        ContainsWindowControl = true;
+                        // CameraEffect（存在チェックのみ）
+                        if (jsonmovement.cameraEffect != null)
+                            ContainsCameraEffect = true;
 
-                    Movements.Add(newMovement);
+                        // WindowControl（存在チェックのみ）
+                        if (jsonmovement.windowControl != null)
+                            ContainsWindowControl = true;
+
+                        Movements.Add(newMovement);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SongScript: Skipping malformed movement #{Movements.Count}: {ex.Message}");
+                    }
                 }
                 return true;
             }
@@ -124,7 +138,7 @@ namespace CameraSongScript.Models
         }
 
         private static void ParsePosRotOffset(
-            AxizWithFoVElements pos, AxisElements rot, AxisElements headOffset,
+            AxisWithFoVElements pos, AxisElements rot, AxisElements headOffset,
             out Vector3 outPos, out Vector3 outRot, out Vector3 outHeadOffset, out float outFOV)
         {
             outPos = (pos?.x != null) ? ParseVector3(pos.x, pos.y, pos.z) : Vector3.zero;

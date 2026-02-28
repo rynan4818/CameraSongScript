@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using CameraSongScript.Configuration;
 using CameraSongScript.HarmonyPatches;
@@ -13,16 +14,16 @@ namespace CameraSongScript
     /// <summary>
     /// SongScript制御のメインコントローラー（Camera2モード専用）
     /// PlayerInstallerでバインドされ、GameCoreシーンでのみ動作する
-    /// Camera2 OverrideToken SDKをリフレクション経由で呼び出す
+    /// ICameraToken経由でカメラを操作する
     /// </summary>
     public class CameraSongScriptController : IInitializable, IDisposable, ITickable
     {
-        [Inject] private readonly AudioTimeSyncController _audioTimeSyncController = null;
-        [Inject(Optional = true)] private readonly PauseController _pauseController = null;
+        [Inject] private readonly AudioTimeSyncController _audioTimeSyncController;
+        [Inject(Optional = true)] private readonly PauseController _pauseController;
 
         private bool _dataLoaded = false;
         private CameraSongScriptData _data;
-        private readonly Dictionary<string, object> _tokens = new Dictionary<string, object>();
+        private readonly Dictionary<string, ICameraToken> _tokens = new Dictionary<string, ICameraToken>();
 
         // Lerp用変数
         private Vector3 _startPos = Vector3.zero;
@@ -67,9 +68,9 @@ namespace CameraSongScript
             if (!CameraSongScriptDetector.HasSongScript)
                 return;
 
-            if (Plugin.Cam2Helper == null || !Plugin.Cam2Helper.IsInitialized)
+            if (!Plugin.IsCamHelperReady)
             {
-                Plugin.Log.Error("SongScript: Camera2ReflectionHelper is not initialized.");
+                Plugin.Log.Error("SongScript: Camera2 adapter is not initialized.");
                 return;
             }
 
@@ -81,7 +82,7 @@ namespace CameraSongScript
             }
 
             // SongScriptをロード
-            LoadSongScript(CameraSongScriptDetector.SongScriptPath);
+            LoadSongScript(CameraSongScriptDetector.SelectedScriptPath);
 
             if (_dataLoaded && _data.ActiveInPauseMenu && _pauseController != null)
             {
@@ -89,7 +90,7 @@ namespace CameraSongScript
                 _pauseController.didResumeEvent -= Resume;
                 _pauseController.didPauseEvent -= Pause;
             }
-            // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持（行77-78で登録済み）
+            // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
         }
 
         public void Dispose()
@@ -194,13 +195,13 @@ namespace CameraSongScript
         private IEnumerable<string> GetTargetOrActiveCameras()
         {
             string[] targetNames = CameraSongScriptConfig.Instance.GetTargetCameraNames();
-            return targetNames.Length > 0
-                ? (IEnumerable<string>)targetNames
-                : Plugin.Cam2Helper.GetActiveCameras();
+            if (targetNames.Length > 0)
+                return targetNames;
+            return Plugin.CamHelper.GetActiveCameras();
         }
 
         /// <summary>
-        /// OverrideTokenを対象カメラから取得（リフレクション経由）
+        /// OverrideTokenを対象カメラから取得
         /// </summary>
         private void AcquireTokens()
         {
@@ -208,13 +209,13 @@ namespace CameraSongScript
 
             foreach (var camName in GetTargetOrActiveCameras())
             {
-                var token = Plugin.Cam2Helper.GetTokenForCamera(camName);
+                var token = Plugin.CamHelper.GetTokenForCamera(camName);
                 if (token != null)
                 {
                     _tokens[camName] = token;
                     // デフォルトFOVを記録（最初のカメラのものを使用）
                     if (_tokens.Count == 1)
-                        _defaultFOV = Plugin.Cam2Helper.GetTokenFOV(token);
+                        _defaultFOV = token.GetFOV();
                     Plugin.Log.Info($"SongScript: Acquired OverrideToken for camera '{camName}'.");
                 }
                 else
@@ -225,13 +226,13 @@ namespace CameraSongScript
         }
 
         /// <summary>
-        /// 全てのOverrideTokenを解放（Close()メソッド経由）
+        /// 全てのOverrideTokenを解放
         /// </summary>
         private void ReleaseAllTokens()
         {
             foreach (var token in _tokens.Values)
             {
-                Plugin.Cam2Helper.CloseToken(token);
+                token.Dispose();
             }
             _tokens.Clear();
         }
@@ -324,7 +325,7 @@ namespace CameraSongScript
         }
 
         /// <summary>
-        /// 全てのOverrideTokenに対してLerp結果を適用（リフレクション経由）
+        /// 全てのOverrideTokenに対してLerp結果を適用
         /// </summary>
         private void ApplyToAllTokens()
         {
@@ -357,56 +358,33 @@ namespace CameraSongScript
                 }
             }
 
-            foreach (var kvp in _tokens)
+            foreach (var token in _tokens.Values)
             {
-                var token = kvp.Value;
-                Plugin.Cam2Helper.SetTokenPosition(token, pos);
-                Plugin.Cam2Helper.SetTokenRotation(token, rot);
-                Plugin.Cam2Helper.SetTokenFOV(token, fov);
+                token.SetPosition(pos);
+                token.SetRotation(rot);
+                token.SetFOV(fov);
             }
         }
 
         /// <summary>
-        /// VisibleObjectをOverrideTokenのvisibleObjectsに適用（リフレクション経由）
+        /// VisibleObjectをOverrideTokenに適用
         /// </summary>
         private void ApplyVisibleObject(VisibleObject scriptVisible)
         {
-            foreach (var kvp in _tokens)
+            foreach (var token in _tokens.Values)
             {
-                var token = kvp.Value;
-                var go = Plugin.Cam2Helper.GetTokenVisibleObjects(token);
-                if (go == null) continue;
-
-                if (scriptVisible.avatar.HasValue)
-                    Plugin.Cam2Helper.SetVisibleAvatar(go, scriptVisible.avatar.Value);
-                if (scriptVisible.notes.HasValue)
-                    Plugin.Cam2Helper.SetVisibleNotes(go, scriptVisible.notes.Value);
-                if (scriptVisible.ui.HasValue)
-                    Plugin.Cam2Helper.SetVisibleUI(go, scriptVisible.ui.Value);
-                if (scriptVisible.saber.HasValue)
-                    Plugin.Cam2Helper.SetVisibleSabers(go, scriptVisible.saber.Value);
-                if (scriptVisible.debris.HasValue)
-                    Plugin.Cam2Helper.SetVisibleDebris(go, scriptVisible.debris.Value);
-                if (scriptVisible.wall.HasValue)
-                    Plugin.Cam2Helper.SetVisibleWalls(go, scriptVisible.wall.Value);
-                if (scriptVisible.wallFrame.HasValue && scriptVisible.wallFrame.Value)
-                    Plugin.Cam2Helper.SetVisibleWallsTransparent(go);
-                if (scriptVisible.cutParticles.HasValue)
-                    Plugin.Cam2Helper.SetVisibleCutParticles(go, scriptVisible.cutParticles.Value);
+                token.ApplyVisibleObject(scriptVisible);
             }
         }
 
         /// <summary>
-        /// VisibleObjectをデフォルト状態に戻す（リフレクション経由）
+        /// VisibleObjectをデフォルト状態に戻す
         /// </summary>
         private void ResetVisibleObjects()
         {
-            foreach (var kvp in _tokens)
+            foreach (var token in _tokens.Values)
             {
-                var token = kvp.Value;
-                var go = Plugin.Cam2Helper.GetTokenVisibleObjects(token);
-                if (go == null) continue;
-                Plugin.Cam2Helper.ResetVisibleObjects(go);
+                token.ResetVisibleObjects();
             }
         }
 

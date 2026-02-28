@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using IPA.Config.Stores;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
@@ -65,7 +66,7 @@ namespace CameraSongScript.Configuration
             if (string.IsNullOrWhiteSpace(TargetCameras))
                 return new string[0];
             var names = TargetCameras.Split(',');
-            var result = new System.Collections.Generic.List<string>();
+            var result = new List<string>();
             foreach (var name in names)
             {
                 var trimmed = name.Trim();
