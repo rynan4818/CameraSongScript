@@ -25,20 +25,10 @@ namespace CameraSongScript
         private CameraSongScriptData _data;
         private readonly Dictionary<string, ICameraToken> _tokens = new Dictionary<string, ICameraToken>();
 
-        // Lerp用変数
-        private Vector3 _startPos = Vector3.zero;
-        private Vector3 _endPos = Vector3.zero;
-        private Vector3 _startRot = Vector3.zero;
-        private Vector3 _endRot = Vector3.zero;
-        private Vector3 _startHeadOffset = Vector3.zero;
-        private Vector3 _endHeadOffset = Vector3.zero;
-        private float _startFOV = 0;
-        private float _endFOV = 0;
-        private bool _easeTransition = true;
+        // 現在セクションのLerp補間パラメータ
+        private LerpState _lerp;
         private float _movePerc;
         private int _eventID;
-        private bool _turnToHead = false;
-        private bool _turnToHeadHorizontal = false;
 
         // AudioSync用
         private float _movementStartTime, _movementEndTime, _movementNextStartTime;
@@ -109,6 +99,7 @@ namespace CameraSongScript
             if (!CameraSongScriptConfig.Instance.Enabled) return;
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
+            float startTime, endTime, currentTime;
 
             if (useAudioSync)
             {
@@ -118,10 +109,9 @@ namespace CameraSongScript
                 while (_movementNextStartTime <= _audioTimeSyncController.songTime)
                     UpdatePosAndRot();
 
-                float difference = _movementEndTime - _movementStartTime;
-                float current = _audioTimeSyncController.songTime - _movementStartTime;
-                if (difference != 0)
-                    _movePerc = Mathf.Clamp(current / difference, 0, 1);
+                startTime = _movementStartTime;
+                endTime = _movementEndTime;
+                currentTime = _audioTimeSyncController.songTime;
             }
             else
             {
@@ -129,11 +119,15 @@ namespace CameraSongScript
                 if (_movePerc == 1 && _movementDelayEndRealtime <= now)
                     UpdatePosAndRot();
 
-                float difference = _movementEndRealtime - _movementStartRealtime;
-                float current = now - _movementStartRealtime;
-                if (difference != 0)
-                    _movePerc = Mathf.Clamp(current / difference, 0, 1);
+                startTime = _movementStartRealtime;
+                endTime = _movementEndRealtime;
+                currentTime = now;
             }
+
+            // 補間割合を計算（共通処理）
+            float difference = endTime - startTime;
+            if (difference != 0)
+                _movePerc = Mathf.Clamp((currentTime - startTime) / difference, 0f, 1f);
 
             // カメラの位置・回転・FOVを更新
             ApplyToAllTokens();
@@ -271,15 +265,15 @@ namespace CameraSongScript
             var movement = _data.Movements[_eventID];
 
             // TurnToHead
-            _turnToHead = _data.TurnToHeadUseCameraSetting ? false : movement.TurnToHead;
-            _turnToHeadHorizontal = movement.TurnToHeadHorizontal;
+            _lerp.TurnToHead = _data.TurnToHeadUseCameraSetting ? false : movement.TurnToHead;
+            _lerp.TurnToHeadHorizontal = movement.TurnToHeadHorizontal;
 
-            _easeTransition = movement.EaseTransition;
+            _lerp.EaseTransition = movement.EaseTransition;
 
-            _startPos = movement.StartPos;
-            _endPos = movement.EndPos;
-            _startRot = movement.StartRot;
-            _endRot = movement.EndRot;
+            _lerp.StartPos = movement.StartPos;
+            _lerp.EndPos = movement.EndPos;
+            _lerp.StartRot = movement.StartRot;
+            _lerp.EndRot = movement.EndRot;
 
             // VisibleObject
             if (movement.SectionVisibleObject != null)
@@ -297,14 +291,14 @@ namespace CameraSongScript
             }
 
             // HeadOffset
-            _startHeadOffset = movement.StartHeadOffset;
-            _endHeadOffset = movement.EndHeadOffset;
+            _lerp.StartHeadOffset = movement.StartHeadOffset;
+            _lerp.EndHeadOffset = movement.EndHeadOffset;
 
             // FOV
-            _startFOV = movement.StartFOV != 0 ? movement.StartFOV : _defaultFOV;
-            _endFOV = movement.EndFOV != 0 ? movement.EndFOV : _defaultFOV;
+            _lerp.StartFOV = movement.StartFOV != 0 ? movement.StartFOV : _defaultFOV;
+            _lerp.EndFOV = movement.EndFOV != 0 ? movement.EndFOV : _defaultFOV;
 
-            FindShortestDelta(ref _startRot, ref _endRot);
+            FindShortestDelta(ref _lerp.StartRot, ref _lerp.EndRot);
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
 
@@ -329,16 +323,16 @@ namespace CameraSongScript
         /// </summary>
         private void ApplyToAllTokens()
         {
-            float easedPerc = Ease(_movePerc);
+            float easedPerc = Ease(_movePerc, _lerp.EaseTransition);
 
-            Vector3 pos = LerpVector3(_startPos, _endPos, easedPerc);
-            Vector3 rot = LerpVector3Angle(_startRot, _endRot, easedPerc);
-            float fov = Mathf.Lerp(_startFOV, _endFOV, easedPerc);
+            Vector3 pos = LerpVector3(_lerp.StartPos, _lerp.EndPos, easedPerc);
+            Vector3 rot = LerpVector3Angle(_lerp.StartRot, _lerp.EndRot, easedPerc);
+            float fov = Mathf.Lerp(_lerp.StartFOV, _lerp.EndFOV, easedPerc);
 
             // TurnToHead処理
-            if (_turnToHead)
+            if (_lerp.TurnToHead)
             {
-                Vector3 headOffset = LerpVector3(_startHeadOffset, _endHeadOffset, easedPerc);
+                Vector3 headOffset = LerpVector3(_lerp.StartHeadOffset, _lerp.EndHeadOffset, easedPerc);
                 Vector3 headPos = GetHMDPosition() + headOffset;
                 Vector3 lookDirection = headPos - pos;
 
@@ -347,7 +341,7 @@ namespace CameraSongScript
                     Quaternion lookRotation = Quaternion.LookRotation(lookDirection);
                     Vector3 lookEuler = lookRotation.eulerAngles;
 
-                    if (_turnToHeadHorizontal)
+                    if (_lerp.TurnToHeadHorizontal)
                     {
                         rot = new Vector3(rot.x, lookEuler.y, rot.z);
                     }
@@ -421,9 +415,12 @@ namespace CameraSongScript
             return new Vector3(Mathf.LerpAngle(from.x, to.x, percent), Mathf.LerpAngle(from.y, to.y, percent), Mathf.LerpAngle(from.z, to.z, percent));
         }
 
-        private float Ease(float p)
+        /// <summary>
+        /// キュービックイーズイン/アウト補間
+        /// </summary>
+        private static float Ease(float p, bool useEase)
         {
-            if (!_easeTransition)
+            if (!useEase)
                 return p;
 
             if (p < 0.5f)
@@ -454,7 +451,7 @@ namespace CameraSongScript
         /// <summary>
         /// OverrideTokenを取得できなかったカメラ名リスト
         /// </summary>
-        public List<string> UnavailableCameras
+        public IReadOnlyList<string> UnavailableCameras
         {
             get
             {
@@ -472,6 +469,28 @@ namespace CameraSongScript
         /// 現在OverrideTokenを保持しているカメラ名リスト
         /// </summary>
         public IEnumerable<string> ActiveCameras => _tokens.Keys;
+
+        #endregion
+
+        #region 内部型
+
+        /// <summary>
+        /// 現在セクションのLerp補間パラメータ（struct: GC圧回避のため値型）
+        /// </summary>
+        private struct LerpState
+        {
+            public Vector3 StartPos;
+            public Vector3 EndPos;
+            public Vector3 StartRot;
+            public Vector3 EndRot;
+            public Vector3 StartHeadOffset;
+            public Vector3 EndHeadOffset;
+            public float StartFOV;
+            public float EndFOV;
+            public bool EaseTransition;
+            public bool TurnToHead;
+            public bool TurnToHeadHorizontal;
+        }
 
         #endregion
     }

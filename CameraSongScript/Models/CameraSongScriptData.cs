@@ -8,7 +8,8 @@ namespace CameraSongScript.Models
 {
     /// <summary>
     /// CameraPlus形式のMovementScript JSONをパースしたデータクラス
-    /// CameraPlusのCameraMovement.CameraData / Movementsに相当
+    /// パフォーマンス上の理由からプロパティではなくpublicフィールドを使用
+    /// （ParsePosRotOffsetでout引数として直接書き込むため）
     /// </summary>
     public class CameraSongScriptMovement
     {
@@ -127,9 +128,12 @@ namespace CameraSongScript.Models
             return false;
         }
 
+        /// <summary>
+        /// ロケール安全な浮動小数点パース（'.' と ',' の両方のデシマルセパレータに対応）
+        /// </summary>
         private static float ParseFloat(string value)
         {
-            return float.Parse(value, CultureInfo.InvariantCulture);
+            return float.Parse(value.Replace(',', '.'), CultureInfo.InvariantCulture);
         }
 
         private static Vector3 ParseVector3(string x, string y, string z)
