@@ -47,6 +47,9 @@ namespace CameraSongScript
         // カメラのデフォルトFOV
         private float _defaultFOV = DefaultFOV;
 
+        // 初回Tickで初期化するためのフラグ
+        private bool _isFirstTick = false;
+
         public void Initialize()
         {
             if (!CameraModDetector.IsCamera2)
@@ -97,6 +100,12 @@ namespace CameraSongScript
         {
             if (!_dataLoaded || _paused) return;
             if (!CameraSongScriptConfig.Instance.Enabled) return;
+
+            if (_isFirstTick)
+            {
+                _isFirstTick = false;
+                UpdatePosAndRot();
+            }
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
             float startTime, endTime, currentTime;
@@ -168,7 +177,7 @@ namespace CameraSongScript
                 }
 
                 _eventID = 0;
-                UpdatePosAndRot();
+                _isFirstTick = true;
                 _dataLoaded = true;
 
                 Plugin.Log.Info($"SongScript: Loaded {_data.Movements.Count} movements from: {path}");
@@ -354,8 +363,7 @@ namespace CameraSongScript
 
             foreach (var token in _tokens.Values)
             {
-                token.SetPosition(pos);
-                token.SetRotation(rot);
+                token.SetPositionAndRotation(pos, rot);
                 token.SetFOV(fov);
             }
         }

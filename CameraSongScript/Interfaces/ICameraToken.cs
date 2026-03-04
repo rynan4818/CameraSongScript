@@ -12,6 +12,7 @@ namespace CameraSongScript.Interfaces
     {
         void SetPosition(Vector3 pos);
         void SetRotation(Vector3 rot);
+        void SetPositionAndRotation(Vector3 pos, Vector3 rot);
         float GetFOV();
         void SetFOV(float fov);
         void ApplyVisibleObject(VisibleObject scriptVisible);
