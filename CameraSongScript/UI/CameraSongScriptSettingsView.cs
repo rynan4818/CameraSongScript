@@ -17,19 +17,19 @@ namespace CameraSongScript.UI
     /// Camera2/CameraPlus両対応
     /// </summary>
     [HotReload]
-    internal class CameraSongScriptSettingsView : BSMLAutomaticViewController, IInitializable, IDisposable
+    public class CameraSongScriptSettingsView : BSMLAutomaticViewController, IInitializable, IDisposable
     {
         public const string TabName = "CameraSongScript";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
 
         public void Initialize()
         {
-            GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
+            //GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
         }
 
         public void Dispose()
         {
-            GameplaySetup.instance?.RemoveTab(TabName);
+            //GameplaySetup.instance?.RemoveTab(TabName);
         }
 
         #region 検出カメラMod表示

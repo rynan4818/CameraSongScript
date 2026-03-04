@@ -1,47 +1,50 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <settings-container child-control-width='true' child-expand-width='true' size-delta-y='-15'>
+  <settings-container child-control-width='true' child-expand-width='true' size-delta-y='0'>
     <horizontal>
-      <text text="CameraSongScript Settings" font-size="5" bold="true"/>
+      <text text="CameraSongScript Settings" font-size="3" bold="true" align="Center"/>
     </horizontal>
-
-    <horizontal pad-top="1">
-      <text text="Camera Mod:" font-size="3.5" color="#AAAAAA"/>
-      <text text="~detected-camera-mod" font-size="3.5" rich-text="true"/>
+    <horizontal pad-bottom="2">
+      <text text="Camera Mod:" font-size="3.5" color="#AAAAAA" align="Right"/>
+      <text text="~detected-camera-mod" font-size="3.5" rich-text="true" align="Center"/>
     </horizontal>
-
-    <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="SongScript機能の有効/無効"/>
-
-    <dropdown-list-setting text="Script File" value="selected-script-file" options="script-file-options" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
-
+    <horizontal>
+      <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="SongScript機能の有効/無効"/>
+    </horizontal>
+    <horizontal>
+      <dropdown-list-setting text="Script File" value="selected-script-file" options="script-file-options" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
+    </horizontal>
     <macro.if value="show-camera2-settings">
-      <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行"/>
-
-      <string-setting text="Target Cameras" value="target-cameras" apply-on-change="true" hover-hint="適用対象のカメラ名（カンマ区切り、空なら全カメラ）"/>
-
-      <horizontal pad-top="2">
+      <horizontal>
+        <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行"/>
+      </horizontal>
+      <horizontal>
+        <string-setting text="Target Cameras" value="target-cameras" apply-on-change="true" hover-hint="適用対象のカメラ名（カンマ区切り、空なら全カメラ）"/>
+      </horizontal>
+      <horizontal>
         <text text="Available Cameras:" font-size="3.5" color="#AAAAAA"/>
       </horizontal>
       <horizontal>
-        <text text="~available-cameras" font-size="3" italics="true"/>
+        <text text="~available-cameras" font-size="1" italics="true"/>
       </horizontal>
     </macro.if>
-
     <macro.if value="show-cameraplus-settings">
-      <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="曲スクリプト検出時に切り替えるCameraPlusプロファイル"/>
-
-      <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行（CameraPlus）"/>
-
-      <string-setting text="Script Cameras" value="song-specific-script-cameras" apply-on-change="true" hover-hint="songSpecificScriptを有効にするカメラ名（カンマ区切り）"/>
-
-      <horizontal pad-top="1">
+      <horizontal>
+        <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="曲スクリプト検出時に切り替えるCameraPlusプロファイル"/>
+      </horizontal>
+      <horizontal>
+        <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行（CameraPlus）"/>
+      </horizontal>
+      <horizontal>
+        <string-setting text="Script Cameras" value="song-specific-script-cameras" apply-on-change="true" hover-hint="songSpecificScriptを有効にするカメラ名（カンマ区切り）"/>
+      </horizontal>
+      <horizontal>
         <text text="Camera Status:" font-size="3.5" color="#AAAAAA"/>
       </horizontal>
       <horizontal>
         <text text="~song-specific-script-status" font-size="3" italics="true"/>
       </horizontal>
     </macro.if>
-
-    <horizontal pad-top="2">
+    <horizontal>
       <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
   </settings-container>

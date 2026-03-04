@@ -144,29 +144,10 @@ namespace CameraSongScript.HarmonyPatches
 
             ct.ThrowIfCancellationRequested();
 
-            // 結果を反映（キャンセルされていなければ）
-            string selectedPath = string.Empty;
+            string selectedPath = SelectDefaultScript(validFiles, levelPath);
 
             if (validFiles.Count > 0)
-            {
-                // デフォルト選択の決定
-                string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
-
-                if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName))
-                {
-                    selectedPath = Path.Combine(levelPath, configFileName);
-                }
-                else if (validFiles.Contains("SongScript.json"))
-                {
-                    selectedPath = Path.Combine(levelPath, "SongScript.json");
-                }
-                else
-                {
-                    selectedPath = Path.Combine(levelPath, validFiles[0]);
-                }
-
                 Plugin.Log.Info($"CameraSongScriptDetector: Found {validFiles.Count} valid script(s). Selected: {Path.GetFileName(selectedPath)}");
-            }
 
             ct.ThrowIfCancellationRequested();
 
@@ -176,6 +157,26 @@ namespace CameraSongScript.HarmonyPatches
 
             // CameraPlusモード時はパスを反映
             SyncCameraPlusPath();
+        }
+
+        /// <summary>
+        /// 有効なスクリプトファイルリストからデフォルト選択を決定する
+        /// 優先順位: Config指定ファイル > SongScript.json > リスト先頭ファイル
+        /// </summary>
+        private static string SelectDefaultScript(List<string> validFiles, string levelPath)
+        {
+            if (validFiles.Count == 0)
+                return string.Empty;
+
+            string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
+
+            if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName))
+                return Path.Combine(levelPath, configFileName);
+
+            if (validFiles.Contains("SongScript.json"))
+                return Path.Combine(levelPath, "SongScript.json");
+
+            return Path.Combine(levelPath, validFiles[0]);
         }
 
         /// <summary>
