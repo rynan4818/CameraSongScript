@@ -24,12 +24,12 @@ namespace CameraSongScript.UI
 
         public void Initialize()
         {
-            //GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
+            GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
         }
 
         public void Dispose()
         {
-            //GameplaySetup.instance?.RemoveTab(TabName);
+            GameplaySetup.instance?.RemoveTab(TabName);
         }
 
         #region 検出カメラMod表示
@@ -116,33 +116,41 @@ namespace CameraSongScript.UI
             set => CameraSongScriptConfig.Instance.UseAudioSync = value;
         }
 
-        [UIValue("target-cameras")]
-        public string TargetCameras
-        {
-            get => CameraSongScriptConfig.Instance.TargetCameras;
-            set => CameraSongScriptConfig.Instance.TargetCameras = value;
-        }
-
-        [UIValue("available-cameras")]
-        public string AvailableCameras
+        [UIValue("target-camera-options")]
+        public List<object> TargetCameraOptions
         {
             get
             {
-                if (!CameraModDetector.IsCamera2 || !Plugin.IsCamHelperReady)
-                    return "";
+                var list = new List<object> { "(All)" };
+                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                {
+                    try
+                    {
+                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
+                        foreach (var cam in cams) list.Add(cam);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SettingsView: Failed to get available cameras: {ex.Message}");
+                    }
+                }
+                return list;
+            }
+        }
 
-                try
-                {
-                    var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
-                    if (cams.Count == 0)
-                        return "No cameras available";
-                    return string.Join(", ", cams);
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Warn($"SettingsView: Failed to get available cameras: {ex.Message}");
-                    return "Camera2 not ready";
-                }
+        [UIValue("target-cameras")]
+        public object TargetCameras
+        {
+            get
+            {
+                string cam = CameraSongScriptConfig.Instance.TargetCameras;
+                return string.IsNullOrEmpty(cam) ? "(All)" : cam;
+            }
+            set
+            {
+                string cam = value as string;
+                if (cam == "(All)") cam = string.Empty;
+                CameraSongScriptConfig.Instance.TargetCameras = cam ?? string.Empty;
             }
         }
 
@@ -197,34 +205,48 @@ namespace CameraSongScript.UI
             set => Plugin.CamPlusHelper?.SetUseAudioSync(value);
         }
 
-        [UIValue("song-specific-script-cameras")]
-        public string SongSpecificScriptCameras
-        {
-            get => Plugin.CamPlusHelper?.GetSongSpecificScriptCameras() ?? string.Empty;
-            set
-            {
-                Plugin.CamPlusHelper?.SetSongSpecificScriptCameras(value ?? string.Empty);
-                NotifyPropertyChanged(nameof(SongSpecificScriptStatus));
-            }
-        }
-
-        [UIValue("song-specific-script-status")]
-        public string SongSpecificScriptStatus
+        [UIValue("cameraplus-camera-options")]
+        public List<object> CameraPlusCameraOptions
         {
             get
             {
-                if (!Plugin.IsCamPlusHelperReady)
-                    return "CameraPlus not ready";
+                var list = new List<object> { "(None)" };
+                if (Plugin.IsCamPlusHelperReady)
+                {
+                    try
+                    {
+                        var cams = Plugin.CamPlusHelper.GetAllCameras();
+                        if (cams != null)
+                        {
+                            foreach (var cam in cams) list.Add(cam);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SettingsView: Failed to get CameraPlus cameras: {ex.Message}");
+                    }
+                }
+                return list;
+            }
+        }
 
-                try
-                {
-                    return Plugin.CamPlusHelper.GetSongSpecificScriptStatus();
-                }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Warn($"SettingsView: Failed to get CameraPlus status: {ex.Message}");
-                    return "CameraPlus not ready";
-                }
+        [UIValue("song-specific-script-cameras")]
+        public object SongSpecificScriptCameras
+        {
+            get
+            {
+                if (!Plugin.IsCamPlusHelperReady) return "(None)";
+                string cam = Plugin.CamPlusHelper?.GetSongSpecificScriptCameras() ?? string.Empty;
+                if (string.IsNullOrEmpty(cam)) return "(None)";
+                
+                var firstCam = cam.Split(',').FirstOrDefault()?.Trim();
+                return string.IsNullOrEmpty(firstCam) ? "(None)" : firstCam;
+            }
+            set
+            {
+                string cam = value as string;
+                if (cam == "(None)") cam = string.Empty;
+                Plugin.CamPlusHelper?.SetSongSpecificScriptCameras(cam ?? string.Empty);
             }
         }
 

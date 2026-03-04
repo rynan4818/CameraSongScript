@@ -106,6 +106,17 @@ namespace CameraSongScript.CamPlus
         #region SongSpecificScript
 
         /// <summary>
+        /// 全てのカメラの名前のリストを返す
+        /// </summary>
+        public IReadOnlyList<string> GetAllCameras()
+        {
+            var controller = GetController();
+            if (controller == null) return new List<string>();
+
+            return controller.Cameras.Keys.ToList();
+        }
+
+        /// <summary>
         /// 全カメラの名前とsongSpecificScript設定の状態を表示用文字列で返す。
         /// 例: "cameraplus: ON, second: OFF"
         /// </summary>
