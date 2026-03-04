@@ -45,6 +45,11 @@ namespace CameraSongScript.Interfaces
         string GetSongSpecificScriptStatus();
 
         /// <summary>
+        /// 全てのカメラの名前のリストを返す
+        /// </summary>
+        IReadOnlyList<string> GetAllCameras();
+
+        /// <summary>
         /// songSpecificScript=trueのカメラ名をカンマ区切りで返す
         /// </summary>
         string GetSongSpecificScriptCameras();
