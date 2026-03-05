@@ -42,22 +42,36 @@ namespace CameraSongScript.CamPlus
 
         #region プロファイル
 
+        private string _backedUpProfile = null;
+        private bool _hasBackup = false;
+
         public IReadOnlyList<string> GetProfileList()
         {
             return CameraUtilities.ProfileList().ToList();
         }
 
-        public string GetSongSpecificScriptProfile()
+        public void PreGameSceneCurrentSetup(string profileName)
         {
-            return PluginConfig.Instance?.SongSpecificScriptProfile ?? string.Empty;
-        }
+            if (string.IsNullOrEmpty(profileName) || profileName == "(Default)")
+                return;
 
-        public void SetSongSpecificScriptProfile(string profileName)
-        {
+            _backedUpProfile = PluginConfig.Instance?.SongSpecificScriptProfile;
+            _hasBackup = true;
+
             if (PluginConfig.Instance != null)
             {
-                PluginConfig.Instance.SongSpecificScriptProfile = profileName ?? string.Empty;
+                PluginConfig.Instance.SongSpecificScriptProfile = profileName;
                 PluginConfig.Instance.Changed();
+            }
+        }
+
+        public void RestoreGameSceneSetup()
+        {
+            if (_hasBackup && PluginConfig.Instance != null)
+            {
+                PluginConfig.Instance.SongSpecificScriptProfile = _backedUpProfile ?? string.Empty;
+                PluginConfig.Instance.Changed();
+                _hasBackup = false;
             }
         }
 
@@ -103,83 +117,22 @@ namespace CameraSongScript.CamPlus
 
         #endregion
 
-        #region SongSpecificScript
+        #region Profile Switch (Native CameraPlus Feature)
 
         /// <summary>
-        /// 全てのカメラの名前のリストを返す
+        /// 曲固有スクリプト検出時に切り替えるプロファイル名を取得する
         /// </summary>
-        public IReadOnlyList<string> GetAllCameras()
+        public string GetSongSpecificScriptProfile()
         {
-            var controller = GetController();
-            if (controller == null) return new List<string>();
-
-            return controller.Cameras.Keys.ToList();
+            return CameraPlus.Configuration.PluginConfig.Instance.SongSpecificScriptProfile;
         }
 
         /// <summary>
-        /// 全カメラの名前とsongSpecificScript設定の状態を表示用文字列で返す。
-        /// 例: "cameraplus: ON, second: OFF"
+        /// 曲固有スクリプト検出時に切り替えるプロファイル名を設定する
         /// </summary>
-        public string GetSongSpecificScriptStatus()
+        public void SetSongSpecificScriptProfile(string profileName)
         {
-            var controller = GetController();
-            if (controller == null) return "CameraPlus not ready";
-
-            var parts = new List<string>();
-            foreach (var kvp in controller.Cameras)
-            {
-                bool enabled = kvp.Value.Config.movementScript.songSpecificScript;
-                parts.Add($"{kvp.Key}: {(enabled ? "ON" : "OFF")}");
-            }
-            return parts.Count > 0 ? string.Join(", ", parts) : "No cameras";
-        }
-
-        /// <summary>
-        /// songSpecificScript=trueのカメラ名をカンマ区切りで返す。
-        /// </summary>
-        public string GetSongSpecificScriptCameras()
-        {
-            var controller = GetController();
-            if (controller == null) return string.Empty;
-
-            var names = new List<string>();
-            foreach (var kvp in controller.Cameras)
-            {
-                if (kvp.Value.Config.movementScript.songSpecificScript)
-                    names.Add(kvp.Key);
-            }
-            return string.Join(", ", names);
-        }
-
-        /// <summary>
-        /// 指定されたカメラ名（カンマ区切り）のsongSpecificScriptをtrueに、
-        /// それ以外のカメラはfalseに設定して保存する。
-        /// </summary>
-        public void SetSongSpecificScriptCameras(string cameraNames)
-        {
-            var controller = GetController();
-            if (controller == null) return;
-
-            var targetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (!string.IsNullOrEmpty(cameraNames))
-            {
-                foreach (var name in cameraNames.Split(','))
-                {
-                    var trimmed = name.Trim();
-                    if (!string.IsNullOrEmpty(trimmed))
-                        targetNames.Add(trimmed);
-                }
-            }
-
-            foreach (var kvp in controller.Cameras)
-            {
-                bool shouldEnable = targetNames.Contains(kvp.Key);
-                if (kvp.Value.Config.movementScript.songSpecificScript != shouldEnable)
-                {
-                    kvp.Value.Config.movementScript.songSpecificScript = shouldEnable;
-                    kvp.Value.Config.Save();
-                }
-            }
+            CameraPlus.Configuration.PluginConfig.Instance.SongSpecificScriptProfile = profileName ?? string.Empty;
         }
 
         #endregion

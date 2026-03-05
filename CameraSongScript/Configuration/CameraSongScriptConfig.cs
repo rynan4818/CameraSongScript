@@ -34,6 +34,11 @@ namespace CameraSongScript.Configuration
         public virtual string SelectedScriptFile { get; set; } = "";
 
         /// <summary>
+        /// 自動的に切り替えるCamera2のCustom Scene名
+        /// </summary>
+        public virtual string CustomSceneToSwitch { get; set; } = "(Default)";
+
+        /// <summary>
         /// BSIPAが設定ファイルを読み込むたびに呼び出される
         /// </summary>
         public virtual void OnReload()
@@ -56,6 +61,7 @@ namespace CameraSongScript.Configuration
             UseAudioSync = other.UseAudioSync;
             TargetCameras = other.TargetCameras;
             SelectedScriptFile = other.SelectedScriptFile;
+            this.CustomSceneToSwitch = other.CustomSceneToSwitch;
         }
 
         /// <summary>

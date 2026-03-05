@@ -20,6 +20,12 @@
       <horizontal>
         <dropdown-list-setting text="Target Camera" value="target-cameras" options="target-camera-options" apply-on-change="true" hover-hint="適用対象のカメラ名を選択（Allなら全カメラ）"/>
       </horizontal>
+      <horizontal>
+        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="Camera2のCustom Sceneを切り替えます"/>
+      </horizontal>
+      <horizontal>
+        <button text="Add 'CameraSongScript' Custom Scene" on-click="add-custom-scene" hover-hint="上記の「Target Camera」に選ばれたカメラを「CameraSongScript」シーン名としてCamera2に登録・上書きします" />
+      </horizontal>
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
@@ -27,9 +33,6 @@
       </horizontal>
       <horizontal>
         <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行（CameraPlus）"/>
-      </horizontal>
-      <horizontal>
-        <dropdown-list-setting text="Script Camera" value="song-specific-script-cameras" options="cameraplus-camera-options" apply-on-change="true" hover-hint="songSpecificScriptを有効にするカメラ名を選択"/>
       </horizontal>
     </macro.if>
     <horizontal>
