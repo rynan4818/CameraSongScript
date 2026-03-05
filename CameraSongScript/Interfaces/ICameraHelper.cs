@@ -12,6 +12,12 @@ namespace CameraSongScript.Interfaces
         bool IsInitialized { get; }
         IEnumerable<string> GetActiveCameras();
         IEnumerable<string> GetAvailableCameras();
+        IEnumerable<string> CustomScenes { get; }
+        void CreateOrUpdateCustomScene(string sceneName, IEnumerable<string> cameras);
+        void PreGameSceneCurrentSetup(string customSceneName);
+        void RestoreGameSceneSetup();
+        void SwitchToCustomScene(string sceneName);
+        void ShowNormalScene();
         ICameraToken GetTokenForCamera(string camName);
     }
 }

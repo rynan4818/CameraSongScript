@@ -18,8 +18,10 @@ namespace CameraSongScript
     /// </summary>
     public class CameraSongScriptController : IInitializable, IDisposable, ITickable
     {
-        [Inject] private readonly AudioTimeSyncController _audioTimeSyncController;
-        [Inject(Optional = true)] private readonly PauseController _pauseController;
+#pragma warning disable 0649
+        [Inject] private AudioTimeSyncController _audioTimeSyncController;
+        [Inject(Optional = true)] private PauseController _pauseController;
+#pragma warning restore 0649
 
         private bool _dataLoaded = false;
         private CameraSongScriptData _data;
@@ -50,20 +52,29 @@ namespace CameraSongScript
         // 初回Tickで初期化するためのフラグ
         private bool _isFirstTick = false;
 
+        // Camera2のゲームシーン読み込み完了待ちフラグ
+#if !NO_CAMERA2
+        private bool _pendingCustomSceneSwitch = false;
+        private int _customSceneSwitchDelay = 0;
+#endif
+
         public void Initialize()
         {
-            if (!CameraModDetector.IsCamera2)
-                return;
-
             if (!CameraSongScriptConfig.Instance.Enabled)
                 return;
 
             if (!CameraSongScriptDetector.HasSongScript)
                 return;
 
-            if (!Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && !Plugin.IsCamHelperReady)
             {
                 Plugin.Log.Error("SongScript: Camera2 adapter is not initialized.");
+                return;
+            }
+
+            if (CameraModDetector.IsCameraPlus && !Plugin.IsCamPlusHelperReady)
+            {
+                Plugin.Log.Error("SongScript: CameraPlus adapter is not initialized.");
                 return;
             }
 
@@ -84,10 +95,27 @@ namespace CameraSongScript
                 _pauseController.didPauseEvent -= Pause;
             }
             // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
+
+            // Camera2のゲームシーン読み込み完了後にカスタムシーンを適用する
+#if !NO_CAMERA2
+            var customScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch;
+            if (CameraModDetector.IsCamera2 && !string.IsNullOrEmpty(customScene) && customScene != "(Default)")
+            {
+                _pendingCustomSceneSwitch = true;
+                _customSceneSwitchDelay = 2; // 2フレーム待機（Camera2のコルーチン完了後）
+            }
+#endif
+
         }
 
         public void Dispose()
         {
+            // カスタムシーンの復元
+            if (CameraModDetector.IsCamera2)
+            {
+                Plugin.CamHelper.RestoreGameSceneSetup();
+            }
+
             if (_pauseController != null)
             {
                 _pauseController.didResumeEvent -= Resume;
@@ -106,6 +134,19 @@ namespace CameraSongScript
                 _isFirstTick = false;
                 UpdatePosAndRot();
             }
+
+            // Camera2のゲームシーン読み込み完了を確認してからカスタムシーンに切り替える
+#if !NO_CAMERA2
+            if (CameraModDetector.IsCamera2 && _pendingCustomSceneSwitch)
+            {
+                _customSceneSwitchDelay--;
+                if (_customSceneSwitchDelay <= 0)
+                {
+                    _pendingCustomSceneSwitch = false;
+                    Plugin.CamHelper.PreGameSceneCurrentSetup(CameraSongScriptConfig.Instance.CustomSceneToSwitch);
+                }
+            }
+#endif
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
             float startTime, endTime, currentTime;

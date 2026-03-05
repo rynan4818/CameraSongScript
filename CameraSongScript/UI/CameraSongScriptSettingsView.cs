@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BeatSaberMarkupLanguage.Attributes;
+using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
 using CameraSongScript.Configuration;
@@ -109,6 +110,82 @@ namespace CameraSongScript.UI
         [UIValue("show-camera2-settings")]
         public bool ShowCamera2Settings => CameraModDetector.IsCamera2;
 
+        [UIValue("custom-scene-options")]
+        public List<object> CustomSceneOptions
+        {
+            get
+            {
+                var list = new List<object> { "(Default)" };
+                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                {
+                    try
+                    {
+                        var scenes = Plugin.CamHelper.CustomScenes;
+                        if (scenes != null)
+                        {
+                            foreach (var scene in scenes) list.Add(scene);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SettingsView: Failed to get custom scenes: {ex.Message}");
+                    }
+                }
+                return list;
+            }
+        }
+
+        [UIComponent("custom-scene-dropdown")]
+        public DropDownListSetting customSceneDropdown;
+
+        private string _selectedCustomScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch ?? "(Default)";
+
+        [UIValue("selected-custom-scene")]
+        public object SelectedCustomScene
+        {
+            get => _selectedCustomScene;
+            set
+            {
+                string scene = value as string;
+                _selectedCustomScene = scene ?? "(Default)";
+                
+                // 設定に保存（実際の切り替えはゲームシーン開始時に自動で行われる）
+                CameraSongScriptConfig.Instance.CustomSceneToSwitch = _selectedCustomScene;
+            }
+        }
+
+        [UIAction("add-custom-scene")]
+        public void AddCustomScene()
+        {
+            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            {
+                var targetCam = CameraSongScriptConfig.Instance.TargetCameras;
+                IEnumerable<string> camerasToAdd;
+
+                // All または 未指定の場合は有効なすべてのカメラを追加、そうでない場合は指定カメラのみ追加
+                if (string.IsNullOrEmpty(targetCam) || targetCam == "(All)")
+                {
+                    camerasToAdd = Plugin.CamHelper.GetAvailableCameras();
+                }
+                else
+                {
+                    camerasToAdd = new List<string> { targetCam };
+                }
+
+                Plugin.CamHelper.CreateOrUpdateCustomScene("CameraSongScript", camerasToAdd);
+                
+                // ドロップダウンのリストとUIを更新
+                NotifyPropertyChanged(nameof(CustomSceneOptions));
+                customSceneDropdown?.UpdateChoices();
+
+                // 既にCameraSongScriptが選択されている場合は、直ちに画面にも反映させる
+                if (_selectedCustomScene == "CameraSongScript")
+                {
+                    Plugin.CamHelper.SwitchToCustomScene("CameraSongScript");
+                }
+            }
+        }
+
         [UIValue("use-audio-sync")]
         public bool UseAudioSync
         {
@@ -185,16 +262,15 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (!Plugin.IsCamPlusHelperReady)
-                    return "(Default)";
+                if (!Plugin.IsCamPlusHelperReady) return "(Default)";
                 string profile = Plugin.CamPlusHelper.GetSongSpecificScriptProfile();
                 return string.IsNullOrEmpty(profile) ? "(Default)" : profile;
             }
             set
             {
+                if (!Plugin.IsCamPlusHelperReady) return;
                 string profile = value as string;
-                if (profile == "(Default)") profile = string.Empty;
-                Plugin.CamPlusHelper?.SetSongSpecificScriptProfile(profile ?? string.Empty);
+                Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profile == "(Default)" ? string.Empty : profile);
             }
         }
 
@@ -203,51 +279,6 @@ namespace CameraSongScript.UI
         {
             get => Plugin.CamPlusHelper?.GetUseAudioSync() ?? true;
             set => Plugin.CamPlusHelper?.SetUseAudioSync(value);
-        }
-
-        [UIValue("cameraplus-camera-options")]
-        public List<object> CameraPlusCameraOptions
-        {
-            get
-            {
-                var list = new List<object> { "(None)" };
-                if (Plugin.IsCamPlusHelperReady)
-                {
-                    try
-                    {
-                        var cams = Plugin.CamPlusHelper.GetAllCameras();
-                        if (cams != null)
-                        {
-                            foreach (var cam in cams) list.Add(cam);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Warn($"SettingsView: Failed to get CameraPlus cameras: {ex.Message}");
-                    }
-                }
-                return list;
-            }
-        }
-
-        [UIValue("song-specific-script-cameras")]
-        public object SongSpecificScriptCameras
-        {
-            get
-            {
-                if (!Plugin.IsCamPlusHelperReady) return "(None)";
-                string cam = Plugin.CamPlusHelper?.GetSongSpecificScriptCameras() ?? string.Empty;
-                if (string.IsNullOrEmpty(cam)) return "(None)";
-                
-                var firstCam = cam.Split(',').FirstOrDefault()?.Trim();
-                return string.IsNullOrEmpty(firstCam) ? "(None)" : firstCam;
-            }
-            set
-            {
-                string cam = value as string;
-                if (cam == "(None)") cam = string.Empty;
-                Plugin.CamPlusHelper?.SetSongSpecificScriptCameras(cam ?? string.Empty);
-            }
         }
 
         #endregion
