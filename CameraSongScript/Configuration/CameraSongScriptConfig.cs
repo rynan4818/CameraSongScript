@@ -44,6 +44,24 @@ namespace CameraSongScript.Configuration
         public virtual int CameraHeightOffsetCm { get; set; } = 0;
 
         /// <summary>
+        /// true: 高さオフセットをスクリプト(譜面)ごとに個別保存する（デフォルト）
+        /// false: 高さオフセットを共通の1つの設定として使用する（CameraSongScript.jsonに保存）
+        /// </summary>
+        public virtual bool UsePerScriptHeightOffset { get; set; } = true;
+
+        /// <summary>
+        /// hover-hint表示言語の強制設定
+        /// "English" = 英語固定(デフォルト), "Japanese" = 日本語固定, "Auto" = ゲーム言語に追従
+        /// </summary>
+        public virtual string HoverHintLanguage { get; set; } = "Auto";
+
+        /// <summary>
+        /// hover-hintの表示ON/OFF
+        /// true: hover-hintを表示する(デフォルト), false: hover-hintを非表示
+        /// </summary>
+        public virtual bool ShowHoverHints { get; set; } = true;
+
+        /// <summary>
         /// ステータスインジケータパネルの表示ON/OFF
         /// </summary>
         public virtual bool ShowStatusPanel { get; set; } = true;
@@ -78,6 +96,9 @@ namespace CameraSongScript.Configuration
             SelectedScriptFile = other.SelectedScriptFile;
             this.CustomSceneToSwitch = other.CustomSceneToSwitch;
             this.CameraHeightOffsetCm = other.CameraHeightOffsetCm;
+            this.UsePerScriptHeightOffset = other.UsePerScriptHeightOffset;
+            this.HoverHintLanguage = other.HoverHintLanguage;
+            this.ShowHoverHints = other.ShowHoverHints;
             this.ShowStatusPanel = other.ShowStatusPanel;
             this.StatusPanelPosition = other.StatusPanelPosition;
         }

@@ -174,12 +174,20 @@ namespace CameraSongScript.Detectors
 
             if (!string.IsNullOrEmpty(SelectedScriptPath))
             {
-                int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
-                CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+                // 個別保存モードの場合のみ、スクリプトハッシュから保存済みオフセットを復元する
+                if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
+                {
+                    int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
+                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+                }
+                // 共通モードの場合はCameraSongScriptConfig.Instance.CameraHeightOffsetCmをそのまま使用
             }
             else
             {
-                CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
+                if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
+                {
+                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
+                }
             }
 
             LoadMetadata(SelectedScriptPath);
@@ -249,9 +257,13 @@ namespace CameraSongScript.Detectors
 
             LoadMetadata(SelectedScriptPath);
 
-            // スクリプト変更時、ハッシュをもとに保存済みのオフセット値を取得し、現在のゲーム全体設定に適用する
-            int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
-            CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+            // 個別保存モードの場合のみ、スクリプト変更時にハッシュから保存済みオフセットを復元する
+            if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
+            {
+                int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
+                CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+            }
+            // 共通モードの場合はCameraSongScriptConfig.Instance.CameraHeightOffsetCmをそのまま使用
 
             UpdateEffectiveScriptPath();
             SyncCameraPlusPath();
