@@ -274,12 +274,20 @@ namespace CameraSongScript.Detectors
 
         /// <summary>
         /// CameraPlusモード時にスクリプトパスを同期する
+        /// Enabled=falseの場合は空パスを設定し、CameraPlusにスクリプトが存在しないものとして扱わせる
         /// </summary>
         public static void SyncCameraPlusPath()
         {
-            if (CameraModDetector.IsCameraPlus && HasSongScript && Plugin.IsCamPlusHelperReady)
+            if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
             {
-                Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
+                if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
+                {
+                    Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
+                }
+                else
+                {
+                    Plugin.CamPlusHelper.SetScriptPath(string.Empty);
+                }
             }
         }
 

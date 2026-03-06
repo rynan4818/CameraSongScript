@@ -77,45 +77,6 @@ namespace CameraSongScript.CamPlus
 
         #endregion
 
-        #region UseAudioSync
-
-        /// <summary>
-        /// 現在のプロファイルでsongSpecificScript=trueのカメラのuseAudioSyncを返す。
-        /// 複数カメラがある場合は最初に見つかったものの値を返す。
-        /// songSpecificScript=trueのカメラがない場合はtrue（デフォルト）を返す。
-        /// </summary>
-        public bool GetUseAudioSync()
-        {
-            var controller = GetController();
-            if (controller == null) return true;
-
-            foreach (var cam in controller.Cameras.Values)
-            {
-                if (cam.Config.movementScript.songSpecificScript)
-                    return cam.Config.movementScript.useAudioSync;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// 現在のプロファイルでsongSpecificScript=trueの全カメラのuseAudioSyncを設定し保存する。
-        /// </summary>
-        public void SetUseAudioSync(bool value)
-        {
-            var controller = GetController();
-            if (controller == null) return;
-
-            foreach (var cam in controller.Cameras.Values)
-            {
-                if (cam.Config.movementScript.songSpecificScript)
-                {
-                    cam.Config.movementScript.useAudioSync = value;
-                    cam.Config.Save();
-                }
-            }
-        }
-
-        #endregion
 
         #region Profile Switch (Native CameraPlus Feature)
 

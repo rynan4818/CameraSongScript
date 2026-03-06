@@ -65,11 +65,6 @@ namespace CameraSongScript.Localization
                 [Lang_EN] = "CameraPlus profile to use when song script is detected",
                 [Lang_JA] = "曲スクリプト検出時に切り替えるCameraPlusプロファイル"
             },
-            ["hint-cameraplus-audio-sync"] = new Dictionary<string, string>
-            {
-                [Lang_EN] = "Sync script with song timeline (CameraPlus)",
-                [Lang_JA] = "曲のタイムラインに同期してスクリプトを進行（CameraPlus）"
-            },
             ["hint-show-status-panel"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Show status indicator panel outside tab",
