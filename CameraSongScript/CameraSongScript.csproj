@@ -135,6 +135,7 @@
     <Compile Include="CameraSongScriptController.cs" />
     <Compile Include="UI\BSMLtestFlowCoordinator.cs" />
     <Compile Include="UI\CameraSongScriptSettingsView.cs" />
+    <Compile Include="UI\CameraSongScriptStatusView.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />

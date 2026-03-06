@@ -39,6 +39,21 @@ namespace CameraSongScript.Configuration
         public virtual string CustomSceneToSwitch { get; set; } = "(Default)";
 
         /// <summary>
+        /// カメラ全体に対するY座標オフセット（単位：cm）
+        /// </summary>
+        public virtual int CameraHeightOffsetCm { get; set; } = 0;
+
+        /// <summary>
+        /// ステータスインジケータパネルの表示ON/OFF
+        /// </summary>
+        public virtual bool ShowStatusPanel { get; set; } = true;
+
+        /// <summary>
+        /// ステータスインジケータパネルのプリセット位置インデックス（0=Left, 1=Right, 2=Bottom）
+        /// </summary>
+        public virtual int StatusPanelPosition { get; set; } = 0;
+
+        /// <summary>
         /// BSIPAが設定ファイルを読み込むたびに呼び出される
         /// </summary>
         public virtual void OnReload()
@@ -62,6 +77,9 @@ namespace CameraSongScript.Configuration
             TargetCameras = other.TargetCameras;
             SelectedScriptFile = other.SelectedScriptFile;
             this.CustomSceneToSwitch = other.CustomSceneToSwitch;
+            this.CameraHeightOffsetCm = other.CameraHeightOffsetCm;
+            this.ShowStatusPanel = other.ShowStatusPanel;
+            this.StatusPanelPosition = other.StatusPanelPosition;
         }
 
         /// <summary>
