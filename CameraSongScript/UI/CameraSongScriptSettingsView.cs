@@ -8,6 +8,7 @@ using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Models;
 using UnityEngine;
 using Zenject;
 
@@ -130,7 +131,19 @@ namespace CameraSongScript.UI
             get
             {
                 if (CameraSongScriptDetector.HasSongScript)
+                {
+                    var specificSettings = SongSettingsManager.GetCurrentSettings();
+                    if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
+                    {
+                        // 譜面個別設定があれば、それに合わせて内部選択も更新しておく
+                        if (CameraSongScriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) && 
+                            Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath) != specificSettings.SelectedScriptFileName)
+                        {
+                            CameraSongScriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
+                        }
+                    }
                     return Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath);
+                }
                 return "(none)";
             }
             set
@@ -139,6 +152,8 @@ namespace CameraSongScript.UI
                 if (!string.IsNullOrEmpty(fileName) && fileName != "(none)")
                 {
                     CameraSongScriptDetector.UpdateSelectedScript(fileName);
+                    SongSettingsManager.UpdateCurrentScriptFileName(fileName);
+
                     NotifyPropertyChanged(nameof(SongScriptStatus));
                     NotifyPropertyChanged(nameof(HasMetadata));
                     NotifyPropertyChanged(nameof(MetaAuthor));
@@ -155,11 +170,25 @@ namespace CameraSongScript.UI
         [UIValue("camera-height-offset")]
         public int CameraHeightOffset
         {
-            get => CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            get
+            {
+                var specificSettings = SongSettingsManager.GetCurrentSettings();
+                if (specificSettings != null && specificSettings.CameraHeightOffsetCm.HasValue)
+                {
+                    // 譜面個別設定が優先
+                    return specificSettings.CameraHeightOffsetCm.Value;
+                }
+                return CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            }
             set
             {
-                if (CameraSongScriptConfig.Instance.CameraHeightOffsetCm != value)
+                // UI表示用の値の取得ロジック（上のget）と同じロジックで現在の値を判定
+                int currentValue = CameraHeightOffset;
+                
+                if (currentValue != value)
                 {
+                    // 変更された場合は、個別設定として保存するとともに、グローバル設定にも反映して全体挙動を同期させる
+                    SongSettingsManager.UpdateCurrentHeightOffset(value);
                     CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
 
                     // UIでオフセットが変更されたら直ちに一時ファイルを再生成し、CameraPlusに適用する
