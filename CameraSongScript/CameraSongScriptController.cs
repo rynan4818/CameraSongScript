@@ -6,7 +6,7 @@ using UnityEngine;
 using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using CameraSongScript.Configuration;
-using CameraSongScript.HarmonyPatches;
+using CameraSongScript.Detectors;
 using Zenject;
 
 namespace CameraSongScript

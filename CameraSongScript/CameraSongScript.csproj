@@ -122,7 +122,8 @@
   <ItemGroup>
     <Compile Include="CameraModDetector.cs" />
     <Compile Include="Configuration\CameraSongScriptConfig.cs" />
-    <Compile Include="HarmonyPatches\CameraSongScriptDetector.cs" />
+    <Compile Include="Detectors\LevelSelectionDetector.cs" />
+    <Compile Include="Detectors\CameraSongScriptDetector.cs" />
     <Compile Include="Interfaces\ICameraHelper.cs" />
     <Compile Include="Interfaces\ICameraPlusHelper.cs" />
     <Compile Include="Interfaces\ICameraToken.cs" />

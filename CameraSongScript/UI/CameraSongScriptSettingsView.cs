@@ -7,7 +7,7 @@ using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
 using CameraSongScript.Configuration;
-using CameraSongScript.HarmonyPatches;
+using CameraSongScript.Detectors;
 using UnityEngine;
 using Zenject;
 

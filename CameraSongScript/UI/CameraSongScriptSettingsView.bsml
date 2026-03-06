@@ -14,25 +14,27 @@
       <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
     </horizontal>
     <horizontal>
-      <slider-setting text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" apply-on-change="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
+      <slider-setting text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
     </horizontal>
-    <vertical active="~has-metadata" bg="round-rect-panel" pad="1">
-      <horizontal pad-bottom="1">
-        <text text="Script Metadata" font-size="3" color="#AAAAAA" align="Center"/>
-      </horizontal>
-      <horizontal>
-        <text text="Author: " font-size="3.5" color="#00FF00" align="Right" />
-        <text text="~meta-author" font-size="3.5" align="Left" />
-      </horizontal>
-      <horizontal>
-        <text text="Song: " font-size="3" color="#AAAAAA" align="Right" />
-        <text text="~meta-song" font-size="3" align="Left" />
-      </horizontal>
-      <horizontal>
-        <text text="Mapper: " font-size="3" color="#AAAAAA" align="Right" />
-        <text text="~meta-mapper" font-size="3" align="Left" />
-      </horizontal>
-    </vertical>
+    <horizontal>
+      <vertical active="~has-metadata" bg="round-rect-panel" pad="1">
+        <horizontal pad-bottom="1">
+          <text text="Script Metadata" font-size="3" color="#AAAAAA" align="Center"/>
+        </horizontal>
+        <horizontal>
+          <text text="Author: " font-size="3.5" color="#00FF00" align="Right" />
+          <text text="~meta-author" font-size="3.5" align="Left" />
+        </horizontal>
+        <horizontal>
+          <text text="Song: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~meta-song" font-size="3" align="Left" />
+        </horizontal>
+        <horizontal>
+          <text text="Mapper: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~meta-mapper" font-size="3" align="Left" />
+        </horizontal>
+      </vertical>
+    </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
         <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行"/>

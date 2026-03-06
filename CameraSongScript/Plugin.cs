@@ -2,7 +2,6 @@ using System;
 using CameraSongScript.Configuration;
 using CameraSongScript.Installers;
 using CameraSongScript.Interfaces;
-using HarmonyLib;
 using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
@@ -20,9 +19,6 @@ namespace CameraSongScript
         internal static ICameraPlusHelper CamPlusHelper { get; private set; }
         internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
         internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
-
-        private Harmony _harmony;
-        private const string HarmonyId = "com.github.camerasongscript";
 
         [Init]
         public void Init(IPALogger logger, Config conf, Zenjector zenjector)
@@ -65,10 +61,6 @@ namespace CameraSongScript
                 }
             }
 
-            // 3. Harmonyパッチ適用
-            _harmony = new Harmony(HarmonyId);
-            _harmony.PatchAll(Assembly.GetExecutingAssembly());
-
             Log.Info("CameraSongScript started.");
         }
 
@@ -76,7 +68,6 @@ namespace CameraSongScript
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-            _harmony?.UnpatchSelf();
         }
 
         /// <summary>
