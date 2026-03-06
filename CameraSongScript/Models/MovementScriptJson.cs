@@ -142,11 +142,25 @@ namespace CameraSongScript.Models
         public WindowControlElements[] windowControl { get; set; }
     }
 
+    public class MetadataElements
+    {
+        public string cameraScriptAuthorName { get; set; }
+        public string songName { get; set; }
+        public string songSubName { get; set; }
+        public string songAuthorName { get; set; }
+        public string levelAuthorName { get; set; }
+        public string mapId { get; set; }
+        public double bpm { get; set; }
+        public double duration { get; set; }
+    }
+
     public class MovementScriptJson
     {
         public string ActiveInPauseMenu { get; set; }
         public string TurnToHeadUseCameraSetting { get; set; }
         [JsonProperty("Movements")]
         public JsonMovement[] JsonMovements { get; set; }
+        [JsonProperty("metadata")]
+        public MetadataElements metadata { get; set; }
     }
 }

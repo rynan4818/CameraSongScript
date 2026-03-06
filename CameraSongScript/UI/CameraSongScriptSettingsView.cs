@@ -8,6 +8,7 @@ using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
 using CameraSongScript.Configuration;
 using CameraSongScript.HarmonyPatches;
+using UnityEngine;
 using Zenject;
 
 namespace CameraSongScript.UI
@@ -23,14 +24,48 @@ namespace CameraSongScript.UI
         public const string TabName = "CameraSongScript";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
 
+        [Inject]
+        private CameraSongScriptStatusView _statusView = null;
+
         public void Initialize()
         {
             GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
+            CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
         }
 
         public void Dispose()
         {
+            CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
             GameplaySetup.instance?.RemoveTab(TabName);
+        }
+
+        /// <summary>
+        /// スキャン完了時コールバック（バックグラウンドスレッドから呼ばれるためメインスレッドへディスパッチ）
+        /// </summary>
+        private void OnScanCompleted()
+        {
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            {
+                try
+                {
+                    NotifyPropertyChanged(nameof(ScriptFileOptions));
+                    NotifyPropertyChanged(nameof(SelectedScriptFile));
+                    NotifyPropertyChanged(nameof(SongScriptStatus));
+                    if (scriptFileDropdown != null)
+                    {
+                        scriptFileDropdown.values = ScriptFileOptions;
+                        scriptFileDropdown.UpdateChoices();
+                    }
+                    NotifyPropertyChanged(nameof(HasMetadata));
+                    NotifyPropertyChanged(nameof(MetaAuthor));
+                    NotifyPropertyChanged(nameof(MetaSong));
+                    NotifyPropertyChanged(nameof(MetaMapper));
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SettingsView: Failed to update script file UI: {ex.Message}");
+                }
+            });
         }
 
         #region 検出カメラMod表示
@@ -67,6 +102,9 @@ namespace CameraSongScript.UI
 
         #region スクリプトファイル選択
 
+        [UIComponent("script-file-dropdown")]
+        public DropDownListSetting scriptFileDropdown;
+
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
         {
@@ -99,7 +137,77 @@ namespace CameraSongScript.UI
                 {
                     CameraSongScriptDetector.UpdateSelectedScript(fileName);
                     NotifyPropertyChanged(nameof(SongScriptStatus));
+                    NotifyPropertyChanged(nameof(HasMetadata));
+                    NotifyPropertyChanged(nameof(MetaAuthor));
+                    NotifyPropertyChanged(nameof(MetaSong));
+                    NotifyPropertyChanged(nameof(MetaMapper));
                 }
+            }
+        }
+
+        #endregion
+
+        #region 高さオフセット
+
+        [UIValue("camera-height-offset")]
+        public int CameraHeightOffset
+        {
+            get => CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            set
+            {
+                if (CameraSongScriptConfig.Instance.CameraHeightOffsetCm != value)
+                {
+                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
+
+                    // UIでオフセットが変更されたら直ちに一時ファイルを再生成し、CameraPlusに適用する
+                    if (CameraSongScriptDetector.HasSongScript)
+                    {
+                        CameraSongScriptDetector.UpdateEffectiveScriptPath();
+                        CameraSongScriptDetector.SyncCameraPlusPath();
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region メタデータ表示
+
+        [UIValue("has-metadata")]
+        public bool HasMetadata => CameraSongScriptDetector.CurrentMetadata != null;
+
+        [UIValue("meta-author")]
+        public string MetaAuthor
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                if (meta == null) return string.Empty;
+                return string.IsNullOrEmpty(meta.cameraScriptAuthorName) ? "--" : meta.cameraScriptAuthorName;
+            }
+        }
+
+        [UIValue("meta-song")]
+        public string MetaSong
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                if (meta == null) return string.Empty;
+                string song = meta.songName ?? "";
+                string sub = meta.songSubName ?? "";
+                return string.IsNullOrEmpty(sub) ? song : $"{song} {sub}";
+            }
+        }
+
+        [UIValue("meta-mapper")]
+        public string MetaMapper
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                if (meta == null) return string.Empty;
+                return string.IsNullOrEmpty(meta.levelAuthorName) ? "--" : meta.levelAuthorName;
             }
         }
 
@@ -301,6 +409,60 @@ namespace CameraSongScript.UI
                 else
                 {
                     return "<color=#888888>No camera scripts</color>";
+                }
+            }
+        }
+
+        #endregion
+
+        #region ステータスパネル設定
+
+        [UIValue("show-status-panel")]
+        public bool ShowStatusPanel
+        {
+            get => CameraSongScriptConfig.Instance.ShowStatusPanel;
+            set
+            {
+                CameraSongScriptConfig.Instance.ShowStatusPanel = value;
+                _statusView?.SetVisible(value);
+            }
+        }
+
+        [UIValue("status-panel-position-options")]
+        public List<object> StatusPanelPositionOptions
+        {
+            get
+            {
+                var list = new List<object>();
+                foreach (var name in CameraSongScriptStatusView.GetPresetNames())
+                    list.Add(name);
+                return list;
+            }
+        }
+
+        [UIValue("status-panel-position")]
+        public object StatusPanelPosition
+        {
+            get
+            {
+                var names = CameraSongScriptStatusView.GetPresetNames();
+                int idx = CameraSongScriptConfig.Instance.StatusPanelPosition;
+                if (idx >= 0 && idx < names.Length)
+                    return names[idx];
+                return names[0];
+            }
+            set
+            {
+                string selected = value as string;
+                var names = CameraSongScriptStatusView.GetPresetNames();
+                for (int i = 0; i < names.Length; i++)
+                {
+                    if (names[i] == selected)
+                    {
+                        CameraSongScriptConfig.Instance.StatusPanelPosition = i;
+                        _statusView?.SetPosition(i);
+                        break;
+                    }
                 }
             }
         }
