@@ -56,9 +56,6 @@
       <horizontal>
         <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
-      <horizontal>
-        <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="~hint-cameraplus-audio-sync"/>
-      </horizontal>
     </macro.if>
     <horizontal>
       <toggle-setting text="Show Status Panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>

@@ -105,7 +105,11 @@ namespace CameraSongScript.UI
         public bool Enabled
         {
             get => CameraSongScriptConfig.Instance.Enabled;
-            set => CameraSongScriptConfig.Instance.Enabled = value;
+            set
+            {
+                CameraSongScriptConfig.Instance.Enabled = value;
+                CameraSongScriptDetector.SyncCameraPlusPath();
+            }
         }
 
         #endregion
@@ -433,12 +437,6 @@ namespace CameraSongScript.UI
             }
         }
 
-        [UIValue("cameraplus-use-audio-sync")]
-        public bool CameraPlusUseAudioSync
-        {
-            get => Plugin.CamPlusHelper?.GetUseAudioSync() ?? true;
-            set => Plugin.CamPlusHelper?.SetUseAudioSync(value);
-        }
 
         #endregion
 
@@ -549,8 +547,6 @@ namespace CameraSongScript.UI
         [UIValue("hint-script-profile")]
         public string HintScriptProfile => HoverHintLocalization.Get("hint-script-profile");
 
-        [UIValue("hint-cameraplus-audio-sync")]
-        public string HintCameraPlusAudioSync => HoverHintLocalization.Get("hint-cameraplus-audio-sync");
 
         [UIValue("hint-show-status-panel")]
         public string HintShowStatusPanel => HoverHintLocalization.Get("hint-show-status-panel");

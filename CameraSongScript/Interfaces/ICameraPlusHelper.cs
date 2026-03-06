@@ -18,15 +18,6 @@ namespace CameraSongScript.Interfaces
         /// </summary>
         IReadOnlyList<string> GetProfileList();
 
-        /// <summary>
-        /// 現在のプロファイルのsongSpecificScript=trueカメラのUseAudioSync設定を取得する
-        /// </summary>
-        bool GetUseAudioSync();
-
-        /// <summary>
-        /// 現在のプロファイルのsongSpecificScript=trueカメラのUseAudioSync設定を変更する
-        /// </summary>
-        void SetUseAudioSync(bool value);
 
         /// <summary>
         /// 曲固有スクリプト検出時に切り替えるプロファイル名を取得する
