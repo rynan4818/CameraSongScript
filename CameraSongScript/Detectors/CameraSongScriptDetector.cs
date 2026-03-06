@@ -169,9 +169,18 @@ namespace CameraSongScript.Detectors
 
             ct.ThrowIfCancellationRequested();
 
-            // 結果を一括で反映（SelectedScriptPathを先に代入し、AvailableScriptFilesの参照更新時に整合性を保つ）
             SelectedScriptPath = selectedPath;
             AvailableScriptFiles = validFiles;
+
+            if (!string.IsNullOrEmpty(SelectedScriptPath))
+            {
+                int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
+                CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+            }
+            else
+            {
+                CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
+            }
 
             LoadMetadata(SelectedScriptPath);
 
@@ -239,6 +248,10 @@ namespace CameraSongScript.Detectors
             Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {fileName}");
 
             LoadMetadata(SelectedScriptPath);
+
+            // スクリプト変更時、ハッシュをもとに保存済みのオフセット値を取得し、現在のゲーム全体設定に適用する
+            int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
+            CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
 
             UpdateEffectiveScriptPath();
             SyncCameraPlusPath();

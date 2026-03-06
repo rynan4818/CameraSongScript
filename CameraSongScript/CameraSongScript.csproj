@@ -137,6 +137,7 @@
     <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Models\SongSettingsManager.cs" />
+    <Compile Include="Models\ScriptOffsetManager.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CameraSongScriptController.cs" />

@@ -7,13 +7,19 @@ using Newtonsoft.Json;
 
 namespace CameraSongScript.Models
 {
+    public class SettingsData
+    {
+        public ConcurrentDictionary<string, SongSpecificSettings> SongSettings { get; set; } = new ConcurrentDictionary<string, SongSpecificSettings>();
+        public ConcurrentDictionary<string, int> ScriptOffsets { get; set; } = new ConcurrentDictionary<string, int>();
+    }
+
     /// <summary>
-    /// 譜面ごとの設定データを管理・保存・読み込みを行うクラス
+    /// 譜面ごとの設定データおよびスクリプトファイルごとのオフセット値を管理・保存・読み込みを行うクラス
     /// </summary>
     public static class SongSettingsManager
     {
         private static readonly string SettingsFilePath = Path.Combine(UnityGame.UserDataPath, "CameraSongScript_SongSettings.json");
-        private static ConcurrentDictionary<string, SongSpecificSettings> _settingsDict = new ConcurrentDictionary<string, SongSpecificSettings>();
+        private static SettingsData _settingsData = new SettingsData();
         private static bool _isInitialized = false;
         private static string _currentSongKey = null;
 
@@ -31,10 +37,10 @@ namespace CameraSongScript.Models
                     using (StreamReader reader = new StreamReader(SettingsFilePath))
                     {
                         string json = await reader.ReadToEndAsync();
-                        var data = JsonConvert.DeserializeObject<ConcurrentDictionary<string, SongSpecificSettings>>(json);
+                        var data = JsonConvert.DeserializeObject<SettingsData>(json);
                         if (data != null)
                         {
-                            _settingsDict = data;
+                            _settingsData = data;
                         }
                     }
                 }
@@ -55,7 +61,7 @@ namespace CameraSongScript.Models
 
             try
             {
-                string json = JsonConvert.SerializeObject(_settingsDict, Formatting.Indented);
+                string json = JsonConvert.SerializeObject(_settingsData, Formatting.Indented);
                 using (StreamWriter writer = new StreamWriter(SettingsFilePath, false))
                 {
                     await writer.WriteAsync(json);
@@ -101,7 +107,7 @@ namespace CameraSongScript.Models
         {
             if (string.IsNullOrEmpty(_currentSongKey)) return null;
             
-            if (_settingsDict.TryGetValue(_currentSongKey, out var settings))
+            if (_settingsData.SongSettings.TryGetValue(_currentSongKey, out var settings))
             {
                 return settings;
             }
@@ -115,7 +121,7 @@ namespace CameraSongScript.Models
         {
             if (string.IsNullOrEmpty(_currentSongKey)) return;
 
-            var settings = _settingsDict.GetOrAdd(_currentSongKey, new SongSpecificSettings());
+            var settings = _settingsData.SongSettings.GetOrAdd(_currentSongKey, new SongSpecificSettings());
             settings.SelectedScriptFileName = fileName;
             
             // 変更後は非同期で保存
@@ -123,17 +129,9 @@ namespace CameraSongScript.Models
         }
 
         /// <summary>
-        /// 現在の譜面の高さオフセット設定を更新する
+        /// スクリプトオフセット用の辞書を提供する
         /// </summary>
-        public static void UpdateCurrentHeightOffset(int offset)
-        {
-            if (string.IsNullOrEmpty(_currentSongKey)) return;
+        public static ConcurrentDictionary<string, int> ScriptOffsetsDict => _settingsData.ScriptOffsets;
 
-            var settings = _settingsDict.GetOrAdd(_currentSongKey, new SongSpecificSettings());
-            settings.CameraHeightOffsetCm = offset;
-            
-            // 変更後は非同期で保存
-            _ = SaveSettingsAsync();
-        }
     }
 }
