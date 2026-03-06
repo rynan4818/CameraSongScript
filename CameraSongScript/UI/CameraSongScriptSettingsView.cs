@@ -55,6 +55,10 @@ namespace CameraSongScript.UI
                         scriptFileDropdown.UpdateChoices();
                         scriptFileDropdown.ReceiveValue();
                     }
+                    if (cameraHeightOffsetSlider != null)
+                    {
+                        cameraHeightOffsetSlider.ReceiveValue();
+                    }
                     
                     NotifyPropertyChanged(nameof(ScriptFileOptions));
                     NotifyPropertyChanged(nameof(SelectedScriptFile));
@@ -64,6 +68,7 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
+                    NotifyPropertyChanged(nameof(CameraHeightOffset));
                 }
                 catch (Exception ex)
                 {
@@ -108,6 +113,9 @@ namespace CameraSongScript.UI
 
         [UIComponent("script-file-dropdown")]
         public DropDownListSetting scriptFileDropdown;
+
+        [UIComponent("camera-height-offset")]
+        public SliderSetting cameraHeightOffsetSlider;
 
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
@@ -159,6 +167,12 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
+                    NotifyPropertyChanged(nameof(CameraHeightOffset));
+                    
+                    if (cameraHeightOffsetSlider != null)
+                    {
+                        cameraHeightOffsetSlider.ReceiveValue();
+                    }
                 }
             }
         }
@@ -170,34 +184,37 @@ namespace CameraSongScript.UI
         [UIValue("camera-height-offset")]
         public int CameraHeightOffset
         {
-            get
-            {
-                var specificSettings = SongSettingsManager.GetCurrentSettings();
-                if (specificSettings != null && specificSettings.CameraHeightOffsetCm.HasValue)
-                {
-                    // 譜面個別設定が優先
-                    return specificSettings.CameraHeightOffsetCm.Value;
-                }
-                return CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
-            }
+            get => CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
             set
             {
-                // UI表示用の値の取得ロジック（上のget）と同じロジックで現在の値を判定
                 int currentValue = CameraHeightOffset;
                 
                 if (currentValue != value)
                 {
-                    // 変更された場合は、個別設定として保存するとともに、グローバル設定にも反映して全体挙動を同期させる
-                    SongSettingsManager.UpdateCurrentHeightOffset(value);
+                    if (CameraSongScriptDetector.HasSongScript)
+                    {
+                        ScriptOffsetManager.UpdateOffsetForScript(CameraSongScriptDetector.SelectedScriptPath, value);
+                    }
                     CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
 
-                    // UIでオフセットが変更されたら直ちに一時ファイルを再生成し、CameraPlusに適用する
                     if (CameraSongScriptDetector.HasSongScript)
                     {
                         CameraSongScriptDetector.UpdateEffectiveScriptPath();
                         CameraSongScriptDetector.SyncCameraPlusPath();
                     }
                 }
+            }
+        }
+
+        [UIAction("reset-camera-height")]
+        private void ResetCameraHeight()
+        {
+            CameraHeightOffset = 0;
+            NotifyPropertyChanged(nameof(CameraHeightOffset));
+            
+            if (cameraHeightOffsetSlider != null)
+            {
+                cameraHeightOffsetSlider.ReceiveValue();
             }
         }
 

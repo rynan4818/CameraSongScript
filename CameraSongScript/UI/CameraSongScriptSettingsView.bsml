@@ -1,11 +1,11 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <settings-container child-control-width='true' child-expand-width='true' size-delta-y='0'>
-    <horizontal>
-      <text text="CameraSongScript Settings" font-size="3" bold="true" align="Center"/>
-    </horizontal>
     <horizontal pad-bottom="2">
       <text text="Camera Mod:" font-size="3.5" color="#AAAAAA" align="Right"/>
       <text text="~detected-camera-mod" font-size="3.5" rich-text="true" align="Center"/>
+    </horizontal>
+    <horizontal>
+      <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
     <horizontal>
       <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="SongScript機能の有効/無効"/>
@@ -14,7 +14,10 @@
       <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
     </horizontal>
     <horizontal>
-      <slider-setting text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
+      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
+    </horizontal>
+    <horizontal>
+      <button id="camera-height-reset-btn" text="Reset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="オフセットを0にリセットします"/>
     </horizontal>
     <horizontal>
       <vertical active="~has-metadata" bg="round-rect-panel" pad="1">
@@ -62,9 +65,6 @@
     </horizontal>
     <horizontal>
       <dropdown-list-setting text="Panel Position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="ステータスパネルの表示位置を選択"/>
-    </horizontal>
-    <horizontal>
-      <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
   </settings-container>
 </bg>
