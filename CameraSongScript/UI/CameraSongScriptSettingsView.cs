@@ -9,6 +9,7 @@ using BeatSaberMarkupLanguage.ViewControllers;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Models;
+using CameraSongScript.Localization;
 using UnityEngine;
 using Zenject;
 
@@ -188,10 +189,11 @@ namespace CameraSongScript.UI
             set
             {
                 int currentValue = CameraHeightOffset;
-                
+
                 if (currentValue != value)
                 {
-                    if (CameraSongScriptDetector.HasSongScript)
+                    // 個別保存モードの場合のみ、スクリプトハッシュ別に保存する
+                    if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset && CameraSongScriptDetector.HasSongScript)
                     {
                         ScriptOffsetManager.UpdateOffsetForScript(CameraSongScriptDetector.SelectedScriptPath, value);
                     }
@@ -515,6 +517,46 @@ namespace CameraSongScript.UI
                 }
             }
         }
+
+        #endregion
+
+        #region hover-hintローカライズ
+
+        [UIValue("hint-enabled")]
+        public string HintEnabled => HoverHintLocalization.Get("hint-enabled");
+
+        [UIValue("hint-script-file")]
+        public string HintScriptFile => HoverHintLocalization.Get("hint-script-file");
+
+        [UIValue("hint-height-offset")]
+        public string HintHeightOffset => HoverHintLocalization.Get("hint-height-offset");
+
+        [UIValue("hint-height-reset")]
+        public string HintHeightReset => HoverHintLocalization.Get("hint-height-reset");
+
+        [UIValue("hint-audio-sync")]
+        public string HintAudioSync => HoverHintLocalization.Get("hint-audio-sync");
+
+        [UIValue("hint-target-camera")]
+        public string HintTargetCamera => HoverHintLocalization.Get("hint-target-camera");
+
+        [UIValue("hint-custom-scene")]
+        public string HintCustomScene => HoverHintLocalization.Get("hint-custom-scene");
+
+        [UIValue("hint-add-custom-scene")]
+        public string HintAddCustomScene => HoverHintLocalization.Get("hint-add-custom-scene");
+
+        [UIValue("hint-script-profile")]
+        public string HintScriptProfile => HoverHintLocalization.Get("hint-script-profile");
+
+        [UIValue("hint-cameraplus-audio-sync")]
+        public string HintCameraPlusAudioSync => HoverHintLocalization.Get("hint-cameraplus-audio-sync");
+
+        [UIValue("hint-show-status-panel")]
+        public string HintShowStatusPanel => HoverHintLocalization.Get("hint-show-status-panel");
+
+        [UIValue("hint-panel-position")]
+        public string HintPanelPosition => HoverHintLocalization.Get("hint-panel-position");
 
         #endregion
     }

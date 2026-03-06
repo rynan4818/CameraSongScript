@@ -1,0 +1,9 @@
+<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+	xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'
+	>
+  <settings-container>
+    <bool-setting text='Per-Script Height Offset' value='UsePerScriptHeightOffset' apply-on-change="true" hover-hint="~hint-per-script-height"></bool-setting>
+    <dropdown-list-setting text='Hover-Hint Language' value='hover-hint-language' options='hover-hint-language-options' apply-on-change='true' hover-hint='~hint-hover-hint-language'/>
+    <bool-setting text='Show Hover-Hints' value='ShowHoverHints' apply-on-change="true" hover-hint="~hint-show-hover-hints"></bool-setting>
+  </settings-container>
+</bg>

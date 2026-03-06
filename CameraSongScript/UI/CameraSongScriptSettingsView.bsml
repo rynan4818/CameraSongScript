@@ -8,16 +8,10 @@
       <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
     <horizontal>
-      <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="SongScript機能の有効/無効"/>
+      <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="~hint-enabled"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
-    </horizontal>
-    <horizontal>
-      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
-    </horizontal>
-    <horizontal>
-      <button id="camera-height-reset-btn" text="Reset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="オフセットを0にリセットします"/>
+      <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
     </horizontal>
     <horizontal>
       <vertical active="~has-metadata" bg="round-rect-panel" pad="1">
@@ -38,33 +32,39 @@
         </horizontal>
       </vertical>
     </horizontal>
+    <horizontal>
+      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" hover-hint="~hint-height-offset" />
+    </horizontal>
+    <horizontal>
+      <button id="camera-height-reset-btn" text="Reset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="~hint-height-reset"/>
+    </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
-        <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行"/>
+        <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting text="Target Camera" value="target-cameras" options="target-camera-options" apply-on-change="true" hover-hint="適用対象のカメラ名を選択（Allなら全カメラ）"/>
+        <dropdown-list-setting text="Target Camera" value="target-cameras" options="target-camera-options" apply-on-change="true" hover-hint="~hint-target-camera"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="Camera2のCustom Sceneを切り替えます"/>
+        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="~hint-custom-scene"/>
       </horizontal>
       <horizontal>
-        <button text="Add 'CameraSongScript' Custom Scene" on-click="add-custom-scene" hover-hint="上記の「Target Camera」に選ばれたカメラを「CameraSongScript」シーン名としてCamera2に登録・上書きします" />
+        <button text="Add 'CameraSongScript' Custom Scene" on-click="add-custom-scene" hover-hint="~hint-add-custom-scene" />
       </horizontal>
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
-        <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="曲スクリプト検出時に切り替えるCameraPlusプロファイル"/>
+        <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
       <horizontal>
-        <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="曲のタイムラインに同期してスクリプトを進行（CameraPlus）"/>
+        <toggle-setting text="Use Audio Sync" value="cameraplus-use-audio-sync" apply-on-change="true" hover-hint="~hint-cameraplus-audio-sync"/>
       </horizontal>
     </macro.if>
     <horizontal>
-      <toggle-setting text="Show Status Panel" value="show-status-panel" apply-on-change="true" hover-hint="タブ外にステータスインジケータパネルを表示する"/>
+      <toggle-setting text="Show Status Panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting text="Panel Position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="ステータスパネルの表示位置を選択"/>
+      <dropdown-list-setting text="Panel Position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="~hint-panel-position"/>
     </horizontal>
   </settings-container>
 </bg>

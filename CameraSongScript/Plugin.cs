@@ -29,8 +29,8 @@ namespace CameraSongScript
             Log.Info("CameraSongScript initialized.");
 
             // Zenjectインストーラー登録
-            zenjector.Install<CameraSongScriptMenuInstaller>(Location.Menu);
             zenjector.Install<CameraSongScriptPlayerInstaller>(Location.Player);
+            zenjector.Install<CameraSongScriptMenuInstaller>(Location.Menu);
         }
 
         [OnStart]
