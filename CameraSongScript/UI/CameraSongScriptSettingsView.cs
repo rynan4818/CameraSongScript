@@ -48,14 +48,17 @@ namespace CameraSongScript.UI
             {
                 try
                 {
-                    NotifyPropertyChanged(nameof(ScriptFileOptions));
-                    NotifyPropertyChanged(nameof(SelectedScriptFile));
-                    NotifyPropertyChanged(nameof(SongScriptStatus));
                     if (scriptFileDropdown != null)
                     {
                         scriptFileDropdown.values = ScriptFileOptions;
                         scriptFileDropdown.UpdateChoices();
+                        scriptFileDropdown.ReceiveValue();
                     }
+                    
+                    NotifyPropertyChanged(nameof(ScriptFileOptions));
+                    NotifyPropertyChanged(nameof(SelectedScriptFile));
+                    NotifyPropertyChanged(nameof(SongScriptStatus));
+                    
                     NotifyPropertyChanged(nameof(HasMetadata));
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));

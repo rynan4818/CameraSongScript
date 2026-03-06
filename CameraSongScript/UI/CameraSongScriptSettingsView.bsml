@@ -11,7 +11,7 @@
       <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="SongScript機能の有効/無効"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
+      <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="使用するカメラスクリプトファイルを選択"/>
     </horizontal>
     <horizontal>
       <slider-setting text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" hover-hint="全カメラを指定cm分、上下にオフセットします" />
