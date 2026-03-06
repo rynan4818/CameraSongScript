@@ -6,17 +6,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Models;
-using HarmonyLib;
 using Newtonsoft.Json;
 
-namespace CameraSongScript.HarmonyPatches
+namespace CameraSongScript.Detectors
 {
     /// <summary>
-    /// 曲選択時にカメラスクリプト(.json)の存在を検出するHarmonyパッチ
+    /// 曲選択時にカメラスクリプト(.json)の存在を検出するクラス
     /// フォルダ内の全.jsonファイルをスキャンし、有効なMovementScript形式のものを候補として保持する
     /// ファイルI/Oは非同期で実行し、メインスレッドをブロックしない
     /// </summary>
-    [HarmonyPatch(typeof(StandardLevelDetailView), nameof(StandardLevelDetailView.SetContent))]
     internal class CameraSongScriptDetector
     {
         private static string _latestSelectedSong = string.Empty;
@@ -70,7 +68,7 @@ namespace CameraSongScript.HarmonyPatches
             "cinema-video.json"
         };
 
-        static void Postfix(IBeatmapLevel level)
+        public static void ProcessLevel(IPreviewBeatmapLevel level)
         {
             if (level is CustomPreviewBeatmapLevel customLevel)
             {
@@ -151,7 +149,7 @@ namespace CameraSongScript.HarmonyPatches
 
                 string fileName = Path.GetFileName(filePath);
 
-                // Beat Saberの既知ファイルをスキップ
+                // Beat Saberের 既知ファイルをスキップ
                 if (_skipFileNames.Contains(fileName))
                     continue;
 
@@ -187,10 +185,6 @@ namespace CameraSongScript.HarmonyPatches
             ScanCompleted?.Invoke();
         }
 
-        /// <summary>
-        /// 有効なスクリプトファイルリストからデフォルト選択を決定する
-        /// 優先順位: Config指定ファイル > SongScript.json > リスト先頭ファイル
-        /// </summary>
         private static string SelectDefaultScript(List<string> validFiles, string levelPath)
         {
             if (validFiles.Count == 0)
@@ -198,13 +192,21 @@ namespace CameraSongScript.HarmonyPatches
 
             string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
 
+            // 1. Configに記録されているファイル名が存在すれば優先
             if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName))
                 return Path.Combine(levelPath, configFileName);
 
+            // 2. なければ "SongScript.json" を探す
             if (validFiles.Contains("SongScript.json"))
+            {
+                CameraSongScriptConfig.Instance.SelectedScriptFile = "SongScript.json";
                 return Path.Combine(levelPath, "SongScript.json");
+            }
 
-            return Path.Combine(levelPath, validFiles[0]);
+            // 3. どちらもなければ先頭のファイルを選択
+            string fallbackName = validFiles[0];
+            CameraSongScriptConfig.Instance.SelectedScriptFile = fallbackName;
+            return Path.Combine(levelPath, fallbackName);
         }
 
         /// <summary>

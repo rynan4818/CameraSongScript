@@ -1,6 +1,6 @@
 using System;
 using CameraSongScript.Configuration;
-using CameraSongScript.HarmonyPatches;
+using CameraSongScript.Detectors;
 using HMUI;
 using UnityEngine;
 using UnityEngine.UI;
