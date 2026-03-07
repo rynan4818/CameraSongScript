@@ -1,32 +1,27 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <settings-container child-control-width='true' child-expand-width='true' size-delta-y='0'>
+  <settings-container id="settings-container" child-control-width="true" child-expand-width="true" size-delta-y="0">
     <horizontal pad-bottom="2">
       <text text="Camera Mod:" font-size="3.5" color="#AAAAAA" align="Right"/>
       <text text="~detected-camera-mod" font-size="3.5" rich-text="true" align="Center"/>
     </horizontal>
     <horizontal>
-      <text text="~song-script-status" font-size="3.5" rich-text="true"/>
-    </horizontal>
-    <horizontal>
       <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="~hint-enabled"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="script-file-dropdown" text="Script File" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
+      <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
     <horizontal>
-      <vertical active="~has-metadata" bg="round-rect-panel" pad="1">
-        <horizontal pad-bottom="1">
-          <text text="Script Metadata" font-size="3" color="#AAAAAA" align="Center"/>
-        </horizontal>
+      <dropdown-list-setting id="script-file-dropdown" text="Script File" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
+    </horizontal>
+    <horizontal active="~has-metadata">
+      <vertical bg="round-rect-panel" pad="1">
         <horizontal>
-          <text text="Author: " font-size="3.5" color="#00FF00" align="Right" />
+          <text text="Camera: " font-size="3.5" color="#00FF00" align="Right" />
           <text text="~meta-author" font-size="3.5" align="Left" />
         </horizontal>
         <horizontal>
           <text text="Song: " font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-song" font-size="3" align="Left" />
-        </horizontal>
-        <horizontal>
           <text text="Mapper: " font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-mapper" font-size="3" align="Left" />
         </horizontal>
@@ -36,7 +31,7 @@
       <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" hover-hint="~hint-height-offset" />
     </horizontal>
     <horizontal>
-      <button id="camera-height-reset-btn" text="Reset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="~hint-height-reset"/>
+      <button id="camera-height-reset-btn" text="Reset Offset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="~hint-height-reset"/>
     </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
@@ -54,7 +49,7 @@
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
-        <dropdown-list-setting text="Script Profile" value="song-specific-profile" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
+        <dropdown-list-setting text="SongScript Profile" value="song-specific-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
     </macro.if>
     <horizontal>

@@ -12,6 +12,7 @@ using CameraSongScript.Models;
 using CameraSongScript.Localization;
 using UnityEngine;
 using Zenject;
+using UnityEngine.UI;
 
 namespace CameraSongScript.UI
 {
@@ -70,6 +71,8 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
+
+                    RefreshLayout();
                 }
                 catch (Exception ex)
                 {
@@ -109,6 +112,7 @@ namespace CameraSongScript.UI
             {
                 CameraSongScriptConfig.Instance.Enabled = value;
                 CameraSongScriptDetector.SyncCameraPlusPath();
+                _statusView?.UpdateContent();
             }
         }
 
@@ -121,6 +125,9 @@ namespace CameraSongScript.UI
 
         [UIComponent("camera-height-offset")]
         public SliderSetting cameraHeightOffsetSlider;
+
+        [UIComponent("settings-container")]
+        public RectTransform settingsContainer;
 
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
@@ -173,11 +180,51 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
+
+                    RefreshLayout();
                     
                     if (cameraHeightOffsetSlider != null)
                     {
                         cameraHeightOffsetSlider.ReceiveValue();
                     }
+
+                    _statusView?.UpdateContent();
+                }
+            }
+        }
+
+        private void RefreshLayout()
+        {
+            if (gameObject.activeInHierarchy)
+            {
+                StartCoroutine(RefreshLayoutCoroutine());
+            }
+        }
+
+        private System.Collections.IEnumerator RefreshLayoutCoroutine()
+        {
+            // 2フレーム待機して、Unityのレイアウトグループと
+            // ContentSizeFitterが完全に状態変化を認識できるようにする
+            yield return null;
+            yield return null;
+
+            if (settingsContainer != null)
+            {
+                // 自己のレイアウトを更新
+                LayoutRebuilder.ForceRebuildLayoutImmediate(settingsContainer);
+                
+                // 親（ContentSizeFitterを持っている可能性がある要素）のレイアウトも更新
+                if (settingsContainer.parent is RectTransform parentTransform)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(parentTransform);
+                }
+                
+                // スクロールビュー全体の更新
+                var scrollView = settingsContainer.GetComponentInParent<HMUI.ScrollView>();
+                if (scrollView != null)
+                {
+                    scrollView.SetContentSize(settingsContainer.rect.height);
+                    scrollView.RefreshButtons();
                 }
             }
         }
@@ -208,6 +255,7 @@ namespace CameraSongScript.UI
                         CameraSongScriptDetector.UpdateEffectiveScriptPath();
                         CameraSongScriptDetector.SyncCameraPlusPath();
                     }
+                    _statusView?.UpdateContent();
                 }
             }
         }
@@ -222,6 +270,7 @@ namespace CameraSongScript.UI
             {
                 cameraHeightOffsetSlider.ReceiveValue();
             }
+            _statusView?.UpdateContent();
         }
 
         #endregion
@@ -340,12 +389,6 @@ namespace CameraSongScript.UI
                 // ドロップダウンのリストとUIを更新
                 NotifyPropertyChanged(nameof(CustomSceneOptions));
                 customSceneDropdown?.UpdateChoices();
-
-                // 既にCameraSongScriptが選択されている場合は、直ちに画面にも反映させる
-                if (_selectedCustomScene == "CameraSongScript")
-                {
-                    Plugin.CamHelper.SwitchToCustomScene("CameraSongScript");
-                }
             }
         }
 

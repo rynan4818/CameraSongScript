@@ -53,10 +53,8 @@ namespace CameraSongScript
         private bool _isFirstTick = false;
 
         // Camera2のゲームシーン読み込み完了待ちフラグ
-#if !NO_CAMERA2
         private bool _pendingCustomSceneSwitch = false;
         private int _customSceneSwitchDelay = 0;
-#endif
 
         public void Initialize()
         {
@@ -97,15 +95,12 @@ namespace CameraSongScript
             // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
 
             // Camera2のゲームシーン読み込み完了後にカスタムシーンを適用する
-#if !NO_CAMERA2
             var customScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch;
             if (CameraModDetector.IsCamera2 && !string.IsNullOrEmpty(customScene) && customScene != "(Default)")
             {
                 _pendingCustomSceneSwitch = true;
                 _customSceneSwitchDelay = 2; // 2フレーム待機（Camera2のコルーチン完了後）
             }
-#endif
-
         }
 
         public void Dispose()
@@ -136,7 +131,6 @@ namespace CameraSongScript
             }
 
             // Camera2のゲームシーン読み込み完了を確認してからカスタムシーンに切り替える
-#if !NO_CAMERA2
             if (CameraModDetector.IsCamera2 && _pendingCustomSceneSwitch)
             {
                 _customSceneSwitchDelay--;
@@ -146,7 +140,6 @@ namespace CameraSongScript
                     Plugin.CamHelper.PreGameSceneCurrentSetup(CameraSongScriptConfig.Instance.CustomSceneToSwitch);
                 }
             }
-#endif
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
             float startTime, endTime, currentTime;
@@ -376,6 +369,14 @@ namespace CameraSongScript
             float easedPerc = Ease(_movePerc, _lerp.EaseTransition);
 
             Vector3 pos = LerpVector3(_lerp.StartPos, _lerp.EndPos, easedPerc);
+
+            // Y座標へのオフセット適用（Camera2モードではここで動的に適用する）
+            int offsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            if (offsetCm != 0)
+            {
+                pos.y += offsetCm / 100f;
+            }
+
             Vector3 rot = LerpVector3Angle(_lerp.StartRot, _lerp.EndRot, easedPerc);
             float fov = Mathf.Lerp(_lerp.StartFOV, _lerp.EndFOV, easedPerc);
 
