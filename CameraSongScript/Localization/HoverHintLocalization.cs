@@ -27,18 +27,18 @@ namespace CameraSongScript.Localization
             },
             ["hint-script-file"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Select camera script file to use",
-                [Lang_JA] = "使用するカメラスクリプトファイルを選択"
+                [Lang_EN] = "Select camera script to use",
+                [Lang_JA] = "使用するカメラスクリプトを選択"
             },
             ["hint-height-offset"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Offset all cameras up/down by specified cm",
-                [Lang_JA] = "全カメラを指定cm分、上下にオフセットします"
+                [Lang_EN] = "Offset script cameras up/down by specified cm",
+                [Lang_JA] = "スクリプトのカメラを上下にオフセット"
             },
             ["hint-height-reset"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Reset offset to 0",
-                [Lang_JA] = "オフセットを0にリセットします"
+                [Lang_JA] = "オフセットを0にリセット"
             },
             ["hint-audio-sync"] = new Dictionary<string, string>
             {
@@ -53,22 +53,22 @@ namespace CameraSongScript.Localization
             ["hint-custom-scene"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Switch Camera2 Custom Scene",
-                [Lang_JA] = "Camera2のCustom Sceneを切り替えます"
+                [Lang_JA] = "Camera2のCustom Sceneを切り替え"
             },
             ["hint-add-custom-scene"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Register selected camera as 'CameraSongScript' custom scene in Camera2",
-                [Lang_JA] = "上記の「Target Camera」に選ばれたカメラを「CameraSongScript」シーン名としてCamera2に登録・上書きします"
+                [Lang_EN] = "Register and update the single camera selected as the 'Target Camera' as the 'CameraSongScript' custom scene name for Camera2",
+                [Lang_JA] = "上記の「Target Camera」に選ばれた単独のカメラを「CameraSongScript」カスタムシーン名としてCamera2に登録・更新"
             },
             ["hint-script-profile"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "CameraPlus profile to use when song script is detected",
-                [Lang_JA] = "曲スクリプト検出時に切り替えるCameraPlusプロファイル"
+                [Lang_EN] = "CameraPlus profile to use when SongScript is detected",
+                [Lang_JA] = "SongScript検出時に切り替えるCameraPlusプロファイル"
             },
             ["hint-show-status-panel"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Show status indicator panel outside tab",
-                [Lang_JA] = "タブ外にステータスインジケータパネルを表示する"
+                [Lang_JA] = "タブ外にステータスインジケータパネルを表示"
             },
             ["hint-panel-position"] = new Dictionary<string, string>
             {
@@ -79,17 +79,17 @@ namespace CameraSongScript.Localization
             ["hint-per-script-height"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "ON: Save height offset per-script. OFF: Use single shared setting",
-                [Lang_JA] = "ONの場合、高さオフセットをスクリプト毎に個別保存します。OFFの場合、共通の1つの設定として使用します"
+                [Lang_JA] = "ONの場合、高さオフセットをスクリプト毎に個別保存。OFFの場合、共通の1つの設定として使用"
             },
             ["hint-hover-hint-language"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Select hover-hint display language",
-                [Lang_JA] = "hover-hintの表示言語を選択します"
+                [Lang_JA] = "hover-hintの表示言語を選択"
             },
             ["hint-show-hover-hints"] = new Dictionary<string, string>
             {
                 [Lang_EN] = "Show/hide hover-hints",
-                [Lang_JA] = "hover-hintの表示/非表示を切り替えます"
+                [Lang_JA] = "hover-hintの表示/非表示を切り替え"
             },
         };
 

@@ -343,7 +343,9 @@ namespace CameraSongScript.Detectors
             }
 
             int offsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
-            if (offsetCm == 0)
+            // CameraPlusモード以外（Camera2モード等）は、コントローラー側で動的にオフセット適用するため
+            // ここでの一時ファイル生成は行わない。
+            if (offsetCm == 0 || !CameraModDetector.IsCameraPlus)
             {
                 EffectiveScriptPath = SelectedScriptPath;
                 return;
