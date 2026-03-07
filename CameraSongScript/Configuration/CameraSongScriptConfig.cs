@@ -78,88 +78,88 @@ namespace CameraSongScript.Configuration
         public virtual float PresetLeftUpperRightPosX { get; set; } = -3.0f;
         public virtual float PresetLeftUpperRightPosY { get; set; } = 2.8f;
         public virtual float PresetLeftUpperRightPosZ { get; set; } = 3.0f;
-        public virtual float PresetLeftUpperRightRotX { get; set; } = 0f;
-        public virtual float PresetLeftUpperRightRotY { get; set; } = -44f;
-        public virtual float PresetLeftUpperRightRotZ { get; set; } = 0f;
+        public virtual float PresetLeftUpperRightRotX { get; set; } = 0.0f;
+        public virtual float PresetLeftUpperRightRotY { get; set; } = -46.0f;
+        public virtual float PresetLeftUpperRightRotZ { get; set; } = 0.0f;
 
         public virtual float PresetLeftUpperLeftPosX { get; set; } = -4.0f;
         public virtual float PresetLeftUpperLeftPosY { get; set; } = 3.0f;
-        public virtual float PresetLeftUpperLeftPosZ { get; set; } = 1.0f;
-        public virtual float PresetLeftUpperLeftRotX { get; set; } = 0f;
-        public virtual float PresetLeftUpperLeftRotY { get; set; } = -76f;
-        public virtual float PresetLeftUpperLeftRotZ { get; set; } = 0f;
+        public virtual float PresetLeftUpperLeftPosZ { get; set; } = 1.5f;
+        public virtual float PresetLeftUpperLeftRotX { get; set; } = 0.0f;
+        public virtual float PresetLeftUpperLeftRotY { get; set; } = -70.0f;
+        public virtual float PresetLeftUpperLeftRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetLeftLowerRightPosX { get; set; } = -3.0f;
-        public virtual float PresetLeftLowerRightPosY { get; set; } = 0.2f;
-        public virtual float PresetLeftLowerRightPosZ { get; set; } = 3.0f;
-        public virtual float PresetLeftLowerRightRotX { get; set; } = 0f;
-        public virtual float PresetLeftLowerRightRotY { get; set; } = -44f;
-        public virtual float PresetLeftLowerRightRotZ { get; set; } = 0f;
+        public virtual float PresetLeftLowerRightPosX { get; set; } = -2.6f;
+        public virtual float PresetLeftLowerRightPosY { get; set; } = 0.1f;
+        public virtual float PresetLeftLowerRightPosZ { get; set; } = 2.6f;
+        public virtual float PresetLeftLowerRightRotX { get; set; } = 70.0f;
+        public virtual float PresetLeftLowerRightRotY { get; set; } = -50.0f;
+        public virtual float PresetLeftLowerRightRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetLeftLowerLeftPosX { get; set; } = -4.0f;
-        public virtual float PresetLeftLowerLeftPosY { get; set; } = 0.2f;
+        public virtual float PresetLeftLowerLeftPosX { get; set; } = -3.7f;
+        public virtual float PresetLeftLowerLeftPosY { get; set; } = 0.3f;
         public virtual float PresetLeftLowerLeftPosZ { get; set; } = 1.0f;
-        public virtual float PresetLeftLowerLeftRotX { get; set; } = 0f;
-        public virtual float PresetLeftLowerLeftRotY { get; set; } = -76f;
-        public virtual float PresetLeftLowerLeftRotZ { get; set; } = 0f;
+        public virtual float PresetLeftLowerLeftRotX { get; set; } = 40.0f;
+        public virtual float PresetLeftLowerLeftRotY { get; set; } = -76.0f;
+        public virtual float PresetLeftLowerLeftRotZ { get; set; } = 0.0f;
 
         // Center 領域
         public virtual float PresetCenterUpperRightPosX { get; set; } = 1.8f;
-        public virtual float PresetCenterUpperRightPosY { get; set; } = 3.0f;
+        public virtual float PresetCenterUpperRightPosY { get; set; } = 2.9f;
         public virtual float PresetCenterUpperRightPosZ { get; set; } = 3.7f;
-        public virtual float PresetCenterUpperRightRotX { get; set; } = 0f;
-        public virtual float PresetCenterUpperRightRotY { get; set; } = 27f;
-        public virtual float PresetCenterUpperRightRotZ { get; set; } = 0f;
+        public virtual float PresetCenterUpperRightRotX { get; set; } = 0.0f;
+        public virtual float PresetCenterUpperRightRotY { get; set; } = 27.0f;
+        public virtual float PresetCenterUpperRightRotZ { get; set; } = 0.0f;
 
         public virtual float PresetCenterUpperLeftPosX { get; set; } = -1.8f;
         public virtual float PresetCenterUpperLeftPosY { get; set; } = 3.0f;
         public virtual float PresetCenterUpperLeftPosZ { get; set; } = 3.7f;
-        public virtual float PresetCenterUpperLeftRotX { get; set; } = 0f;
-        public virtual float PresetCenterUpperLeftRotY { get; set; } = -27f;
-        public virtual float PresetCenterUpperLeftRotZ { get; set; } = 0f;
+        public virtual float PresetCenterUpperLeftRotX { get; set; } = 0.0f;
+        public virtual float PresetCenterUpperLeftRotY { get; set; } = -27.0f;
+        public virtual float PresetCenterUpperLeftRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetCenterLowerRightPosX { get; set; } = 2.6f;
-        public virtual float PresetCenterLowerRightPosY { get; set; } = 0.2f;
-        public virtual float PresetCenterLowerRightPosZ { get; set; } = 3.2f;
-        public virtual float PresetCenterLowerRightRotX { get; set; } = 0f;
-        public virtual float PresetCenterLowerRightRotY { get; set; } = 40f;
-        public virtual float PresetCenterLowerRightRotZ { get; set; } = 0f;
+        public virtual float PresetCenterLowerRightPosX { get; set; } = 1.6f;
+        public virtual float PresetCenterLowerRightPosY { get; set; } = 0.15f;
+        public virtual float PresetCenterLowerRightPosZ { get; set; } = 3.5f;
+        public virtual float PresetCenterLowerRightRotX { get; set; } = 70.0f;
+        public virtual float PresetCenterLowerRightRotY { get; set; } = 20.0f;
+        public virtual float PresetCenterLowerRightRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetCenterLowerLeftPosX { get; set; } = -2.6f;
+        public virtual float PresetCenterLowerLeftPosX { get; set; } = -1.3f;
         public virtual float PresetCenterLowerLeftPosY { get; set; } = 0.2f;
         public virtual float PresetCenterLowerLeftPosZ { get; set; } = 3.2f;
-        public virtual float PresetCenterLowerLeftRotX { get; set; } = 0f;
-        public virtual float PresetCenterLowerLeftRotY { get; set; } = -40f;
-        public virtual float PresetCenterLowerLeftRotZ { get; set; } = 0f;
+        public virtual float PresetCenterLowerLeftRotX { get; set; } = 70.0f;
+        public virtual float PresetCenterLowerLeftRotY { get; set; } = -20.0f;
+        public virtual float PresetCenterLowerLeftRotZ { get; set; } = 0.0f;
 
         // Right 領域
-        public virtual float PresetRightUpperRightPosX { get; set; } = 4.0f;
-        public virtual float PresetRightUpperRightPosY { get; set; } = 3.0f;
-        public virtual float PresetRightUpperRightPosZ { get; set; } = 1.0f;
-        public virtual float PresetRightUpperRightRotX { get; set; } = 0f;
-        public virtual float PresetRightUpperRightRotY { get; set; } = 76f;
-        public virtual float PresetRightUpperRightRotZ { get; set; } = 0f;
+        public virtual float PresetRightUpperRightPosX { get; set; } = 4.6f;
+        public virtual float PresetRightUpperRightPosY { get; set; } = 3.4f;
+        public virtual float PresetRightUpperRightPosZ { get; set; } = 0.0f;
+        public virtual float PresetRightUpperRightRotX { get; set; } = 0.0f;
+        public virtual float PresetRightUpperRightRotY { get; set; } = 86.0f;
+        public virtual float PresetRightUpperRightRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetRightUpperLeftPosX { get; set; } = 3.0f;
-        public virtual float PresetRightUpperLeftPosY { get; set; } = 3.0f;
-        public virtual float PresetRightUpperLeftPosZ { get; set; } = 3.0f;
-        public virtual float PresetRightUpperLeftRotX { get; set; } = 0f;
-        public virtual float PresetRightUpperLeftRotY { get; set; } = 45f;
-        public virtual float PresetRightUpperLeftRotZ { get; set; } = 0f;
+        public virtual float PresetRightUpperLeftPosX { get; set; } = 2.5f;
+        public virtual float PresetRightUpperLeftPosY { get; set; } = 3.9f;
+        public virtual float PresetRightUpperLeftPosZ { get; set; } = 3.6f;
+        public virtual float PresetRightUpperLeftRotX { get; set; } = 0.0f;
+        public virtual float PresetRightUpperLeftRotY { get; set; } = 35.0f;
+        public virtual float PresetRightUpperLeftRotZ { get; set; } = 0.0f;
 
         public virtual float PresetRightLowerRightPosX { get; set; } = 4.0f;
         public virtual float PresetRightLowerRightPosY { get; set; } = 0.2f;
-        public virtual float PresetRightLowerRightPosZ { get; set; } = 1.0f;
-        public virtual float PresetRightLowerRightRotX { get; set; } = 0f;
-        public virtual float PresetRightLowerRightRotY { get; set; } = 76f;
-        public virtual float PresetRightLowerRightRotZ { get; set; } = 0f;
+        public virtual float PresetRightLowerRightPosZ { get; set; } = 0.4f;
+        public virtual float PresetRightLowerRightRotX { get; set; } = 50.0f;
+        public virtual float PresetRightLowerRightRotY { get; set; } = 76.0f;
+        public virtual float PresetRightLowerRightRotZ { get; set; } = 0.0f;
 
-        public virtual float PresetRightLowerLeftPosX { get; set; } = 3.0f;
+        public virtual float PresetRightLowerLeftPosX { get; set; } = 2.6f;
         public virtual float PresetRightLowerLeftPosY { get; set; } = 0.2f;
-        public virtual float PresetRightLowerLeftPosZ { get; set; } = 3.0f;
-        public virtual float PresetRightLowerLeftRotX { get; set; } = 0f;
-        public virtual float PresetRightLowerLeftRotY { get; set; } = 45f;
-        public virtual float PresetRightLowerLeftRotZ { get; set; } = 0f;
+        public virtual float PresetRightLowerLeftPosZ { get; set; } = 3.2f;
+        public virtual float PresetRightLowerLeftRotX { get; set; } = 45.0f;
+        public virtual float PresetRightLowerLeftRotY { get; set; } = 40.0f;
+        public virtual float PresetRightLowerLeftRotZ { get; set; } = 0.0f;
 
 
         // --- ステータスパネル ビジュアルプロパティ ---

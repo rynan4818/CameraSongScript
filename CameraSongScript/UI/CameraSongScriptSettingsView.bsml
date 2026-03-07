@@ -38,10 +38,10 @@
         <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting text="Target Camera" value="target-cameras" options="target-camera-options" apply-on-change="true" hover-hint="~hint-target-camera"/>
+        <dropdown-list-setting text="Target Camera" value="target-cameras" size-delta-x="50" options="target-camera-options" apply-on-change="true" hover-hint="~hint-target-camera"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="~hint-custom-scene"/>
+        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" size-delta-x="50" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="~hint-custom-scene"/>
       </horizontal>
       <horizontal>
         <button text="Add 'CameraSongScript' Custom Scene" on-click="add-custom-scene" hover-hint="~hint-add-custom-scene" />

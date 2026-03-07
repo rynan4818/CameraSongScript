@@ -47,13 +47,13 @@ namespace CameraSongScript.Localization
             },
             ["hint-target-camera"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Select target camera (All = all cameras)",
-                [Lang_JA] = "適用対象のカメラ名を選択（Allなら全カメラ）"
+                [Lang_EN] = "Select the camera name to play the script (All = all cameras)",
+                [Lang_JA] = "スクリプト再生するカメラ名を選択（Allなら全カメラ）"
             },
             ["hint-custom-scene"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Switch Camera2 Custom Scene",
-                [Lang_JA] = "Camera2のCustom Sceneを切り替え"
+                [Lang_EN] = "Custom Scene to Switch to When SongScript is Detected",
+                [Lang_JA] = "SongScript検出時に切り替えるカスタムシーン"
             },
             ["hint-add-custom-scene"] = new Dictionary<string, string>
             {
