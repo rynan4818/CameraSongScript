@@ -126,6 +126,12 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.VRModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SongDetailsCache">
+      <HintPath>$(BeatSaberDir)\Libs\SongDetailsCache.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CameraModDetector.cs" />
@@ -142,6 +148,8 @@
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Models\SongSettingsManager.cs" />
     <Compile Include="Models\ScriptOffsetManager.cs" />
+    <Compile Include="Models\ScriptCandidate.cs" />
+    <Compile Include="Models\SongScriptFolderCache.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -252,7 +252,7 @@ namespace CameraSongScript.UI
             }
 
             // 以下、有効かつスクリプトありの場合
-            string scriptName = System.IO.Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath);
+            string scriptName = CameraSongScriptDetector.SelectedScriptDisplayName;
 
             string statusLine = $"<color=#00FF00>CameraSongScript: ON</color>";
             string scriptLine = $"<color=#AAAAAA>Script:</color> {scriptName}";
