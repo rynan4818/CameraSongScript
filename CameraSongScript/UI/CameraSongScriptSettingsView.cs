@@ -156,13 +156,13 @@ namespace CameraSongScript.UI
                     if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
                     {
                         // 譜面個別設定があれば、それに合わせて内部選択も更新しておく
-                        if (CameraSongScriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) && 
-                            Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath) != specificSettings.SelectedScriptFileName)
+                        if (CameraSongScriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) &&
+                            CameraSongScriptDetector.SelectedScriptDisplayName != specificSettings.SelectedScriptFileName)
                         {
                             CameraSongScriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
                         }
                     }
-                    return Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath);
+                    return CameraSongScriptDetector.SelectedScriptDisplayName;
                 }
                 return "(none)";
             }
@@ -494,7 +494,7 @@ namespace CameraSongScript.UI
                 if (count > 0)
                 {
                     string selected = CameraSongScriptDetector.HasSongScript
-                        ? Path.GetFileName(CameraSongScriptDetector.SelectedScriptPath)
+                        ? CameraSongScriptDetector.SelectedScriptDisplayName
                         : "?";
                     return $"<color=#00FF00>{count} script(s) found - {selected}</color>";
                 }

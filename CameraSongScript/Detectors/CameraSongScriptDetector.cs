@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Models;
+using IPA.Utilities;
 using Newtonsoft.Json;
 
 namespace CameraSongScript.Detectors
 {
     /// <summary>
     /// 曲選択時にカメラスクリプト(.json)の存在を検出するクラス
-    /// フォルダ内の全.jsonファイルをスキャンし、有効なMovementScript形式のものを候補として保持する
+    /// 譜面フォルダ内の.jsonファイルに加え、SongScriptフォルダ内のスクリプトも
+    /// metadata.mapIdによるマッチングで検出・統合する
     /// ファイルI/Oは非同期で実行し、メインスレッドをブロックしない
     /// </summary>
     internal class CameraSongScriptDetector
@@ -20,6 +23,16 @@ namespace CameraSongScript.Detectors
         private static string _latestSelectedSong = string.Empty;
         private static CancellationTokenSource _scanCts;
         private static readonly object _scanLock = new object();
+
+        /// <summary>
+        /// 表示名 → ScriptCandidate のマッピング（パス解決用）
+        /// </summary>
+        private static Dictionary<string, ScriptCandidate> _candidateMap = new Dictionary<string, ScriptCandidate>();
+
+        /// <summary>
+        /// 現在選択中のlevelID（hash抽出用）
+        /// </summary>
+        private static string _currentLevelId = string.Empty;
 
         /// <summary>
         /// スキャン完了時に発火するイベント（UIの更新通知用）
@@ -33,14 +46,21 @@ namespace CameraSongScript.Detectors
         public static string CurrentLevelPath { get; private set; } = string.Empty;
 
         /// <summary>
-        /// 現在選択中の曲フォルダにある有効なカメラスクリプトファイル名リスト（ファイル名のみ）
+        /// 現在選択中の曲で利用可能なカメラスクリプトの表示名リスト
+        /// 譜面フォルダ: ファイル名のみ / SongScriptフォルダ: "[SS] filename" 形式
         /// </summary>
         public static List<string> AvailableScriptFiles { get; private set; } = new List<string>();
 
         /// <summary>
         /// 現在選択されているスクリプトのフルパス（存在しない場合はstring.Empty）
+        /// zipエントリの場合は展開済み一時ファイルのパスが入る
         /// </summary>
         public static string SelectedScriptPath { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// 現在選択されているスクリプトの表示名（AvailableScriptFilesの要素と一致する）
+        /// </summary>
+        public static string SelectedScriptDisplayName { get; private set; } = string.Empty;
 
         /// <summary>
         /// オフセット適用済みの一時スクリプトのフルパス
@@ -76,11 +96,12 @@ namespace CameraSongScript.Detectors
                 {
                     _latestSelectedSong = customLevel.customLevelPath;
                     CurrentLevelPath = customLevel.customLevelPath;
+                    _currentLevelId = customLevel.levelID;
 #if DEBUG
                     Plugin.Log.Notice($"Selected CustomLevel Path:\n {customLevel.customLevelPath}");
 #endif
                     // 前回のスキャンをキャンセルして新しいスキャンを開始
-                    StartScanAsync(customLevel.customLevelPath);
+                    StartScanAsync(customLevel.customLevelPath, customLevel.levelID);
                 }
             }
         }
@@ -88,12 +109,14 @@ namespace CameraSongScript.Detectors
         /// <summary>
         /// 非同期スキャンを開始する。前回のスキャンが実行中であればキャンセルする
         /// </summary>
-        private static void StartScanAsync(string levelPath)
+        private static void StartScanAsync(string levelPath, string levelId)
         {
             // 即座に状態をクリア（メインスレッド上で実行）
             // 共有リストをClear()せず新規リストを代入することで、他スレッドが旧リストを安全に参照し続けられる
             SelectedScriptPath = string.Empty;
+            SelectedScriptDisplayName = string.Empty;
             AvailableScriptFiles = new List<string>();
+            _candidateMap = new Dictionary<string, ScriptCandidate>();
 
             CancellationToken ct;
             lock (_scanLock)
@@ -109,7 +132,7 @@ namespace CameraSongScript.Detectors
             {
                 try
                 {
-                    ScanForScriptFiles(levelPath, ct);
+                    ScanForScriptFiles(levelPath, levelId, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -123,54 +146,121 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
-        /// 指定フォルダ内の.jsonファイルをスキャンし、有効なカメラスクリプトを検出する（バックグラウンドスレッド実行）
+        /// 譜面フォルダとSongScriptフォルダの両方をスキャンし、有効なカメラスクリプトを検出する（バックグラウンドスレッド実行）
         /// </summary>
-        private static void ScanForScriptFiles(string levelPath, CancellationToken ct)
+        private static void ScanForScriptFiles(string levelPath, string levelId, CancellationToken ct)
         {
-            if (!Directory.Exists(levelPath))
-                return;
+            // --- Phase 1: 譜面フォルダスキャン ---
+            var chartCandidates = new List<ScriptCandidate>();
 
-            string[] jsonFiles;
-            try
+            if (Directory.Exists(levelPath))
             {
-                jsonFiles = Directory.GetFiles(levelPath, "*.json");
-            }
-            catch (Exception ex)
-            {
-                Plugin.Log.Error($"CameraSongScriptDetector: Failed to scan directory: {ex.Message}");
-                return;
-            }
-
-            var validFiles = new List<string>();
-
-            foreach (var filePath in jsonFiles)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                string fileName = Path.GetFileName(filePath);
-
-                // Beat Saberের 既知ファイルをスキップ
-                if (_skipFileNames.Contains(fileName))
-                    continue;
-
-                // フォーマット検証
-                if (IsValidMovementScript(filePath))
+                string[] jsonFiles;
+                try
                 {
-                    validFiles.Add(fileName);
+                    jsonFiles = Directory.GetFiles(levelPath, "*.json");
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Error($"CameraSongScriptDetector: Failed to scan directory: {ex.Message}");
+                    jsonFiles = new string[0];
+                }
+
+                foreach (var filePath in jsonFiles)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    string fileName = Path.GetFileName(filePath);
+
+                    // Beat Saberの既知ファイルをスキップ
+                    if (_skipFileNames.Contains(fileName))
+                        continue;
+
+                    // フォーマット検証
+                    if (IsValidMovementScript(filePath))
+                    {
+                        chartCandidates.Add(new ScriptCandidate
+                        {
+                            DisplayName = fileName,
+                            FilePath = filePath,
+                            Source = ScriptSource.ChartFolder
+                        });
+                    }
                 }
             }
 
             ct.ThrowIfCancellationRequested();
 
-            string selectedPath = SelectDefaultScript(validFiles, levelPath);
+            // --- Phase 2: SongScriptフォルダからmapIdマッチング ---
+            var ssCandidates = new List<ScriptCandidate>();
+            string resolvedMapId = ResolveMapIdFromLevelId(levelId);
+#if DEBUG
+            Plugin.Log.Debug($"CameraSongScriptDetector: Level selected. Resolved MapId from LevelId '{levelId}': {resolvedMapId ?? "(null)"}");
+#endif
 
-            if (validFiles.Count > 0)
-                Plugin.Log.Info($"CameraSongScriptDetector: Found {validFiles.Count} valid script(s). Selected: {Path.GetFileName(selectedPath)}");
+            if (!string.IsNullOrEmpty(resolvedMapId) && SongScriptFolderCache.IsReady)
+            {
+                var entries = SongScriptFolderCache.GetScriptsByMapId(resolvedMapId);
+                foreach (var entry in entries)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    string displayName = FormatSongScriptDisplayName(entry);
+
+                    // 重複する表示名を避ける
+                    if (chartCandidates.Any(c => c.DisplayName == displayName) ||
+                        ssCandidates.Any(c => c.DisplayName == displayName))
+                        continue;
+
+                    ssCandidates.Add(new ScriptCandidate
+                    {
+                        DisplayName = displayName,
+                        FilePath = entry.FilePath,
+                        ZipEntryName = entry.ZipEntryName,
+                        Source = ScriptSource.SongScriptFolder,
+                        Metadata = entry.Metadata
+                    });
+                }
+            }
 
             ct.ThrowIfCancellationRequested();
 
+            // --- Phase 3: 結果のマージ ---
+            var allCandidates = new List<ScriptCandidate>();
+            allCandidates.AddRange(chartCandidates);
+            allCandidates.AddRange(ssCandidates);
+
+            var newCandidateMap = new Dictionary<string, ScriptCandidate>();
+            var displayNames = new List<string>();
+            foreach (var c in allCandidates)
+            {
+                newCandidateMap[c.DisplayName] = c;
+                displayNames.Add(c.DisplayName);
+            }
+
+            ct.ThrowIfCancellationRequested();
+
+            string selectedDisplayName;
+            string selectedPath = SelectDefaultScript(displayNames, newCandidateMap, out selectedDisplayName);
+
+            int chartCount = chartCandidates.Count;
+            int ssCount = ssCandidates.Count;
+            int totalCount = chartCount + ssCount;
+            if (totalCount > 0)
+            {
+                string logName = string.IsNullOrEmpty(selectedDisplayName) ? "?" : selectedDisplayName;
+                if (ssCount > 0)
+                    Plugin.Log.Info($"CameraSongScriptDetector: Found {totalCount} valid script(s) ({chartCount} chart + {ssCount} SS). Selected: {logName}");
+                else
+                    Plugin.Log.Info($"CameraSongScriptDetector: Found {totalCount} valid script(s). Selected: {logName}");
+            }
+
+            ct.ThrowIfCancellationRequested();
+
+            _candidateMap = newCandidateMap;
             SelectedScriptPath = selectedPath;
-            AvailableScriptFiles = validFiles;
+            SelectedScriptDisplayName = selectedDisplayName ?? string.Empty;
+            AvailableScriptFiles = displayNames;
 
             if (!string.IsNullOrEmpty(SelectedScriptPath))
             {
@@ -202,28 +292,139 @@ namespace CameraSongScript.Detectors
             ScanCompleted?.Invoke();
         }
 
-        private static string SelectDefaultScript(List<string> validFiles, string levelPath)
+        /// <summary>
+        /// デフォルトスクリプトを選択する（候補マップを使用してパス解決）
+        /// </summary>
+        private static string SelectDefaultScript(List<string> validFiles, Dictionary<string, ScriptCandidate> candidateMap, out string selectedDisplayName)
         {
             if (validFiles.Count == 0)
+            {
+                selectedDisplayName = string.Empty;
                 return string.Empty;
+            }
 
             string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
 
-            // 1. Configに記録されているファイル名が存在すれば優先
-            if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName))
-                return Path.Combine(levelPath, configFileName);
+            // 1. Configに記録されている表示名が存在すれば優先
+            if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName) && candidateMap.ContainsKey(configFileName))
+            {
+                selectedDisplayName = configFileName;
+                return ResolveScriptPath(candidateMap[configFileName]);
+            }
 
-            // 2. なければ "SongScript.json" を探す
-            if (validFiles.Contains("SongScript.json"))
+            // 2. なければ "SongScript.json" を探す（譜面フォルダのデフォルト名）
+            if (validFiles.Contains("SongScript.json") && candidateMap.ContainsKey("SongScript.json"))
             {
                 CameraSongScriptConfig.Instance.SelectedScriptFile = "SongScript.json";
-                return Path.Combine(levelPath, "SongScript.json");
+                selectedDisplayName = "SongScript.json";
+                return ResolveScriptPath(candidateMap["SongScript.json"]);
             }
 
             // 3. どちらもなければ先頭のファイルを選択
             string fallbackName = validFiles[0];
             CameraSongScriptConfig.Instance.SelectedScriptFile = fallbackName;
-            return Path.Combine(levelPath, fallbackName);
+            selectedDisplayName = fallbackName;
+            return ResolveScriptPath(candidateMap[fallbackName]);
+        }
+
+        /// <summary>
+        /// ScriptCandidateからFile.ReadAllText等で使えるファイルパスに解決する
+        /// zipエントリの場合は一時ファイルに展開する
+        /// </summary>
+        private static string ResolveScriptPath(ScriptCandidate candidate)
+        {
+            if (candidate.Source == ScriptSource.ChartFolder)
+            {
+                return candidate.FilePath;
+            }
+
+            // SongScriptフォルダ: raw jsonファイル
+            if (!candidate.IsZipEntry)
+            {
+                return candidate.FilePath;
+            }
+
+            // SongScriptフォルダ: zipエントリ → 一時ファイルに展開
+            return ExtractZipEntryToTemp(candidate.FilePath, candidate.ZipEntryName);
+        }
+
+        /// <summary>
+        /// zipエントリを一時ファイルに展開し、そのパスを返す
+        /// </summary>
+        private static string ExtractZipEntryToTemp(string zipPath, string entryName)
+        {
+            string tempDir = Path.Combine(UnityGame.UserDataPath, "CameraSongScript");
+            if (!Directory.Exists(tempDir))
+                Directory.CreateDirectory(tempDir);
+
+            string tempPath = Path.Combine(tempDir, "Temp_ZipScript.json");
+
+            using (var zip = ZipFile.OpenRead(zipPath))
+            {
+                var entry = zip.GetEntry(entryName);
+                if (entry == null)
+                    throw new FileNotFoundException($"Zip entry '{entryName}' not found in '{zipPath}'");
+
+                using (var stream = entry.Open())
+                using (var reader = new StreamReader(stream))
+                {
+                    string content = reader.ReadToEnd();
+                    File.WriteAllText(tempPath, content);
+                }
+            }
+
+            Plugin.Log.Info($"CameraSongScriptDetector: Extracted zip entry '{entryName}' to temp file.");
+            return tempPath;
+        }
+
+        /// <summary>
+        /// levelIDからhashを抽出し、SongDetailsCacheでmapId（hex key）を取得する
+        /// </summary>
+        private static string ResolveMapIdFromLevelId(string levelId)
+        {
+            if (string.IsNullOrEmpty(levelId))
+                return null;
+
+            const string prefix = "custom_level_";
+            if (!levelId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            string hash = levelId.Substring(prefix.Length);
+            if (hash.Length != 40)
+                return null;
+
+            if (!Plugin.IsSongDetailsReady)
+                return null;
+
+            try
+            {
+                if (Plugin.SongDetailsInstance.songs.FindByHash(hash, out var song))
+                {
+                    string key = song.key;
+#if DEBUG
+                    Plugin.Log.Notice($"CameraSongScriptDetector: Resolved hash '{hash}' to mapId '{key}'");
+#endif
+                    return key;
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Debug($"CameraSongScriptDetector: SongDetailsCache lookup failed: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// SongScriptフォルダのエントリからUI表示名を生成する
+        /// </summary>
+        private static string FormatSongScriptDisplayName(SongScriptEntry entry)
+        {
+            if (entry.IsZipEntry)
+            {
+                string zipName = Path.GetFileNameWithoutExtension(entry.FilePath);
+                return $"[SS] {zipName}/{entry.ZipEntryName}";
+            }
+            return $"[SS] {entry.FileName}";
         }
 
         /// <summary>
@@ -245,15 +446,30 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
-        /// 選択中のスクリプトファイルを変更する
+        /// 選択中のスクリプトファイルを変更する（表示名で指定）
         /// </summary>
-        public static void UpdateSelectedScript(string fileName)
+        public static void UpdateSelectedScript(string displayName)
         {
-            if (string.IsNullOrEmpty(CurrentLevelPath) || !AvailableScriptFiles.Contains(fileName))
+            if (!AvailableScriptFiles.Contains(displayName))
                 return;
 
-            SelectedScriptPath = Path.Combine(CurrentLevelPath, fileName);
-            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {fileName}");
+            if (!_candidateMap.TryGetValue(displayName, out var candidate))
+                return;
+
+            try
+            {
+                SelectedScriptPath = ResolveScriptPath(candidate);
+                SelectedScriptDisplayName = displayName;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error($"CameraSongScriptDetector: Failed to resolve script path for '{displayName}': {ex.Message}");
+                SelectedScriptPath = string.Empty;
+                SelectedScriptDisplayName = string.Empty;
+                return;
+            }
+
+            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
 
             LoadMetadata(SelectedScriptPath);
 
@@ -268,8 +484,8 @@ namespace CameraSongScript.Detectors
             UpdateEffectiveScriptPath();
             SyncCameraPlusPath();
 
-            // Configに記録
-            CameraSongScriptConfig.Instance.SelectedScriptFile = fileName;
+            // Configに記録（表示名を保存）
+            CameraSongScriptConfig.Instance.SelectedScriptFile = displayName;
         }
 
         /// <summary>
@@ -303,11 +519,14 @@ namespace CameraSongScript.Detectors
                 _scanCts = null;
             }
             _latestSelectedSong = string.Empty;
+            _currentLevelId = string.Empty;
             CurrentLevelPath = string.Empty;
             SelectedScriptPath = string.Empty;
+            SelectedScriptDisplayName = string.Empty;
             EffectiveScriptPath = string.Empty;
             CurrentMetadata = null;
             AvailableScriptFiles = new List<string>();
+            _candidateMap = new Dictionary<string, ScriptCandidate>();
         }
 
         private static void LoadMetadata(string filePath)
@@ -389,7 +608,7 @@ namespace CameraSongScript.Detectors
                         Directory.CreateDirectory(tempDir);
 
                     string tempFilePath = Path.Combine(tempDir, "Temp_OffsetScript.json");
-                    
+
                     var settings = new JsonSerializerSettings
                     {
                         NullValueHandling = NullValueHandling.Ignore,

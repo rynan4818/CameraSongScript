@@ -1,7 +1,9 @@
 using System;
+using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Installers;
 using CameraSongScript.Interfaces;
+using CameraSongScript.Models;
 using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
@@ -19,6 +21,9 @@ namespace CameraSongScript
         internal static ICameraPlusHelper CamPlusHelper { get; private set; }
         internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
         internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
+
+        internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
+        internal static bool IsSongDetailsReady => SongDetailsInstance != null;
 
         [Init]
         public void Init(IPALogger logger, Config conf, Zenjector zenjector)
@@ -41,7 +46,13 @@ namespace CameraSongScript
             // 1. カメラMod検出
             CameraModDetector.Detect();
 
-            // 2. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
+            // 2. SongDetailsCacheの初期化（非同期、初回はデータダウンロードの可能性あり）
+            _ = InitSongDetailsCacheAsync();
+
+            // 3. SongScriptフォルダのスキャン・キャッシュ構築（非同期）
+            _ = SongScriptFolderCache.ScanAsync();
+
+            // 4. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
             if (CameraModDetector.IsCamera2)
             {
                 CamHelper = CreateAdapter<ICameraHelper>("CameraSongScript.Cam2", "CameraSongScript.Cam2.Camera2Helper");
@@ -91,6 +102,22 @@ namespace CameraSongScript
             {
                 Log.Error($"Failed to create adapter '{typeName}': {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// SongDetailsCacheを非同期で初期化する
+        /// </summary>
+        private static async Task InitSongDetailsCacheAsync()
+        {
+            try
+            {
+                SongDetailsInstance = await SongDetailsCache.SongDetails.Init();
+                Log.Info("SongDetailsCache initialized successfully.");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"SongDetailsCache initialization failed: {ex.Message}");
             }
         }
     }
