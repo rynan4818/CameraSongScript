@@ -14,7 +14,7 @@ namespace CameraSongScript.Detectors
 {
     /// <summary>
     /// 曲選択時にカメラスクリプト(.json)の存在を検出するクラス
-    /// 譜面フォルダ内の.jsonファイルに加え、SongScriptフォルダ内のスクリプトも
+    /// 譜面フォルダ内の.jsonファイルに加え、SongScriptsフォルダ内のスクリプトも
     /// metadata.mapIdによるマッチングで検出・統合する
     /// ファイルI/Oは非同期で実行し、メインスレッドをブロックしない
     /// </summary>
@@ -47,7 +47,7 @@ namespace CameraSongScript.Detectors
 
         /// <summary>
         /// 現在選択中の曲で利用可能なカメラスクリプトの表示名リスト
-        /// 譜面フォルダ: ファイル名のみ / SongScriptフォルダ: "[SS] filename" 形式
+        /// 譜面フォルダ: ファイル名のみ / SongScriptsフォルダ: "[SS] filename" 形式
         /// </summary>
         public static List<string> AvailableScriptFiles { get; private set; } = new List<string>();
 
@@ -72,6 +72,22 @@ namespace CameraSongScript.Detectors
         /// 有効なカメラスクリプトが存在するかどうか
         /// </summary>
         public static bool HasSongScript => !string.IsNullOrEmpty(SelectedScriptPath);
+
+        /// <summary>
+        /// 現在の曲で汎用スクリプトが使用されるかどうか
+        /// </summary>
+        public static bool IsUsingCommonScript { get; private set; }
+
+        /// <summary>
+        /// 汎用スクリプトの解決済みファイルパス
+        /// CameraPlusモードでは曲選択時に解決、Camera2モードではプレイ開始時に解決
+        /// </summary>
+        public static string ResolvedCommonScriptPath { get; internal set; } = string.Empty;
+
+        /// <summary>
+        /// 汎用スクリプトの解決済み表示名（ステータス・ログ用）
+        /// </summary>
+        public static string ResolvedCommonScriptDisplayName { get; internal set; } = string.Empty;
 
         /// <summary>
         /// 選択中のカメラスクリプトに含まれるメタデータ
@@ -117,6 +133,9 @@ namespace CameraSongScript.Detectors
             SelectedScriptDisplayName = string.Empty;
             AvailableScriptFiles = new List<string>();
             _candidateMap = new Dictionary<string, ScriptCandidate>();
+            IsUsingCommonScript = false;
+            ResolvedCommonScriptPath = string.Empty;
+            ResolvedCommonScriptDisplayName = string.Empty;
 
             CancellationToken ct;
             lock (_scanLock)
@@ -146,7 +165,7 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
-        /// 譜面フォルダとSongScriptフォルダの両方をスキャンし、有効なカメラスクリプトを検出する（バックグラウンドスレッド実行）
+        /// 譜面フォルダとSongScriptsフォルダの両方をスキャンし、有効なカメラスクリプトを検出する（バックグラウンドスレッド実行）
         /// </summary>
         private static void ScanForScriptFiles(string levelPath, string levelId, CancellationToken ct)
         {
@@ -191,7 +210,7 @@ namespace CameraSongScript.Detectors
 
             ct.ThrowIfCancellationRequested();
 
-            // --- Phase 2: SongScriptフォルダからmapIdマッチング ---
+            // --- Phase 2: SongScriptsフォルダからmapIdマッチング ---
             var ssCandidates = new List<ScriptCandidate>();
             string resolvedMapId = ResolveMapIdFromLevelId(levelId);
 #if DEBUG
@@ -285,6 +304,9 @@ namespace CameraSongScript.Detectors
             // 一時ファイルの再生成
             UpdateEffectiveScriptPath();
 
+            // --- Phase 4: 汎用スクリプト判定 ---
+            DetermineCommonScriptUsage(allCandidates.Count);
+
             // CameraPlusモード時はパスを反映
             SyncCameraPlusPath();
 
@@ -338,13 +360,13 @@ namespace CameraSongScript.Detectors
                 return candidate.FilePath;
             }
 
-            // SongScriptフォルダ: raw jsonファイル
+            // SongScriptsフォルダ: raw jsonファイル
             if (!candidate.IsZipEntry)
             {
                 return candidate.FilePath;
             }
 
-            // SongScriptフォルダ: zipエントリ → 一時ファイルに展開
+            // SongScriptsフォルダ: zipエントリ → 一時ファイルに展開
             return ExtractZipEntryToTemp(candidate.FilePath, candidate.ZipEntryName);
         }
 
@@ -415,7 +437,7 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
-        /// SongScriptフォルダのエントリからUI表示名を生成する
+        /// SongScriptsフォルダのエントリからUI表示名を生成する
         /// </summary>
         private static string FormatSongScriptDisplayName(SongScriptEntry entry)
         {
@@ -491,11 +513,26 @@ namespace CameraSongScript.Detectors
         /// <summary>
         /// CameraPlusモード時にスクリプトパスを同期する
         /// Enabled=falseの場合は空パスを設定し、CameraPlusにスクリプトが存在しないものとして扱わせる
+        /// 汎用スクリプト使用時はForceCommonScript=ONならEnabled無視で適用
         /// </summary>
         public static void SyncCameraPlusPath()
         {
             if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
             {
+                // 汎用スクリプトが有効な場合
+                if (IsUsingCommonScript && !string.IsNullOrEmpty(ResolvedCommonScriptPath))
+                {
+                    Plugin.CamPlusHelper.SetScriptPath(ResolvedCommonScriptPath);
+
+                    // 汎用スクリプト用プロファイルが指定されている場合は一時適用
+                    string commonProfile = CameraSongScriptConfig.Instance.CommonScriptProfile;
+                    if (!string.IsNullOrEmpty(commonProfile))
+                    {
+                        Plugin.CamPlusHelper.SetSongSpecificScriptProfile(commonProfile);
+                    }
+                    return;
+                }
+
                 if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
                 {
                     Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
@@ -503,6 +540,98 @@ namespace CameraSongScript.Detectors
                 else
                 {
                     Plugin.CamPlusHelper.SetScriptPath(string.Empty);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 汎用スクリプトの使用を再判定する（UI設定変更時に呼ばれる）
+        /// 現在のAvailableScriptFilesの数をsongScriptCountとして使用
+        /// </summary>
+        public static void ReevaluateCommonScriptUsage()
+        {
+            int songScriptCount = AvailableScriptFiles?.Count ?? 0;
+            DetermineCommonScriptUsage(songScriptCount);
+            SyncCameraPlusPath();
+        }
+
+        /// <summary>
+        /// 汎用スクリプトの使用を判定し、CameraPlusモードの場合はパスを即時解決する
+        /// </summary>
+        private static void DetermineCommonScriptUsage(int songScriptCount)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            IsUsingCommonScript = false;
+            ResolvedCommonScriptPath = string.Empty;
+            ResolvedCommonScriptDisplayName = string.Empty;
+
+            if (!CommonScriptCache.IsReady || CommonScriptCache.Scripts.Count == 0)
+                return;
+
+            // ForceCommonScript=ON → SongScriptの有無やEnabled設定に関係なく強制使用
+            if (config.ForceCommonScript)
+            {
+                IsUsingCommonScript = true;
+            }
+            // SongScript無し && Fallback=ON && Enabled=ON
+            else if (songScriptCount == 0 && config.UseCommonScriptAsFallback && config.Enabled)
+            {
+                IsUsingCommonScript = true;
+            }
+
+            if (!IsUsingCommonScript)
+                return;
+
+            // CameraPlusモードでは曲選択時にパスを解決する必要がある
+            if (CameraModDetector.IsCameraPlus)
+            {
+                ResolveAndSetCommonScriptPath();
+            }
+            // Camera2モードではプレイ開始時に解決するため、ここでは指定ファイル名のみ保持
+            else if (config.SelectedCommonScript != "(Random)")
+            {
+                string path = CommonScriptCache.GetPathByDisplayName(config.SelectedCommonScript);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    ResolvedCommonScriptPath = path;
+                    ResolvedCommonScriptDisplayName = config.SelectedCommonScript;
+                }
+            }
+            // Camera2 + Random の場合は空のまま（プレイ開始時に解決）
+
+            if (IsUsingCommonScript)
+            {
+                string displayInfo = config.SelectedCommonScript == "(Random)" ? "(Random)" : ResolvedCommonScriptDisplayName;
+                Plugin.Log.Info($"CameraSongScriptDetector: Common script will be used: {displayInfo}");
+            }
+        }
+
+        /// <summary>
+        /// 汎用スクリプトのパスを解決する（ランダムまたは指定ファイル）
+        /// CameraPlusモード: 曲選択時に呼ばれる
+        /// Camera2モード: プレイ開始時にControllerから呼ばれる
+        /// </summary>
+        public static void ResolveAndSetCommonScriptPath()
+        {
+            var config = CameraSongScriptConfig.Instance;
+
+            if (config.SelectedCommonScript == "(Random)")
+            {
+                var entry = CommonScriptCache.GetRandom();
+                if (entry != null)
+                {
+                    ResolvedCommonScriptPath = entry.FilePath;
+                    ResolvedCommonScriptDisplayName = entry.DisplayName;
+                    Plugin.Log.Info($"CameraSongScriptDetector: Random common script selected: {entry.DisplayName}");
+                }
+            }
+            else
+            {
+                string path = CommonScriptCache.GetPathByDisplayName(config.SelectedCommonScript);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    ResolvedCommonScriptPath = path;
+                    ResolvedCommonScriptDisplayName = config.SelectedCommonScript;
                 }
             }
         }
@@ -527,6 +656,9 @@ namespace CameraSongScript.Detectors
             CurrentMetadata = null;
             AvailableScriptFiles = new List<string>();
             _candidateMap = new Dictionary<string, ScriptCandidate>();
+            IsUsingCommonScript = false;
+            ResolvedCommonScriptPath = string.Empty;
+            ResolvedCommonScriptDisplayName = string.Empty;
         }
 
         private static void LoadMetadata(string filePath)

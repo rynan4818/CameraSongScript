@@ -173,6 +173,38 @@ namespace CameraSongScript.Configuration
         /// <summary>ステータスパネルのスケール（uniform）</summary>
         public virtual float StatusScale { get; set; } = 0.025f;
 
+        // --- 汎用スクリプト（CommonScripts）設定 ---
+
+        /// <summary>
+        /// SongScriptが無い曲で汎用スクリプトを使用する
+        /// </summary>
+        public virtual bool UseCommonScriptAsFallback { get; set; } = false;
+
+        /// <summary>
+        /// SongScriptの有無やEnabled設定に関係なく汎用スクリプトを強制使用する
+        /// </summary>
+        public virtual bool ForceCommonScript { get; set; } = false;
+
+        /// <summary>
+        /// 選択中の汎用スクリプト表示名 ("(Random)" or ファイル名)
+        /// </summary>
+        public virtual string SelectedCommonScript { get; set; } = "(Random)";
+
+        /// <summary>
+        /// [CameraPlus] 汎用スクリプト使用時のプロファイル（空文字列 = SongScript設定と同じ）
+        /// </summary>
+        public virtual string CommonScriptProfile { get; set; } = "";
+
+        /// <summary>
+        /// [Camera2] 汎用スクリプト使用時のターゲットカメラ（空文字列 = SongScript設定と同じ）
+        /// </summary>
+        public virtual string CommonScriptTargetCamera { get; set; } = "";
+
+        /// <summary>
+        /// [Camera2] 汎用スクリプト使用時のカスタムシーン（空文字列 = SongScript設定と同じ）
+        /// </summary>
+        public virtual string CommonScriptCustomScene { get; set; } = "";
+
         /// <summary>
         /// コンフィグがファイルからリロードされたときに発火するイベント。
         /// BSIPAのファイルシステム読み取りスレッドから呼ばれるため、
@@ -300,6 +332,13 @@ namespace CameraSongScript.Configuration
             this.StatusCanvasWidth = other.StatusCanvasWidth;
             this.StatusCanvasHeight = other.StatusCanvasHeight;
             this.StatusScale = other.StatusScale;
+
+            this.UseCommonScriptAsFallback = other.UseCommonScriptAsFallback;
+            this.ForceCommonScript = other.ForceCommonScript;
+            this.SelectedCommonScript = other.SelectedCommonScript;
+            this.CommonScriptProfile = other.CommonScriptProfile;
+            this.CommonScriptTargetCamera = other.CommonScriptTargetCamera;
+            this.CommonScriptCustomScene = other.CommonScriptCustomScene;
         }
 
         /// <summary>

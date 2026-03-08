@@ -56,12 +56,19 @@ namespace CameraSongScript
         private bool _pendingCustomSceneSwitch = false;
         private int _customSceneSwitchDelay = 0;
 
+        // 汎用スクリプト使用時フラグ
+        private bool _isUsingCommonScript = false;
+
         public void Initialize()
         {
-            if (!CameraSongScriptConfig.Instance.Enabled)
+            bool useCommon = CameraSongScriptDetector.IsUsingCommonScript;
+            bool hasNormalScript = CameraSongScriptDetector.HasSongScript;
+
+            // ForceCommonの場合はEnabled無視
+            if (!useCommon && !CameraSongScriptConfig.Instance.Enabled)
                 return;
 
-            if (!CameraSongScriptDetector.HasSongScript)
+            if (!useCommon && !hasNormalScript)
                 return;
 
             if (CameraModDetector.IsCamera2 && !Plugin.IsCamHelperReady)
@@ -83,8 +90,32 @@ namespace CameraSongScript
                 _pauseController.didPauseEvent += Pause;
             }
 
+            // スクリプトパスの決定
+            string scriptPath;
+            _isUsingCommonScript = useCommon;
+
+            if (useCommon)
+            {
+                // Camera2: ランダムの場合はここで解決する
+                if (string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptPath))
+                {
+                    CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
+                }
+                scriptPath = CameraSongScriptDetector.ResolvedCommonScriptPath;
+
+                if (string.IsNullOrEmpty(scriptPath))
+                {
+                    Plugin.Log.Warn("SongScript: Common script path could not be resolved.");
+                    return;
+                }
+            }
+            else
+            {
+                scriptPath = CameraSongScriptDetector.SelectedScriptPath;
+            }
+
             // SongScriptをロード
-            LoadSongScript(CameraSongScriptDetector.SelectedScriptPath);
+            LoadSongScript(scriptPath);
 
             if (_dataLoaded && _data.ActiveInPauseMenu && _pauseController != null)
             {
@@ -95,7 +126,15 @@ namespace CameraSongScript
             // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
 
             // Camera2のゲームシーン読み込み完了後にカスタムシーンを適用する
-            var customScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch;
+            string customScene;
+            if (useCommon && !string.IsNullOrEmpty(CameraSongScriptConfig.Instance.CommonScriptCustomScene))
+            {
+                customScene = CameraSongScriptConfig.Instance.CommonScriptCustomScene;
+            }
+            else
+            {
+                customScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch;
+            }
             if (CameraModDetector.IsCamera2 && !string.IsNullOrEmpty(customScene) && customScene != "(Default)")
             {
                 _pendingCustomSceneSwitch = true;
@@ -122,7 +161,7 @@ namespace CameraSongScript
         public void Tick()
         {
             if (!_dataLoaded || _paused) return;
-            if (!CameraSongScriptConfig.Instance.Enabled) return;
+            if (!_isUsingCommonScript && !CameraSongScriptConfig.Instance.Enabled) return;
 
             if (_isFirstTick)
             {
@@ -228,9 +267,20 @@ namespace CameraSongScript
 
         /// <summary>
         /// Configで指定されたターゲットカメラ名、未指定ならアクティブな全カメラ名を返す
+        /// 汎用スクリプト使用時はCommonScriptTargetCameraを優先
         /// </summary>
         private IEnumerable<string> GetTargetOrActiveCameras()
         {
+            // 汎用スクリプト使用時は専用設定を優先
+            if (_isUsingCommonScript)
+            {
+                string commonTarget = CameraSongScriptConfig.Instance.CommonScriptTargetCamera;
+                if (!string.IsNullOrEmpty(commonTarget))
+                {
+                    return new List<string> { commonTarget };
+                }
+            }
+
             string[] targetNames = CameraSongScriptConfig.Instance.GetTargetCameraNames();
             if (targetNames.Length > 0)
                 return targetNames;

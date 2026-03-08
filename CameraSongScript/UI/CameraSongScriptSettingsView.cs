@@ -111,7 +111,9 @@ namespace CameraSongScript.UI
             set
             {
                 CameraSongScriptConfig.Instance.Enabled = value;
+                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
                 CameraSongScriptDetector.SyncCameraPlusPath();
+                NotifyPropertyChanged(nameof(SongScriptStatus));
                 _statusView?.UpdateContent();
             }
         }
@@ -483,6 +485,206 @@ namespace CameraSongScript.UI
 
         #endregion
 
+        #region 汎用スクリプト設定
+
+        [UIValue("use-common-fallback")]
+        public bool UseCommonFallback
+        {
+            get => CameraSongScriptConfig.Instance.UseCommonScriptAsFallback;
+            set
+            {
+                CameraSongScriptConfig.Instance.UseCommonScriptAsFallback = value;
+                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                NotifyPropertyChanged(nameof(SongScriptStatus));
+                _statusView?.UpdateContent();
+            }
+        }
+
+        [UIValue("force-common-script")]
+        public bool ForceCommonScript
+        {
+            get => CameraSongScriptConfig.Instance.ForceCommonScript;
+            set
+            {
+                CameraSongScriptConfig.Instance.ForceCommonScript = value;
+                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                NotifyPropertyChanged(nameof(SongScriptStatus));
+                _statusView?.UpdateContent();
+            }
+        }
+
+        [UIComponent("common-script-dropdown")]
+        public DropDownListSetting commonScriptDropdown;
+
+        [UIValue("common-script-options")]
+        public List<object> CommonScriptOptions
+        {
+            get
+            {
+                var list = new List<object>();
+                if (CommonScriptCache.IsReady)
+                {
+                    foreach (var name in CommonScriptCache.GetDisplayNames())
+                    {
+                        list.Add(name);
+                    }
+                }
+                if (list.Count == 0)
+                    list.Add("(none)");
+                return list;
+            }
+        }
+
+        [UIValue("selected-common-script")]
+        public object SelectedCommonScript
+        {
+            get
+            {
+                string selected = CameraSongScriptConfig.Instance.SelectedCommonScript;
+                if (!string.IsNullOrEmpty(selected) && CommonScriptCache.IsReady)
+                {
+                    var names = CommonScriptCache.GetDisplayNames();
+                    if (names.Contains(selected))
+                        return selected;
+                }
+                return "(Random)";
+            }
+            set
+            {
+                string name = value as string;
+                if (!string.IsNullOrEmpty(name) && name != "(none)")
+                {
+                    CameraSongScriptConfig.Instance.SelectedCommonScript = name;
+                    CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                    NotifyPropertyChanged(nameof(SongScriptStatus));
+                    _statusView?.UpdateContent();
+                }
+            }
+        }
+
+        // --- Camera2用: 汎用スクリプト専用設定 ---
+
+        [UIValue("common-target-camera-options")]
+        public List<object> CommonTargetCameraOptions
+        {
+            get
+            {
+                var list = new List<object> { "(Same as SongScript)" };
+                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                {
+                    try
+                    {
+                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
+                        foreach (var cam in cams) list.Add(cam);
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SettingsView: Failed to get available cameras for CS: {ex.Message}");
+                    }
+                }
+                return list;
+            }
+        }
+
+        [UIValue("common-target-camera")]
+        public object CommonTargetCamera
+        {
+            get
+            {
+                string cam = CameraSongScriptConfig.Instance.CommonScriptTargetCamera;
+                return string.IsNullOrEmpty(cam) ? "(Same as SongScript)" : cam;
+            }
+            set
+            {
+                string cam = value as string;
+                CameraSongScriptConfig.Instance.CommonScriptTargetCamera =
+                    (cam == "(Same as SongScript)") ? string.Empty : (cam ?? string.Empty);
+                _statusView?.UpdateContent();
+            }
+        }
+
+        [UIValue("common-custom-scene-options")]
+        public List<object> CommonCustomSceneOptions
+        {
+            get
+            {
+                var list = new List<object> { "(Same as SongScript)" };
+                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                {
+                    try
+                    {
+                        var scenes = Plugin.CamHelper.CustomScenes;
+                        if (scenes != null)
+                        {
+                            foreach (var scene in scenes) list.Add(scene);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SettingsView: Failed to get custom scenes for CS: {ex.Message}");
+                    }
+                }
+                return list;
+            }
+        }
+
+        [UIValue("common-custom-scene")]
+        public object CommonCustomScene
+        {
+            get
+            {
+                string scene = CameraSongScriptConfig.Instance.CommonScriptCustomScene;
+                return string.IsNullOrEmpty(scene) ? "(Same as SongScript)" : scene;
+            }
+            set
+            {
+                string scene = value as string;
+                CameraSongScriptConfig.Instance.CommonScriptCustomScene =
+                    (scene == "(Same as SongScript)") ? string.Empty : (scene ?? string.Empty);
+                _statusView?.UpdateContent();
+            }
+        }
+
+        // --- CameraPlus用: 汎用スクリプト専用設定 ---
+
+        [UIValue("common-profile-options")]
+        public List<object> CommonProfileOptions
+        {
+            get
+            {
+                var list = new List<object> { "(Same as SongScript)" };
+                if (Plugin.IsCamPlusHelperReady)
+                {
+                    foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
+                    {
+                        list.Add(string.IsNullOrEmpty(profile) ? "(Default)" : profile);
+                    }
+                }
+                return list;
+            }
+        }
+
+        [UIValue("common-profile")]
+        public object CommonProfile
+        {
+            get
+            {
+                string profile = CameraSongScriptConfig.Instance.CommonScriptProfile;
+                return string.IsNullOrEmpty(profile) ? "(Same as SongScript)" : profile;
+            }
+            set
+            {
+                string profile = value as string;
+                if (profile == "(Same as SongScript)") profile = string.Empty;
+                else if (profile == "(Default)") profile = string.Empty;
+                CameraSongScriptConfig.Instance.CommonScriptProfile = profile ?? string.Empty;
+                CameraSongScriptDetector.SyncCameraPlusPath();
+                _statusView?.UpdateContent();
+            }
+        }
+
+        #endregion
+
         #region SongScript検出状態
 
         [UIValue("song-script-status")]
@@ -491,6 +693,17 @@ namespace CameraSongScript.UI
             get
             {
                 int count = CameraSongScriptDetector.AvailableScriptFiles.Count;
+                bool isCommon = CameraSongScriptDetector.IsUsingCommonScript;
+
+                if (isCommon)
+                {
+                    string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript;
+                    if (count > 0)
+                        return $"<color=#FFAA00>Common Script: {commonName}</color> <color=#AAAAAA>({count} SongScript available)</color>";
+                    else
+                        return $"<color=#FFAA00>Common Script: {commonName}</color>";
+                }
+
                 if (count > 0)
                 {
                     string selected = CameraSongScriptDetector.HasSongScript
@@ -596,6 +809,24 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-panel-position")]
         public string HintPanelPosition => HoverHintLocalization.Get("hint-panel-position");
+
+        [UIValue("hint-common-fallback")]
+        public string HintCommonFallback => HoverHintLocalization.Get("hint-common-fallback");
+
+        [UIValue("hint-force-common")]
+        public string HintForceCommon => HoverHintLocalization.Get("hint-force-common");
+
+        [UIValue("hint-common-script-file")]
+        public string HintCommonScriptFile => HoverHintLocalization.Get("hint-common-script-file");
+
+        [UIValue("hint-common-target-camera")]
+        public string HintCommonTargetCamera => HoverHintLocalization.Get("hint-common-target-camera");
+
+        [UIValue("hint-common-custom-scene")]
+        public string HintCommonCustomScene => HoverHintLocalization.Get("hint-common-custom-scene");
+
+        [UIValue("hint-common-profile")]
+        public string HintCommonProfile => HoverHintLocalization.Get("hint-common-profile");
 
         #endregion
     }

@@ -227,6 +227,7 @@ namespace CameraSongScript.UI
             bool show = CameraSongScriptConfig.Instance.ShowStatusPanel;
             bool enabled = CameraSongScriptConfig.Instance.Enabled;
             bool hasScript = CameraSongScriptDetector.HasSongScript;
+            bool isCommon = CameraSongScriptDetector.IsUsingCommonScript;
 
             // 表示設定OFFの場合は完全に非表示
             if (!show)
@@ -236,6 +237,28 @@ namespace CameraSongScript.UI
             }
 
             _rootObject.SetActive(true);
+
+            // 汎用スクリプト使用中の場合
+            if (isCommon)
+            {
+                string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)"
+                    ? "(Random)"
+                    : CameraSongScriptDetector.ResolvedCommonScriptDisplayName;
+                if (string.IsNullOrEmpty(commonName))
+                    commonName = CameraSongScriptConfig.Instance.SelectedCommonScript;
+
+                string commonText = "<color=#FFAA00>CameraSongScript: COMMON</color>";
+                commonText += $"\n<color=#AAAAAA>Script:</color> {commonName}";
+
+                int commonOffsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+                if (commonOffsetCm != 0)
+                {
+                    commonText += $"\n<color=#FFFF00>Y Offset: {commonOffsetCm}cm</color>";
+                }
+
+                _statusText.text = commonText;
+                return;
+            }
 
             // スクリプトなしの場合
             if (!hasScript)

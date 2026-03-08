@@ -49,10 +49,13 @@ namespace CameraSongScript
             // 2. SongDetailsCacheの初期化（非同期、初回はデータダウンロードの可能性あり）
             _ = InitSongDetailsCacheAsync();
 
-            // 3. SongScriptフォルダのスキャン・キャッシュ構築（非同期）
+            // 3. SongScriptsフォルダのスキャン・キャッシュ構築（非同期）
             _ = SongScriptFolderCache.ScanAsync();
 
-            // 4. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
+            // 4. CommonScriptsフォルダのスキャン・キャッシュ構築（非同期）
+            _ = CommonScriptCache.ScanAsync();
+
+            // 5. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
             if (CameraModDetector.IsCamera2)
             {
                 CamHelper = CreateAdapter<ICameraHelper>("CameraSongScript.Cam2", "CameraSongScript.Cam2.Camera2Helper");

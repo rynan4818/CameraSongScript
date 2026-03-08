@@ -149,6 +149,7 @@
     <Compile Include="Models\SongSettingsManager.cs" />
     <Compile Include="Models\ScriptOffsetManager.cs" />
     <Compile Include="Models\ScriptCandidate.cs" />
+    <Compile Include="Models\CommonScriptCache.cs" />
     <Compile Include="Models\SongScriptFolderCache.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
     <Compile Include="Plugin.cs" />
