@@ -35,6 +35,12 @@ namespace CameraSongScript.Configuration
         public virtual string SelectedScriptFile { get; set; } = "";
 
         /// <summary>
+        /// [CameraPlus] SongScript使用時のプロファイル名
+        /// "(NoChange)" = プロファイルを変更しない, "(Delete)" = プロファイルを空にする
+        /// </summary>
+        public virtual string SongScriptProfile { get; set; } = "(NoChange)";
+
+        /// <summary>
         /// 自動的に切り替えるCamera2のCustom Scene名
         /// </summary>
         public virtual string CustomSceneToSwitch { get; set; } = "(Default)";
@@ -236,6 +242,7 @@ namespace CameraSongScript.Configuration
             UseAudioSync = other.UseAudioSync;
             TargetCameras = other.TargetCameras;
             SelectedScriptFile = other.SelectedScriptFile;
+            this.SongScriptProfile = other.SongScriptProfile;
             this.CustomSceneToSwitch = other.CustomSceneToSwitch;
             this.CameraHeightOffsetCm = other.CameraHeightOffsetCm;
             this.UsePerScriptHeightOffset = other.UsePerScriptHeightOffset;

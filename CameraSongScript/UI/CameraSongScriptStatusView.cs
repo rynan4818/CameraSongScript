@@ -250,10 +250,15 @@ namespace CameraSongScript.UI
                 string commonText = "<color=#FFAA00>CameraSongScript: COMMON</color>";
                 commonText += $"\n<color=#AAAAAA>Script:</color> {commonName}";
 
-                int commonOffsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
-                if (commonOffsetCm != 0)
+                // ランダム時はオフセット表示なし（対象スクリプトが不明なため）
+                bool isRandom = CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)";
+                if (!isRandom)
                 {
-                    commonText += $"\n<color=#FFFF00>Y Offset: {commonOffsetCm}cm</color>";
+                    int commonOffsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+                    if (commonOffsetCm != 0)
+                    {
+                        commonText += $"\n<color=#FFFF00>Y Offset: {commonOffsetCm}cm</color>";
+                    }
                 }
 
                 _statusText.text = commonText;
