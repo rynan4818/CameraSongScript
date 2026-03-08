@@ -98,15 +98,12 @@ namespace CameraSongScript.CamPlus
 
         public void PreGameSceneCurrentSetup(string profileName)
         {
-            if (string.IsNullOrEmpty(profileName) || profileName == "(Default)")
-                return;
-
             _backedUpProfile = PluginConfig.Instance?.SongSpecificScriptProfile;
             _hasBackup = true;
 
             if (PluginConfig.Instance != null)
             {
-                PluginConfig.Instance.SongSpecificScriptProfile = profileName;
+                PluginConfig.Instance.SongSpecificScriptProfile = profileName ?? string.Empty;
                 PluginConfig.Instance.Changed();
             }
         }

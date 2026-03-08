@@ -96,8 +96,8 @@ namespace CameraSongScript
 
             if (useCommon)
             {
-                // Camera2: ランダムの場合はここで解決する
-                if (string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptPath))
+                // Camera2: ランダムの場合は毎回プレイ開始時に再選択する
+                if (CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)")
                 {
                     CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
                 }
@@ -107,6 +107,14 @@ namespace CameraSongScript
                 {
                     Plugin.Log.Warn("SongScript: Common script path could not be resolved.");
                     return;
+                }
+
+                // 汎用スクリプト確定後にハッシュ対応表からオフセットを復元する
+                // ランダム時はここで初めてスクリプトが確定するため、このタイミングで復元が必要
+                if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
+                {
+                    int savedOffset = ScriptOffsetManager.GetOffsetForScript(scriptPath);
+                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
                 }
             }
             else

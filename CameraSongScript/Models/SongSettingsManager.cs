@@ -129,20 +129,6 @@ namespace CameraSongScript.Models
         }
 
         /// <summary>
-        /// 現在の譜面のプロファイル名設定を更新する
-        /// </summary>
-        public static void UpdateCurrentProfileName(string profileName)
-        {
-            if (string.IsNullOrEmpty(_currentSongKey)) return;
-
-            var settings = _settingsData.SongSettings.GetOrAdd(_currentSongKey, new SongSpecificSettings());
-            settings.SelectedProfileName = profileName;
-
-            // 変更後は非同期で保存
-            _ = SaveSettingsAsync();
-        }
-
-        /// <summary>
         /// スクリプトオフセット用の辞書を提供する
         /// </summary>
         public static ConcurrentDictionary<string, int> ScriptOffsetsDict => _settingsData.ScriptOffsets;

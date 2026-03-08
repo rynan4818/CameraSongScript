@@ -35,10 +35,10 @@
       </vertical>
     </horizontal>
     <horizontal>
-      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" hover-hint="~hint-height-offset" />
+      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" interactable="~is-offset-interactable" hover-hint="~hint-height-offset" />
     </horizontal>
     <horizontal>
-      <button id="camera-height-reset-btn" text="Reset Offset" on-click="reset-camera-height" align="Right" min-width="15" hover-hint="~hint-height-reset"/>
+      <button id="camera-height-reset-btn" text="Reset Offset" on-click="reset-camera-height" align="Right" min-width="15" interactable="~is-offset-interactable" hover-hint="~hint-height-reset"/>
     </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>

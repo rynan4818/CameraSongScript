@@ -95,6 +95,14 @@ namespace CameraSongScript.Detectors
         public static MetadataElements CurrentMetadata { get; private set; }
 
         /// <summary>
+        /// CameraPlusに設定するプロファイル名の解決済みキャッシュ
+        /// SyncCameraPlusPath()はSongSettingsManagerに直接アクセスせず、この値を使用する
+        /// これにより、バックグラウンドスレッドからのSyncCameraPlusPath()呼び出し時に
+        /// _currentSongKeyが別の曲/難易度に変わっていても正しいプロファイルが適用される
+        /// </summary>
+        public static string ResolvedProfileName { get; private set; } = string.Empty;
+
+        /// <summary>
         /// Beat Saberの既知ファイル名（スキップ対象）
         /// </summary>
         private static readonly HashSet<string> _skipFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -518,41 +526,68 @@ namespace CameraSongScript.Detectors
         /// CameraPlusモード時にスクリプトパスを同期する
         /// Enabled=falseの場合は空パスを設定し、CameraPlusにスクリプトが存在しないものとして扱わせる
         /// 汎用スクリプト使用時はForceCommonScript=ONならEnabled無視で適用
+        /// プロファイル名はResolvedProfileNameを使用し、SongSettingsManagerへの直接アクセスを避ける
         /// </summary>
         public static void SyncCameraPlusPath()
         {
             if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
             {
-                // 汎用スクリプトが有効な場合
+                string profileToSet = string.Empty;
+
+                // 1. スクリプトパスの決定と同期
                 if (IsUsingCommonScript && !string.IsNullOrEmpty(ResolvedCommonScriptPath))
                 {
-                    Plugin.CamPlusHelper.SetScriptPath(ResolvedCommonScriptPath);
+                    string commonEffectivePath = GenerateCommonOffsetScript(ResolvedCommonScriptPath);
+                    Plugin.CamPlusHelper.SetScriptPath(commonEffectivePath);
 
-                    // 汎用スクリプト用プロファイルが指定されている場合は一時適用
-                    string commonProfile = CameraSongScriptConfig.Instance.CommonScriptProfile;
-                    if (!string.IsNullOrEmpty(commonProfile))
-                    {
-                        Plugin.CamPlusHelper.SetSongSpecificScriptProfile(commonProfile);
-                    }
-                    return;
+                    // 汎用スクリプト用プロファイル
+                    profileToSet = CameraSongScriptConfig.Instance.CommonScriptProfile;
+                    // "Same as SongScript" (空文字) の場合は、後続の通常スクリプト判定に任せるためここでは何もしない
                 }
-
-                if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
+                else if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
                 {
                     Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
-
-                    // 譜面個別プロファイルが設定されていれば適用する
-                    var specificSettings = SongSettingsManager.GetCurrentSettings();
-                    if (specificSettings != null)
-                    {
-                        Plugin.CamPlusHelper.SetSongSpecificScriptProfile(specificSettings.SelectedProfileName ?? string.Empty);
-                    }
                 }
                 else
                 {
                     Plugin.CamPlusHelper.SetScriptPath(string.Empty);
                 }
+
+                // 2. プロファイル名の決定
+                // 汎用スクリプト側で指定がない、または汎用スクリプト未使用時はResolvedProfileNameを使用
+                if (string.IsNullOrEmpty(profileToSet))
+                {
+                    profileToSet = ResolvedProfileName;
+                }
+
+                // "(NoChange)" または未設定: プロファイルを変更しない（CameraPlusの現在の設定を維持）
+                if (!string.IsNullOrEmpty(profileToSet) && profileToSet != "(NoChange)")
+                {
+                    // "(Delete)": プロファイルを空にする
+                    if (profileToSet == "(Delete)")
+                    {
+                        profileToSet = string.Empty;
+                    }
+
+                    Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profileToSet);
+                }
             }
+        }
+
+        /// <summary>
+        /// グローバル設定からプロファイル名を解決してResolvedProfileNameにキャッシュする
+        /// </summary>
+        public static void ResolveProfileName()
+        {
+            ResolvedProfileName = CameraSongScriptConfig.Instance.SongScriptProfile ?? string.Empty;
+        }
+
+        /// <summary>
+        /// プロファイル名を直接設定する（UI操作時やキー未使用の場合に使用）
+        /// </summary>
+        public static void SetResolvedProfileName(string profileName)
+        {
+            ResolvedProfileName = profileName ?? string.Empty;
         }
 
         /// <summary>
@@ -593,25 +628,32 @@ namespace CameraSongScript.Detectors
             if (!IsUsingCommonScript)
                 return;
 
-            // CameraPlusモードでは曲選択時にパスを解決する必要がある
-            if (CameraModDetector.IsCameraPlus)
+            // CameraPlusモードでは曲選択時にパスを解決する（プレイ終了時に再抽選される）
+            // Camera2モードでは指定スクリプトのみ即時解決（ランダムはプレイ開始時に解決）
+            if (CameraModDetector.IsCameraPlus || config.SelectedCommonScript != "(Random)")
             {
                 ResolveAndSetCommonScriptPath();
-            }
-            // Camera2モードではプレイ開始時に解決するため、ここでは指定ファイル名のみ保持
-            else if (config.SelectedCommonScript != "(Random)")
-            {
-                string path = CommonScriptCache.GetPathByDisplayName(config.SelectedCommonScript);
-                if (!string.IsNullOrEmpty(path))
-                {
-                    ResolvedCommonScriptPath = path;
-                    ResolvedCommonScriptDisplayName = config.SelectedCommonScript;
-                }
             }
             // Camera2 + Random の場合は空のまま（プレイ開始時に解決）
 
             if (IsUsingCommonScript)
             {
+                // 汎用スクリプトのオフセット復元
+                if (config.UsePerScriptHeightOffset)
+                {
+                    if (!string.IsNullOrEmpty(ResolvedCommonScriptPath))
+                    {
+                        // パス確定済み（非ランダム、またはCameraPlusランダム解決済み）: ハッシュ対応表から復元
+                        int savedOffset = ScriptOffsetManager.GetOffsetForScript(ResolvedCommonScriptPath);
+                        config.CameraHeightOffsetCm = savedOffset;
+                    }
+                    else
+                    {
+                        // パス未確定（Camera2ランダム等）: プレイ開始時まで対象スクリプト不明なのでUI上は0にする
+                        config.CameraHeightOffsetCm = 0;
+                    }
+                }
+
                 string displayInfo = config.SelectedCommonScript == "(Random)" ? "(Random)" : ResolvedCommonScriptDisplayName;
                 Plugin.Log.Info($"CameraSongScriptDetector: Common script will be used: {displayInfo}");
             }
@@ -670,6 +712,7 @@ namespace CameraSongScript.Detectors
             IsUsingCommonScript = false;
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedProfileName = string.Empty;
         }
 
         private static void LoadMetadata(string filePath)
@@ -774,6 +817,77 @@ namespace CameraSongScript.Detectors
                 // エラー時は元のスクリプトを使用
                 EffectiveScriptPath = SelectedScriptPath;
             }
+        }
+        /// <summary>
+        /// 汎用スクリプト用: オフセットがある場合に一時ファイルを生成し、そのパスを返す。
+        /// オフセットが0またはCameraPlusモードでない場合は元のパスをそのまま返す。
+        /// </summary>
+        private static string GenerateCommonOffsetScript(string commonScriptPath)
+        {
+            if (string.IsNullOrEmpty(commonScriptPath) || !File.Exists(commonScriptPath))
+                return commonScriptPath;
+
+            int offsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            if (offsetCm == 0 || !CameraModDetector.IsCameraPlus)
+                return commonScriptPath;
+
+            float offsetMeters = offsetCm / 100f;
+
+            try
+            {
+                string json = File.ReadAllText(commonScriptPath);
+                var movementScript = JsonConvert.DeserializeObject<MovementScriptJson>(json);
+
+                if (movementScript?.JsonMovements != null)
+                {
+                    string sep = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+                    string sepCheck = (sep == "." ? "," : ".");
+
+                    foreach (var movement in movementScript.JsonMovements)
+                    {
+                        if (movement.startPos != null && !string.IsNullOrEmpty(movement.startPos.y))
+                        {
+                            string yStr = movement.startPos.y.Contains(sepCheck) ? movement.startPos.y.Replace(sepCheck, sep) : movement.startPos.y;
+                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float startY))
+                            {
+                                movement.startPos.y = (startY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                        }
+
+                        if (movement.endPos != null && !string.IsNullOrEmpty(movement.endPos.y))
+                        {
+                            string yStr = movement.endPos.y.Contains(sepCheck) ? movement.endPos.y.Replace(sepCheck, sep) : movement.endPos.y;
+                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float endY))
+                            {
+                                movement.endPos.y = (endY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                        }
+                    }
+
+                    string tempDir = Path.Combine(Environment.CurrentDirectory, "UserData", "CameraSongScript");
+                    if (!Directory.Exists(tempDir))
+                        Directory.CreateDirectory(tempDir);
+
+                    string tempFilePath = Path.Combine(tempDir, "Temp_CommonOffsetScript.json");
+
+                    var settings = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        Formatting = Formatting.Indented
+                    };
+                    string modifiedJson = JsonConvert.SerializeObject(movementScript, settings);
+                    File.WriteAllText(tempFilePath, modifiedJson);
+
+                    Plugin.Log.Info($"CameraSongScriptDetector: Generated temporary common offset script ({offsetMeters}m) at {tempFilePath}");
+                    return tempFilePath;
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error($"CameraSongScriptDetector: Failed to generate temporary common offset script: {ex.Message}");
+            }
+
+            return commonScriptPath;
         }
     }
 }

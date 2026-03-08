@@ -62,6 +62,15 @@ namespace CameraSongScript.UI
             {
                 try
                 {
+                    // メインスレッド上でプロファイル名を再解決し、CameraPlusに同期する
+                    // バックグラウンドスキャン完了時のSyncCameraPlusPath()は_currentSongKeyが
+                    // 変わっている可能性があったため、ここで正しいキーで再解決する
+                    CameraSongScriptDetector.ResolveProfileName();
+                    CameraSongScriptDetector.SyncCameraPlusPath();
+
+                    // プロファイルドロップダウンのUIを現在の曲の設定に更新する
+                    NotifyPropertyChanged(nameof(SongSpecificProfile));
+
                     if (scriptFileDropdown != null)
                     {
                         scriptFileDropdown.values = ScriptFileOptions;
@@ -72,11 +81,11 @@ namespace CameraSongScript.UI
                     {
                         cameraHeightOffsetSlider.ReceiveValue();
                     }
-                    
+
                     NotifyPropertyChanged(nameof(ScriptFileOptions));
                     NotifyPropertyChanged(nameof(SelectedScriptFile));
                     NotifyPropertyChanged(nameof(SongScriptStatus));
-                    
+
                     NotifyPropertyChanged(nameof(HasMetadata));
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));
@@ -86,6 +95,7 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(HasMetaDescription));
                     NotifyPropertyChanged(nameof(MetaDescription));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
+                    NotifyPropertyChanged(nameof(IsOffsetInteractable));
 
                     RefreshLayout();
                 }
@@ -129,6 +139,9 @@ namespace CameraSongScript.UI
                 CameraSongScriptDetector.ReevaluateCommonScriptUsage();
                 CameraSongScriptDetector.SyncCameraPlusPath();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
+                NotifyPropertyChanged(nameof(IsOffsetInteractable));
+                NotifyPropertyChanged(nameof(CameraHeightOffset));
+                if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 _statusView?.UpdateContent();
             }
         }
@@ -265,26 +278,66 @@ namespace CameraSongScript.UI
 
         #region 高さオフセット
 
+        /// <summary>
+        /// 汎用スクリプトがランダム選択中かどうか（オフセットUIの有効/無効判定用）
+        /// </summary>
+        private bool IsCommonRandom =>
+            CameraSongScriptDetector.IsUsingCommonScript &&
+            CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)";
+
+        /// <summary>
+        /// オフセットスライダーとリセットボタンの操作可否
+        /// ランダム汎用スクリプト時は操作不可
+        /// </summary>
+        [UIValue("is-offset-interactable")]
+        public bool IsOffsetInteractable => !IsCommonRandom;
+
         [UIValue("camera-height-offset")]
         public int CameraHeightOffset
         {
-            get => CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            get
+            {
+                // ランダム汎用スクリプト時は常に0を返す（UI上で動かないようにする）
+                if (IsCommonRandom) return 0;
+                return CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
+            }
             set
             {
-                int currentValue = CameraHeightOffset;
+                // ランダム汎用スクリプト時は何もしない
+                if (IsCommonRandom) return;
+
+                int currentValue = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
 
                 if (currentValue != value)
                 {
-                    // 個別保存モードの場合のみ、スクリプトハッシュ別に保存する
-                    if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset && CameraSongScriptDetector.HasSongScript)
+                    // 個別保存モードの場合: スクリプトハッシュ別に保存する
+                    if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
                     {
-                        ScriptOffsetManager.UpdateOffsetForScript(CameraSongScriptDetector.SelectedScriptPath, value);
+                        if (CameraSongScriptDetector.IsUsingCommonScript)
+                        {
+                            // 汎用スクリプト非ランダム: ResolvedCommonScriptPathのハッシュで保存
+                            string commonPath = CameraSongScriptDetector.ResolvedCommonScriptPath;
+                            if (!string.IsNullOrEmpty(commonPath))
+                            {
+                                ScriptOffsetManager.UpdateOffsetForScript(commonPath, value);
+                            }
+                        }
+                        else if (CameraSongScriptDetector.HasSongScript)
+                        {
+                            // 通常スクリプト: SelectedScriptPathのハッシュで保存
+                            ScriptOffsetManager.UpdateOffsetForScript(CameraSongScriptDetector.SelectedScriptPath, value);
+                        }
                     }
                     CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
 
                     if (CameraSongScriptDetector.HasSongScript)
                     {
                         CameraSongScriptDetector.UpdateEffectiveScriptPath();
+                        CameraSongScriptDetector.SyncCameraPlusPath();
+                    }
+                    else if (CameraSongScriptDetector.IsUsingCommonScript)
+                    {
+                        // 汎用スクリプト: CameraPlusモードの場合はパス再同期
                         CameraSongScriptDetector.SyncCameraPlusPath();
                     }
                     _statusView?.UpdateContent();
@@ -295,9 +348,11 @@ namespace CameraSongScript.UI
         [UIAction("reset-camera-height")]
         private void ResetCameraHeight()
         {
+            if (IsCommonRandom) return;
+
             CameraHeightOffset = 0;
             NotifyPropertyChanged(nameof(CameraHeightOffset));
-            
+
             if (cameraHeightOffsetSlider != null)
             {
                 cameraHeightOffsetSlider.ReceiveValue();
@@ -523,16 +578,15 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object>();
+                var list = new List<object> { "(NoChange)", "(Delete)" };
                 if (Plugin.IsCamPlusHelperReady)
                 {
                     foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
                     {
-                        list.Add(string.IsNullOrEmpty(profile) ? "(Default)" : profile);
+                        if (!string.IsNullOrEmpty(profile))
+                            list.Add(profile);
                     }
                 }
-                if (list.Count == 0)
-                    list.Add("(Default)");
                 return list;
             }
         }
@@ -542,20 +596,21 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (!Plugin.IsCamPlusHelperReady) return "(Default)";
-                string profile = Plugin.CamPlusHelper.GetSongSpecificScriptProfile();
-                return string.IsNullOrEmpty(profile) ? "(Default)" : profile;
+                if (!Plugin.IsCamPlusHelperReady) return "(NoChange)";
+                string profile = CameraSongScriptDetector.ResolvedProfileName;
+                if (string.IsNullOrEmpty(profile)) return "(NoChange)";
+                return profile;
             }
             set
             {
                 if (!Plugin.IsCamPlusHelperReady) return;
-                string profile = value as string;
-                string profileName = profile == "(Default)" ? string.Empty : profile;
-                
-                Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profileName);
-                
-                // 譜面個別設定として保存
-                SongSettingsManager.UpdateCurrentProfileName(profileName);
+                string profile = value as string ?? "(NoChange)";
+
+                // グローバル設定として保存
+                CameraSongScriptConfig.Instance.SongScriptProfile = profile;
+
+                // 解決済みプロファイル名を直接更新
+                CameraSongScriptDetector.SetResolvedProfileName(profile);
 
                 // 即座に全体のパス・プロファイル状態を同期
                 CameraSongScriptDetector.SyncCameraPlusPath();
@@ -576,6 +631,9 @@ namespace CameraSongScript.UI
                 CameraSongScriptConfig.Instance.UseCommonScriptAsFallback = value;
                 CameraSongScriptDetector.ReevaluateCommonScriptUsage();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
+                NotifyPropertyChanged(nameof(IsOffsetInteractable));
+                NotifyPropertyChanged(nameof(CameraHeightOffset));
+                if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 _statusView?.UpdateContent();
             }
         }
@@ -589,6 +647,9 @@ namespace CameraSongScript.UI
                 CameraSongScriptConfig.Instance.ForceCommonScript = value;
                 CameraSongScriptDetector.ReevaluateCommonScriptUsage();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
+                NotifyPropertyChanged(nameof(IsOffsetInteractable));
+                NotifyPropertyChanged(nameof(CameraHeightOffset));
+                if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 _statusView?.UpdateContent();
             }
         }
@@ -637,6 +698,15 @@ namespace CameraSongScript.UI
                     CameraSongScriptConfig.Instance.SelectedCommonScript = name;
                     CameraSongScriptDetector.ReevaluateCommonScriptUsage();
                     NotifyPropertyChanged(nameof(SongScriptStatus));
+
+                    // 汎用スクリプト選択変更後のオフセット関連UI更新
+                    NotifyPropertyChanged(nameof(IsOffsetInteractable));
+                    NotifyPropertyChanged(nameof(CameraHeightOffset));
+                    if (cameraHeightOffsetSlider != null)
+                    {
+                        cameraHeightOffsetSlider.ReceiveValue();
+                    }
+
                     _statusView?.UpdateContent();
                 }
             }
@@ -732,12 +802,13 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(Same as SongScript)" };
+                var list = new List<object> { "(Same as SongScript)", "(NoChange)", "(Delete)" };
                 if (Plugin.IsCamPlusHelperReady)
                 {
                     foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
                     {
-                        list.Add(string.IsNullOrEmpty(profile) ? "(Default)" : profile);
+                        if (!string.IsNullOrEmpty(profile))
+                            list.Add(profile);
                     }
                 }
                 return list;
@@ -750,13 +821,15 @@ namespace CameraSongScript.UI
             get
             {
                 string profile = CameraSongScriptConfig.Instance.CommonScriptProfile;
-                return string.IsNullOrEmpty(profile) ? "(Same as SongScript)" : profile;
+                if (string.IsNullOrEmpty(profile)) return "(Same as SongScript)";
+                // 旧バージョンの "(Default)" 設定を "(Delete)" に変換
+                if (profile == "(Default)") return "(Delete)";
+                return profile;
             }
             set
             {
                 string profile = value as string;
                 if (profile == "(Same as SongScript)") profile = string.Empty;
-                else if (profile == "(Default)") profile = string.Empty;
                 CameraSongScriptConfig.Instance.CommonScriptProfile = profile ?? string.Empty;
                 CameraSongScriptDetector.SyncCameraPlusPath();
                 _statusView?.UpdateContent();

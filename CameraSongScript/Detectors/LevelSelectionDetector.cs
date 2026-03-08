@@ -41,19 +41,27 @@ namespace CameraSongScript.Detectors
         private void OnDifficultyChanged(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
         {
             UpdateCurrentSongSettings(beatmap);
+            CameraSongScriptDetector.ResolveProfileName();
             if (beatmap?.level is CustomPreviewBeatmapLevel customLevel)
             {
                 CameraSongScriptDetector.ProcessLevel(customLevel);
             }
+            // ProcessLevelが同一曲ガードでスキップされた場合でも、
+            // プロファイル名のキャッシュを更新して再同期する
+            CameraSongScriptDetector.SyncCameraPlusPath();
         }
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
         {
             UpdateCurrentSongSettings(controller?.selectedDifficultyBeatmap);
+            CameraSongScriptDetector.ResolveProfileName();
             if (controller?.selectedDifficultyBeatmap?.level is CustomPreviewBeatmapLevel customLevel)
             {
                 CameraSongScriptDetector.ProcessLevel(customLevel);
             }
+            // ProcessLevelが同一曲ガードでスキップされた場合でも、
+            // プロファイル名のキャッシュを更新して再同期する
+            CameraSongScriptDetector.SyncCameraPlusPath();
         }
 
         private void UpdateCurrentSongSettings(IDifficultyBeatmap beatmap)
