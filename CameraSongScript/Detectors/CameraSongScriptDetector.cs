@@ -137,6 +137,10 @@ namespace CameraSongScript.Detectors
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
 
+            // CameraPlusモード: 前の曲のPending pathをクリアし、スキャン完了前にゲーム開始された場合に
+            // 前の曲のスクリプトが適用されるのを防ぐ
+            SyncCameraPlusPath();
+
             CancellationToken ct;
             lock (_scanLock)
             {
