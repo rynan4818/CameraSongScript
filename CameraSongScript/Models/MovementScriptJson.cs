@@ -152,6 +152,8 @@ namespace CameraSongScript.Models
         public string mapId { get; set; }
         public double bpm { get; set; }
         public double duration { get; set; }
+        public double avatarHeight { get; set; }
+        public string description { get; set; }
     }
 
     public class MovementScriptJson

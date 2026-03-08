@@ -25,6 +25,13 @@
           <text text="Mapper: " font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-mapper" font-size="3" align="Left" />
         </horizontal>
+        <horizontal active="~has-meta-height">
+          <text text="Avatar Height: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~meta-height" font-size="3" align="Left" />
+        </horizontal>
+        <horizontal active="~has-meta-description">
+          <text text="~meta-description" font-size="3" color="#CCCCCC" align="Left" word-wrapping="true" />
+        </horizontal>
       </vertical>
     </horizontal>
     <horizontal>
