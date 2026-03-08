@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace CameraSongScript.Models
 {
     /// <summary>
-    /// SongScriptフォルダ内のスクリプト情報を保持するエントリ
+    /// SongScriptsフォルダ内のスクリプト情報を保持するエントリ
     /// </summary>
     internal class SongScriptEntry
     {
@@ -32,14 +32,14 @@ namespace CameraSongScript.Models
     }
 
     /// <summary>
-    /// UserData/CameraSongScript/SongScript/ フォルダを再帰的にスキャンし、
+    /// UserData/CameraSongScript/SongScripts/ フォルダを再帰的にスキャンし、
     /// metadata.mapId をキーとしたインデックスをキャッシュするクラス。
     /// 起動時に一度だけスキャンし、以降は高速にmapIdで検索できる。
     /// </summary>
     internal static class SongScriptFolderCache
     {
         private static readonly string SongScriptFolderPath =
-            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScript");
+            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScripts");
 
         /// <summary>mapId（小文字） → エントリ一覧</summary>
         private static Dictionary<string, List<SongScriptEntry>> _mapIdIndex =

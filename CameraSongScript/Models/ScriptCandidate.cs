@@ -3,12 +3,13 @@ namespace CameraSongScript.Models
     internal enum ScriptSource
     {
         ChartFolder,
-        SongScriptFolder
+        SongScriptFolder,
+        CommonScript
     }
 
     /// <summary>
     /// スクリプト候補の統一表現。
-    /// 譜面フォルダ内スクリプトとSongScriptフォルダ内スクリプトの両方を扱う。
+    /// 譜面フォルダ内スクリプトとSongScriptsフォルダ内スクリプトの両方を扱う。
     /// </summary>
     internal class ScriptCandidate
     {

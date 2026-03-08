@@ -91,6 +91,37 @@ namespace CameraSongScript.Localization
                 [Lang_EN] = "Show/hide hover-hints",
                 [Lang_JA] = "hover-hintの表示/非表示を切り替え"
             },
+            // ========== Common Script ==========
+            ["hint-common-fallback"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Use a common script when no SongScript is found",
+                [Lang_JA] = "SongScriptが無い曲で汎用スクリプトを使用"
+            },
+            ["hint-force-common"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Force common script regardless of SongScript or Enable setting",
+                [Lang_JA] = "SongScriptの有無やEnabled設定に関係なく汎用スクリプトを強制使用"
+            },
+            ["hint-common-script-file"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Select common script file (Random = random each play)",
+                [Lang_JA] = "汎用スクリプトファイルを選択（Random = プレイごとにランダム）"
+            },
+            ["hint-common-target-camera"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Camera for common script (Same = use SongScript setting)",
+                [Lang_JA] = "汎用スクリプト用カメラ（Sameは通常設定と同じ）"
+            },
+            ["hint-common-custom-scene"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Custom scene for common script (Same = use SongScript setting)",
+                [Lang_JA] = "汎用スクリプト用カスタムシーン（Sameは通常設定と同じ）"
+            },
+            ["hint-common-profile"] = new Dictionary<string, string>
+            {
+                [Lang_EN] = "Profile for common script (Same = use SongScript setting)",
+                [Lang_JA] = "汎用スクリプト用プロファイル（Sameは通常設定と同じ）"
+            },
         };
 
         /// <summary>

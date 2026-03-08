@@ -52,6 +52,34 @@
         <dropdown-list-setting text="SongScript Profile" value="song-specific-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
     </macro.if>
+    <horizontal pad-top="2">
+      <text text="--- Common Script ---" font-size="3.5" color="#FFAA00" align="Center"/>
+    </horizontal>
+    <horizontal>
+      <toggle-setting text="Fallback to Common" value="use-common-fallback" apply-on-change="true" hover-hint="~hint-common-fallback"/>
+    </horizontal>
+    <horizontal>
+      <toggle-setting text="Force Common Script" value="force-common-script" apply-on-change="true" hover-hint="~hint-force-common"/>
+    </horizontal>
+    <horizontal>
+      <dropdown-list-setting id="common-script-dropdown" text="Common Script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true" hover-hint="~hint-common-script-file"/>
+    </horizontal>
+    <macro.if value="show-camera2-settings">
+      <horizontal>
+        <dropdown-list-setting text="CS Target Camera" value="common-target-camera" size-delta-x="50" options="common-target-camera-options" apply-on-change="true" hover-hint="~hint-common-target-camera"/>
+      </horizontal>
+      <horizontal>
+        <dropdown-list-setting text="CS Custom Scene" value="common-custom-scene" size-delta-x="50" options="common-custom-scene-options" apply-on-change="true" hover-hint="~hint-common-custom-scene"/>
+      </horizontal>
+    </macro.if>
+    <macro.if value="show-cameraplus-settings">
+      <horizontal>
+        <dropdown-list-setting text="CS Profile" value="common-profile" size-delta-x="50" options="common-profile-options" apply-on-change="true" hover-hint="~hint-common-profile"/>
+      </horizontal>
+    </macro.if>
+    <horizontal pad-top="2">
+      <text text="--- Status Panel ---" font-size="3.5" color="#FFAA00" align="Center"/>
+    </horizontal>
     <horizontal>
       <toggle-setting text="Show Status Panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>
     </horizontal>
