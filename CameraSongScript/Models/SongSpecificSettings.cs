@@ -12,5 +12,9 @@ namespace CameraSongScript.Models
         /// </summary>
         public string SelectedScriptFileName { get; set; }
 
-}
+        /// <summary>
+        /// 選択されたCameraPlusプロファイル名
+        /// </summary>
+        public string SelectedProfileName { get; set; }
+    }
 }

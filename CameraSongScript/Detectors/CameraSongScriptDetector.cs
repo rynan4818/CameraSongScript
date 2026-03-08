@@ -540,6 +540,13 @@ namespace CameraSongScript.Detectors
                 if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
                 {
                     Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
+
+                    // 譜面個別プロファイルが設定されていれば適用する
+                    var specificSettings = SongSettingsManager.GetCurrentSettings();
+                    if (specificSettings != null)
+                    {
+                        Plugin.CamPlusHelper.SetSongSpecificScriptProfile(specificSettings.SelectedProfileName ?? string.Empty);
+                    }
                 }
                 else
                 {

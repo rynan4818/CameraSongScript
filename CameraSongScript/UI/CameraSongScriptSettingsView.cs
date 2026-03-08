@@ -30,6 +30,8 @@ namespace CameraSongScript.UI
         [Inject]
         private CameraSongScriptStatusView _statusView = null;
 
+        private bool _needsRefresh = false;
+
         public void Initialize()
         {
             GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
@@ -40,6 +42,15 @@ namespace CameraSongScript.UI
         {
             CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
             GameplaySetup.instance?.RemoveTab(TabName);
+        }
+
+        protected void OnEnable()
+        {
+            if (_needsRefresh)
+            {
+                _needsRefresh = false;
+                RefreshLayout();
+            }
         }
 
         /// <summary>
@@ -70,6 +81,10 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
+                    NotifyPropertyChanged(nameof(HasMetaHeight));
+                    NotifyPropertyChanged(nameof(MetaHeight));
+                    NotifyPropertyChanged(nameof(HasMetaDescription));
+                    NotifyPropertyChanged(nameof(MetaDescription));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
 
                     RefreshLayout();
@@ -181,6 +196,10 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaAuthor));
                     NotifyPropertyChanged(nameof(MetaSong));
                     NotifyPropertyChanged(nameof(MetaMapper));
+                    NotifyPropertyChanged(nameof(HasMetaHeight));
+                    NotifyPropertyChanged(nameof(MetaHeight));
+                    NotifyPropertyChanged(nameof(HasMetaDescription));
+                    NotifyPropertyChanged(nameof(MetaDescription));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
 
                     RefreshLayout();
@@ -199,19 +218,30 @@ namespace CameraSongScript.UI
         {
             if (gameObject.activeInHierarchy)
             {
-                StartCoroutine(RefreshLayoutCoroutine());
+                if (isActiveAndEnabled)
+                {
+                    StartCoroutine(RefreshLayoutCoroutine());
+                }
+            }
+            else
+            {
+                _needsRefresh = true;
             }
         }
 
         private System.Collections.IEnumerator RefreshLayoutCoroutine()
         {
-            // 2フレーム待機して、Unityのレイアウトグループと
-            // ContentSizeFitterが完全に状態変化を認識できるようにする
+            // BSMLの要素が有効/無効になった直後だと、Unityが推奨サイズ(preferredHeight)を
+            // 正しく計算できていない場合があるため、複数フレーム待機する
+            yield return new WaitForEndOfFrame();
             yield return null;
             yield return null;
 
             if (settingsContainer != null)
             {
+                // UI全体の更新状態を同期
+                Canvas.ForceUpdateCanvases();
+
                 // 自己のレイアウトを更新
                 LayoutRebuilder.ForceRebuildLayoutImmediate(settingsContainer);
                 
@@ -314,6 +344,48 @@ namespace CameraSongScript.UI
                 var meta = CameraSongScriptDetector.CurrentMetadata;
                 if (meta == null) return string.Empty;
                 return string.IsNullOrEmpty(meta.levelAuthorName) ? "--" : meta.levelAuthorName;
+            }
+        }
+
+        [UIValue("has-meta-height")]
+        public bool HasMetaHeight
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                return meta != null && meta.avatarHeight > 0;
+            }
+        }
+
+        [UIValue("meta-height")]
+        public string MetaHeight
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                if (meta == null || meta.avatarHeight <= 0) return string.Empty;
+                return $"{meta.avatarHeight:0.#} cm";
+            }
+        }
+
+        [UIValue("has-meta-description")]
+        public bool HasMetaDescription
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                return meta != null && !string.IsNullOrEmpty(meta.description);
+            }
+        }
+
+        [UIValue("meta-description")]
+        public string MetaDescription
+        {
+            get
+            {
+                var meta = CameraSongScriptDetector.CurrentMetadata;
+                if (meta == null || string.IsNullOrEmpty(meta.description)) return string.Empty;
+                return meta.description;
             }
         }
 
@@ -478,7 +550,15 @@ namespace CameraSongScript.UI
             {
                 if (!Plugin.IsCamPlusHelperReady) return;
                 string profile = value as string;
-                Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profile == "(Default)" ? string.Empty : profile);
+                string profileName = profile == "(Default)" ? string.Empty : profile;
+                
+                Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profileName);
+                
+                // 譜面個別設定として保存
+                SongSettingsManager.UpdateCurrentProfileName(profileName);
+
+                // 即座に全体のパス・プロファイル状態を同期
+                CameraSongScriptDetector.SyncCameraPlusPath();
             }
         }
 
