@@ -158,6 +158,7 @@
     <Compile Include="CameraSongScriptController.cs" />
     <Compile Include="UI\BSMLtestFlowCoordinator.cs" />
     <Compile Include="UI\CameraSongScriptModSettingView.cs" />
+    <Compile Include="UI\CameraSongScriptPreviewController.cs" />
     <Compile Include="UI\CameraSongScriptSettingsView.cs" />
     <Compile Include="UI\CameraSongScriptStatusView.cs" />
   </ItemGroup>

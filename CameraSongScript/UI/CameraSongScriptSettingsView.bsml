@@ -40,6 +40,26 @@
     <horizontal>
       <button id="camera-height-reset-btn" text="Reset Offset" on-click="reset-camera-height" align="Right" min-width="15" interactable="~is-offset-interactable" hover-hint="~hint-height-reset"/>
     </horizontal>
+    <horizontal pad-top="2">
+      <text text="--- プレビュー ---" font-size="3.5" color="#66CCFF" align="Center"/>
+    </horizontal>
+    <horizontal>
+      <text text="~preview-status" font-size="3" color="#CCCCCC" align="Left" word-wrapping="true" />
+    </horizontal>
+    <horizontal>
+      <button text="表示・開始" on-click="preview-show-start" min-width="18" interactable="~can-preview" />
+      <button text="停止" on-click="preview-stop" min-width="12" interactable="~is-preview-visible" />
+      <button text="消去" on-click="preview-clear" min-width="12" interactable="~is-preview-visible" />
+    </horizontal>
+    <horizontal>
+      <button text="X2" on-click="preview-speed-x2" min-width="10" interactable="~can-preview" />
+      <button text="X4" on-click="preview-speed-x4" min-width="10" interactable="~can-preview" />
+      <button text="X8" on-click="preview-speed-x8" min-width="10" interactable="~can-preview" />
+      <button text="X16" on-click="preview-speed-x16" min-width="10" interactable="~can-preview" />
+    </horizontal>
+    <horizontal>
+      <slider-setting id="preview-position-slider" text="再生位置" value="preview-position" min="0" max="1" increment="0.05" apply-on-change="true" show-buttons="true" formatter="format-preview-time" interactable="~can-preview" />
+    </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
         <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
