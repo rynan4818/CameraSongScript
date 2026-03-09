@@ -95,6 +95,43 @@ namespace CameraSongScript.Detectors
         public static MetadataElements CurrentMetadata { get; private set; }
 
         /// <summary>
+        /// 現在選択中のSongScriptに含まれるCamera2非対応機能
+        /// </summary>
+        public static bool SelectedScriptContainsCameraEffect { get; private set; }
+        public static bool SelectedScriptContainsWindowControl { get; private set; }
+
+        /// <summary>
+        /// 現在解決済みの汎用スクリプトに含まれるCamera2非対応機能
+        /// </summary>
+        public static bool ResolvedCommonScriptContainsCameraEffect { get; private set; }
+        public static bool ResolvedCommonScriptContainsWindowControl { get; private set; }
+
+        /// <summary>
+        /// 現在の実効スクリプトに含まれるCamera2非対応機能
+        /// </summary>
+        public static bool CurrentScriptContainsCameraEffect =>
+            IsUsingCommonScript ? ResolvedCommonScriptContainsCameraEffect : SelectedScriptContainsCameraEffect;
+
+        public static bool CurrentScriptContainsWindowControl =>
+            IsUsingCommonScript ? ResolvedCommonScriptContainsWindowControl : SelectedScriptContainsWindowControl;
+
+        public static bool HasCurrentUnsupportedFeatures =>
+            CurrentScriptContainsCameraEffect || CurrentScriptContainsWindowControl;
+
+        public static string CurrentUnsupportedFeatureSummary
+        {
+            get
+            {
+                var unsupportedFeatures = new List<string>(2);
+                if (CurrentScriptContainsCameraEffect)
+                    unsupportedFeatures.Add("CameraEffect");
+                if (CurrentScriptContainsWindowControl)
+                    unsupportedFeatures.Add("WindowControl");
+                return string.Join(", ", unsupportedFeatures);
+            }
+        }
+
+        /// <summary>
         /// CameraPlusに設定するプロファイル名の解決済みキャッシュ
         /// SyncCameraPlusPath()はSongSettingsManagerに直接アクセスせず、この値を使用する
         /// これにより、バックグラウンドスレッドからのSyncCameraPlusPath()呼び出し時に
@@ -141,9 +178,14 @@ namespace CameraSongScript.Detectors
             SelectedScriptDisplayName = string.Empty;
             AvailableScriptFiles = new List<string>();
             _candidateMap = new Dictionary<string, ScriptCandidate>();
+            CurrentMetadata = null;
+            SelectedScriptContainsCameraEffect = false;
+            SelectedScriptContainsWindowControl = false;
             IsUsingCommonScript = false;
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedCommonScriptContainsCameraEffect = false;
+            ResolvedCommonScriptContainsWindowControl = false;
 
             // CameraPlusモード: 前の曲のPending pathをクリアし、スキャン完了前にゲーム開始された場合に
             // 前の曲のスクリプトが適用されるのを防ぐ
@@ -311,7 +353,7 @@ namespace CameraSongScript.Detectors
                 }
             }
 
-            LoadMetadata(SelectedScriptPath);
+            LoadSelectedScriptInfo(SelectedScriptPath);
 
             // 一時ファイルの再生成
             UpdateEffectiveScriptPath();
@@ -505,7 +547,7 @@ namespace CameraSongScript.Detectors
 
             Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
 
-            LoadMetadata(SelectedScriptPath);
+            LoadSelectedScriptInfo(SelectedScriptPath);
 
             // 個別保存モードの場合のみ、スクリプト変更時にハッシュから保存済みオフセットを復元する
             if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
@@ -667,6 +709,10 @@ namespace CameraSongScript.Detectors
         public static void ResolveAndSetCommonScriptPath()
         {
             var config = CameraSongScriptConfig.Instance;
+            ResolvedCommonScriptPath = string.Empty;
+            ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedCommonScriptContainsCameraEffect = false;
+            ResolvedCommonScriptContainsWindowControl = false;
 
             if (config.SelectedCommonScript == "(Random)")
             {
@@ -687,6 +733,8 @@ namespace CameraSongScript.Detectors
                     ResolvedCommonScriptDisplayName = config.SelectedCommonScript;
                 }
             }
+
+            LoadResolvedCommonScriptCompatibility(ResolvedCommonScriptPath);
         }
 
         /// <summary>
@@ -707,32 +755,88 @@ namespace CameraSongScript.Detectors
             SelectedScriptDisplayName = string.Empty;
             EffectiveScriptPath = string.Empty;
             CurrentMetadata = null;
+            SelectedScriptContainsCameraEffect = false;
+            SelectedScriptContainsWindowControl = false;
             AvailableScriptFiles = new List<string>();
             _candidateMap = new Dictionary<string, ScriptCandidate>();
             IsUsingCommonScript = false;
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedCommonScriptContainsCameraEffect = false;
+            ResolvedCommonScriptContainsWindowControl = false;
             ResolvedProfileName = string.Empty;
         }
 
-        private static void LoadMetadata(string filePath)
+        private static void LoadSelectedScriptInfo(string filePath)
         {
+            CurrentMetadata = null;
+            SelectedScriptContainsCameraEffect = false;
+            SelectedScriptContainsWindowControl = false;
+
+            if (!TryLoadScriptInfo(filePath, "selected script", out var parsed))
+                return;
+
+            CurrentMetadata = parsed.metadata;
+            PopulateUnsupportedFeatureFlags(parsed, out var containsCameraEffect, out var containsWindowControl);
+            SelectedScriptContainsCameraEffect = containsCameraEffect;
+            SelectedScriptContainsWindowControl = containsWindowControl;
+        }
+
+        private static void LoadResolvedCommonScriptCompatibility(string filePath)
+        {
+            ResolvedCommonScriptContainsCameraEffect = false;
+            ResolvedCommonScriptContainsWindowControl = false;
+
+            if (!TryLoadScriptInfo(filePath, "common script", out var parsed))
+                return;
+
+            PopulateUnsupportedFeatureFlags(parsed, out var containsCameraEffect, out var containsWindowControl);
+            ResolvedCommonScriptContainsCameraEffect = containsCameraEffect;
+            ResolvedCommonScriptContainsWindowControl = containsWindowControl;
+        }
+
+        private static bool TryLoadScriptInfo(string filePath, string scriptLabel, out MovementScriptJson parsed)
+        {
+            parsed = null;
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
             {
-                CurrentMetadata = null;
-                return;
+                return false;
             }
 
             try
             {
                 string json = File.ReadAllText(filePath);
-                var parsed = JsonConvert.DeserializeObject<MovementScriptJson>(json);
-                CurrentMetadata = parsed?.metadata;
+                parsed = JsonConvert.DeserializeObject<MovementScriptJson>(json);
+                return parsed != null;
             }
             catch (Exception ex)
             {
-                Plugin.Log.Warn($"CameraSongScriptDetector: Failed to load metadata from '{filePath}': {ex.Message}");
-                CurrentMetadata = null;
+                Plugin.Log.Warn($"CameraSongScriptDetector: Failed to load {scriptLabel} info from '{filePath}': {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void PopulateUnsupportedFeatureFlags(
+            MovementScriptJson parsed,
+            out bool containsCameraEffect,
+            out bool containsWindowControl)
+        {
+            containsCameraEffect = false;
+            containsWindowControl = false;
+
+            if (parsed?.JsonMovements == null)
+                return;
+
+            foreach (var movement in parsed.JsonMovements)
+            {
+                if (!containsCameraEffect && movement?.cameraEffect != null)
+                    containsCameraEffect = true;
+
+                if (!containsWindowControl && movement?.windowControl != null)
+                    containsWindowControl = true;
+
+                if (containsCameraEffect && containsWindowControl)
+                    return;
             }
         }
 

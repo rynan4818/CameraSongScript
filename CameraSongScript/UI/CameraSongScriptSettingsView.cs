@@ -142,6 +142,7 @@ namespace CameraSongScript.UI
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
+                RefreshLayout();
                 _statusView?.UpdateContent();
             }
         }
@@ -634,6 +635,7 @@ namespace CameraSongScript.UI
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
+                RefreshLayout();
                 _statusView?.UpdateContent();
             }
         }
@@ -650,6 +652,7 @@ namespace CameraSongScript.UI
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
+                RefreshLayout();
                 _statusView?.UpdateContent();
             }
         }
@@ -707,6 +710,7 @@ namespace CameraSongScript.UI
                         cameraHeightOffsetSlider.ReceiveValue();
                     }
 
+                    RefreshLayout();
                     _statusView?.UpdateContent();
                 }
             }
@@ -840,6 +844,15 @@ namespace CameraSongScript.UI
 
         #region SongScript検出状態
 
+        private static string AppendCamera2UnsupportedWarning(string statusText)
+        {
+            if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
+                return statusText;
+
+            string warningText = $"<color=#FF5555>Warning: Unsupported in Camera2 - {CameraSongScriptDetector.CurrentUnsupportedFeatureSummary}</color>";
+            return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
+        }
+
         [UIValue("song-script-status")]
         public string SongScriptStatus
         {
@@ -852,9 +865,9 @@ namespace CameraSongScript.UI
                 {
                     string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript;
                     if (count > 0)
-                        return $"<color=#FFAA00>Common Script: {commonName}</color> <color=#AAAAAA>({count} SongScript available)</color>";
+                        return AppendCamera2UnsupportedWarning($"<color=#FFAA00>Common Script: {commonName}</color> <color=#AAAAAA>({count} SongScript available)</color>");
                     else
-                        return $"<color=#FFAA00>Common Script: {commonName}</color>";
+                        return AppendCamera2UnsupportedWarning($"<color=#FFAA00>Common Script: {commonName}</color>");
                 }
 
                 if (count > 0)
@@ -862,11 +875,11 @@ namespace CameraSongScript.UI
                     string selected = CameraSongScriptDetector.HasSongScript
                         ? CameraSongScriptDetector.SelectedScriptDisplayName
                         : "?";
-                    return $"<color=#00FF00>{count} script(s) found - {selected}</color>";
+                    return AppendCamera2UnsupportedWarning($"<color=#00FF00>{count} script(s) found - {selected}</color>");
                 }
                 else
                 {
-                    return "<color=#888888>No camera scripts</color>";
+                    return AppendCamera2UnsupportedWarning("<color=#888888>No camera scripts</color>");
                 }
             }
         }
