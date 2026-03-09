@@ -261,7 +261,7 @@ namespace CameraSongScript.UI
                     }
                 }
 
-                _statusText.text = commonText;
+                _statusText.text = AppendCamera2UnsupportedWarning(commonText);
                 return;
             }
 
@@ -275,7 +275,7 @@ namespace CameraSongScript.UI
             // 機能が無効の場合
             if (!enabled)
             {
-                _statusText.text = "<color=#888888>CameraSongScript: OFF</color>";
+                _statusText.text = AppendCamera2UnsupportedWarning("<color=#888888>CameraSongScript: OFF</color>");
                 return;
             }
 
@@ -310,7 +310,16 @@ namespace CameraSongScript.UI
             if (!string.IsNullOrEmpty(offsetLine))
                 fullText += "\n" + offsetLine;
 
-            _statusText.text = fullText;
+            _statusText.text = AppendCamera2UnsupportedWarning(fullText);
+        }
+
+        private static string AppendCamera2UnsupportedWarning(string statusText)
+        {
+            if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
+                return statusText;
+
+            string warningText = $"<color=#FF5555>Warning: Unsupported in Camera2 - {CameraSongScriptDetector.CurrentUnsupportedFeatureSummary}</color>";
+            return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 
         /// <summary>
