@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using BeatSaberMarkupLanguage.Attributes;
@@ -30,17 +31,30 @@ namespace CameraSongScript.UI
         [Inject]
         private CameraSongScriptStatusView _statusView = null;
 
+        [Inject]
+        private CameraSongScriptPreviewController _previewController = null;
+
+        private const float PreviewSliderStep = 0.05f;
         private bool _needsRefresh = false;
+        private bool _suppressPreviewSeek = false;
+        private float _lastPreviewUiTime = float.NegativeInfinity;
+        private bool _lastPreviewVisible = false;
+        private bool _lastPreviewPlaying = false;
+        private int _lastPreviewSpeed = 1;
 
         public void Initialize()
         {
             GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
             CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
+            if (_previewController != null)
+                _previewController.StateChanged += OnPreviewStateChanged;
         }
 
         public void Dispose()
         {
             CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
+            if (_previewController != null)
+                _previewController.StateChanged -= OnPreviewStateChanged;
             GameplaySetup.instance?.RemoveTab(TabName);
         }
 
@@ -51,6 +65,41 @@ namespace CameraSongScript.UI
                 _needsRefresh = false;
                 RefreshLayout();
             }
+
+            RefreshPreviewBindings();
+        }
+
+        protected void Update()
+        {
+            var previewController = _previewController;
+            if (!isActiveAndEnabled || previewController == null)
+                return;
+
+            float currentTime = previewController.CurrentTime;
+            bool isVisible = previewController.IsVisible;
+            bool isPlaying = previewController.IsPlaying;
+            int speedMultiplier = previewController.SpeedMultiplier;
+            bool stateChanged =
+                isVisible != _lastPreviewVisible ||
+                isPlaying != _lastPreviewPlaying ||
+                speedMultiplier != _lastPreviewSpeed;
+
+            if (isVisible || Mathf.Abs(currentTime - _lastPreviewUiTime) >= 0.001f || stateChanged)
+            {
+                _lastPreviewUiTime = currentTime;
+                _lastPreviewVisible = isVisible;
+                _lastPreviewPlaying = isPlaying;
+                _lastPreviewSpeed = speedMultiplier;
+                RefreshPreviewRuntimeUi();
+            }
+        }
+
+        private void OnPreviewStateChanged()
+        {
+            if (_previewController == null)
+                return;
+
+            RefreshPreviewBindings();
         }
 
         /// <summary>
@@ -96,6 +145,7 @@ namespace CameraSongScript.UI
                     NotifyPropertyChanged(nameof(MetaDescription));
                     NotifyPropertyChanged(nameof(CameraHeightOffset));
                     NotifyPropertyChanged(nameof(IsOffsetInteractable));
+                    HandlePreviewSelectionChanged();
 
                     RefreshLayout();
                 }
@@ -144,6 +194,7 @@ namespace CameraSongScript.UI
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 RefreshLayout();
                 _statusView?.UpdateContent();
+                HandlePreviewSelectionChanged();
             }
         }
 
@@ -159,6 +210,9 @@ namespace CameraSongScript.UI
 
         [UIComponent("settings-container")]
         public RectTransform settingsContainer;
+
+        [UIComponent("preview-position-slider")]
+        public SliderSetting previewPositionSlider;
 
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
@@ -224,6 +278,7 @@ namespace CameraSongScript.UI
                     }
 
                     _statusView?.UpdateContent();
+                    HandlePreviewSelectionChanged();
                 }
             }
         }
@@ -342,6 +397,7 @@ namespace CameraSongScript.UI
                         CameraSongScriptDetector.SyncCameraPlusPath();
                     }
                     _statusView?.UpdateContent();
+                    HandlePreviewVisualChanged();
                 }
             }
         }
@@ -359,6 +415,7 @@ namespace CameraSongScript.UI
                 cameraHeightOffsetSlider.ReceiveValue();
             }
             _statusView?.UpdateContent();
+            HandlePreviewVisualChanged();
         }
 
         #endregion
@@ -637,6 +694,7 @@ namespace CameraSongScript.UI
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 RefreshLayout();
                 _statusView?.UpdateContent();
+                HandlePreviewSelectionChanged();
             }
         }
 
@@ -654,6 +712,7 @@ namespace CameraSongScript.UI
                 if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
                 RefreshLayout();
                 _statusView?.UpdateContent();
+                HandlePreviewSelectionChanged();
             }
         }
 
@@ -712,6 +771,7 @@ namespace CameraSongScript.UI
 
                     RefreshLayout();
                     _statusView?.UpdateContent();
+                    HandlePreviewSelectionChanged();
                 }
             }
         }
@@ -882,6 +942,183 @@ namespace CameraSongScript.UI
                     return AppendCamera2UnsupportedWarning("<color=#888888>No camera scripts</color>");
                 }
             }
+        }
+
+        #endregion
+
+        #region プレビュー設定
+
+        [UIValue("can-preview")]
+        public bool CanPreview => _previewController != null && _previewController.CanPreviewSelection;
+
+        [UIValue("is-preview-visible")]
+        public bool IsPreviewVisible => _previewController != null && _previewController.IsVisible;
+
+        [UIValue("preview-position")]
+        public float PreviewPosition
+        {
+            get => _previewController != null ? _previewController.CurrentTime : 0f;
+            set
+            {
+                if (_suppressPreviewSeek || _previewController == null)
+                    return;
+
+                _previewController.Seek(value, true);
+                RefreshPreviewBindings();
+            }
+        }
+
+        [UIValue("preview-status")]
+        public string PreviewStatus
+        {
+            get
+            {
+                if (_previewController == null)
+                    return "プレビュー: 初期化中";
+
+                if (_previewController.IsVisible)
+                {
+                    string state = _previewController.IsPlaying ? "再生中" : "停止中";
+                    string displayName = string.IsNullOrEmpty(_previewController.LoadedScriptDisplayName)
+                        ? "--"
+                        : _previewController.LoadedScriptDisplayName;
+                    return string.Format(
+                        CultureInfo.InvariantCulture,
+                        "プレビュー: {0} | {1} / {2} | {3} | x{4}",
+                        displayName,
+                        FormatPreviewClock(_previewController.CurrentTime),
+                        FormatPreviewClock(_previewController.Duration),
+                        state,
+                        _previewController.SpeedMultiplier);
+                }
+
+                return CanPreview ? "プレビュー: 準備完了" : "プレビュー: スクリプトなし";
+            }
+        }
+
+        [UIAction("preview-show-start")]
+        private void PreviewShowStart()
+        {
+            _previewController?.ShowAndStart();
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-stop")]
+        private void PreviewStop()
+        {
+            _previewController?.Stop();
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-clear")]
+        private void PreviewClear()
+        {
+            _previewController?.Clear();
+            _lastPreviewUiTime = float.NegativeInfinity;
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-speed-x2")]
+        private void PreviewSpeedX2()
+        {
+            _previewController?.StartAtSpeed(2);
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-speed-x4")]
+        private void PreviewSpeedX4()
+        {
+            _previewController?.StartAtSpeed(4);
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-speed-x8")]
+        private void PreviewSpeedX8()
+        {
+            _previewController?.StartAtSpeed(8);
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-speed-x16")]
+        private void PreviewSpeedX16()
+        {
+            _previewController?.StartAtSpeed(16);
+            RefreshPreviewBindings();
+        }
+
+        [UIAction("format-preview-time")]
+        private string FormatPreviewSliderValue(float value)
+        {
+            return FormatPreviewClock(value);
+        }
+
+        private void HandlePreviewSelectionChanged()
+        {
+            _previewController?.HandleSelectionChanged();
+            _lastPreviewUiTime = float.NegativeInfinity;
+            RefreshPreviewBindings();
+        }
+
+        private void HandlePreviewVisualChanged()
+        {
+            _previewController?.HandleVisualChange();
+            _lastPreviewUiTime = float.NegativeInfinity;
+            RefreshPreviewBindings();
+        }
+
+        private void RefreshPreviewBindings()
+        {
+            if (_previewController != null)
+            {
+                _lastPreviewUiTime = _previewController.CurrentTime;
+                _lastPreviewVisible = _previewController.IsVisible;
+                _lastPreviewPlaying = _previewController.IsPlaying;
+                _lastPreviewSpeed = _previewController.SpeedMultiplier;
+            }
+
+            NotifyPropertyChanged(nameof(CanPreview));
+            NotifyPropertyChanged(nameof(IsPreviewVisible));
+            NotifyPropertyChanged(nameof(PreviewPosition));
+            NotifyPropertyChanged(nameof(PreviewStatus));
+            SyncPreviewSlider();
+        }
+
+        private void RefreshPreviewRuntimeUi()
+        {
+            NotifyPropertyChanged(nameof(PreviewPosition));
+            NotifyPropertyChanged(nameof(PreviewStatus));
+            SyncPreviewSlider();
+        }
+
+        private void SyncPreviewSlider()
+        {
+            if (previewPositionSlider == null || previewPositionSlider.slider == null)
+                return;
+
+            float maxValue = Mathf.Max(_previewController != null ? _previewController.Duration : 0f, PreviewSliderStep);
+            previewPositionSlider.slider.minValue = 0f;
+            previewPositionSlider.slider.maxValue = maxValue;
+            previewPositionSlider.increments = PreviewSliderStep;
+            previewPositionSlider.slider.numberOfSteps = Mathf.Max(2, Mathf.RoundToInt(maxValue / PreviewSliderStep) + 1);
+            previewPositionSlider.interactable = CanPreview;
+
+            _suppressPreviewSeek = true;
+            previewPositionSlider.Value = Mathf.Clamp(_previewController != null ? _previewController.CurrentTime : 0f, 0f, maxValue);
+            _suppressPreviewSeek = false;
+        }
+
+        private static string FormatPreviewClock(float seconds)
+        {
+            if (seconds < 0f)
+                seconds = 0f;
+
+            TimeSpan time = TimeSpan.FromSeconds(seconds);
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "{0:00}:{1:00}.{2:00}",
+                (int)time.TotalMinutes,
+                time.Seconds,
+                time.Milliseconds / 10);
         }
 
         #endregion
