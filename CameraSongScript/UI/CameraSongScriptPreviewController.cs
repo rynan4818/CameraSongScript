@@ -29,6 +29,7 @@ namespace CameraSongScript.UI
         private const int MiniatureLayer = 5;
         private const int PreviewTextureWidth = 512;
         private const int PreviewTextureHeight = 288;
+        private const float PathRevealDuration = 2.5f;
 
         private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.5f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
@@ -42,6 +43,7 @@ namespace CameraSongScript.UI
         private static Material _solidMaterialTemplate;
 
         private readonly List<TimelineSegment> _segments = new List<TimelineSegment>();
+        private readonly List<LineRenderer> _pathLineRenderers = new List<LineRenderer>();
 
         private GameObject _visibleRoot;
         private Transform _miniatureRoot;
@@ -54,6 +56,8 @@ namespace CameraSongScript.UI
         private float _duration;
         private int _speedMultiplier = 1;
         private bool _isPlaying;
+        private bool _isPathRevealActive;
+        private float _pathRevealElapsed;
         private string _loadedScriptPath = string.Empty;
         private string _loadedScriptDisplayName = string.Empty;
 
@@ -98,6 +102,9 @@ namespace CameraSongScript.UI
         {
             if (!IsVisible)
                 return;
+
+            if (_isPathRevealActive)
+                UpdatePathRevealAnimation();
 
             if (_isPlaying && _duration > 0f && _segments.Count > 0)
             {
@@ -356,6 +363,7 @@ namespace CameraSongScript.UI
             SetLayerRecursively(_miniatureRoot.gameObject, MiniatureLayer);
             _previewCamera = CreatePreviewCamera();
             UpdatePreviewRenderTextureAndView();
+            StartPathRevealAnimation();
         }
 
         private Transform CreatePreviewSceneContents(Transform parent, float stageLineWidth, float pathLineWidth, bool includeCameraMarker)
@@ -534,16 +542,20 @@ namespace CameraSongScript.UI
 
         private void CreateMovementPath(Transform parent, float lineWidth)
         {
+            _pathLineRenderers.Clear();
+
             for (int i = 0; i < _segments.Count; i++)
             {
                 TimelineSegment segment = _segments[i];
                 Vector3 start = CameraSongScriptMath.ApplyHeightOffset(segment.StartPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
                 Vector3 end = CameraSongScriptMath.ApplyHeightOffset(segment.EndPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
-                CreateLine(parent, "PathSegment_" + i, start, end, lineWidth, PathColor);
+                LineRenderer lineRenderer = CreateLine(parent, "PathSegment_" + i, start, end, lineWidth, PathColor);
+                _pathLineRenderers.Add(lineRenderer);
+                SetLineProgress(lineRenderer, start, end, 0f);
             }
         }
 
-        private static void CreateLine(Transform parent, string name, Vector3 start, Vector3 end, float width, Color color)
+        private static LineRenderer CreateLine(Transform parent, string name, Vector3 start, Vector3 end, float width, Color color)
         {
             GameObject lineObject = new GameObject(name);
             lineObject.transform.SetParent(parent, false);
@@ -562,6 +574,61 @@ namespace CameraSongScript.UI
             lineRenderer.endColor = color;
             lineRenderer.SetPosition(0, start);
             lineRenderer.SetPosition(1, end);
+            return lineRenderer;
+        }
+
+        private static void SetLineProgress(LineRenderer lineRenderer, Vector3 start, Vector3 end, float progress)
+        {
+            if (lineRenderer == null)
+                return;
+
+            lineRenderer.SetPosition(0, start);
+            lineRenderer.SetPosition(1, Vector3.Lerp(start, end, Mathf.Clamp01(progress)));
+        }
+
+        private void StartPathRevealAnimation()
+        {
+            _pathRevealElapsed = 0f;
+            _isPathRevealActive = _pathLineRenderers.Count > 0 && PathRevealDuration > 0f;
+
+            if (!_isPathRevealActive)
+                ShowFullPath();
+        }
+
+        private void UpdatePathRevealAnimation()
+        {
+            if (!_isPathRevealActive)
+                return;
+
+            _pathRevealElapsed += Time.unscaledDeltaTime;
+
+            float normalizedProgress = Mathf.Clamp01(_pathRevealElapsed / PathRevealDuration);
+            float scaledProgress = normalizedProgress * _pathLineRenderers.Count;
+            for (int i = 0; i < _pathLineRenderers.Count; i++)
+                UpdatePathSegmentReveal(i, Mathf.Clamp01(scaledProgress - i));
+
+            if (normalizedProgress >= 1f)
+            {
+                ShowFullPath();
+                _isPathRevealActive = false;
+            }
+        }
+
+        private void UpdatePathSegmentReveal(int index, float progress)
+        {
+            if (index < 0 || index >= _pathLineRenderers.Count || index >= _segments.Count)
+                return;
+
+            TimelineSegment segment = _segments[index];
+            Vector3 start = CameraSongScriptMath.ApplyHeightOffset(segment.StartPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
+            Vector3 end = CameraSongScriptMath.ApplyHeightOffset(segment.EndPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
+            SetLineProgress(_pathLineRenderers[index], start, end, progress);
+        }
+
+        private void ShowFullPath()
+        {
+            for (int i = 0; i < _pathLineRenderers.Count && i < _segments.Count; i++)
+                UpdatePathSegmentReveal(i, 1f);
         }
 
         private static Material GetLineMaterial()
@@ -733,6 +800,10 @@ namespace CameraSongScript.UI
 
         private void DestroyPreviewObjects()
         {
+            _pathLineRenderers.Clear();
+            _isPathRevealActive = false;
+            _pathRevealElapsed = 0f;
+
             if (_previewDisplayImage != null)
             {
                 _previewDisplayImage.texture = null;
