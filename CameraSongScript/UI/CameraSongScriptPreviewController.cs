@@ -312,7 +312,7 @@ namespace CameraSongScript.UI
 
                 Vector3 startRot = movement.StartRot;
                 Vector3 endRot = movement.EndRot;
-                FindShortestDelta(ref startRot, ref endRot);
+                CameraSongScriptMath.FindShortestDelta(ref startRot, ref endRot);
 
                 _segments.Add(new TimelineSegment
                 {
@@ -537,8 +537,8 @@ namespace CameraSongScript.UI
             for (int i = 0; i < _segments.Count; i++)
             {
                 TimelineSegment segment = _segments[i];
-                Vector3 start = ApplyHeightOffset(segment.StartPos);
-                Vector3 end = ApplyHeightOffset(segment.EndPos);
+                Vector3 start = CameraSongScriptMath.ApplyHeightOffset(segment.StartPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
+                Vector3 end = CameraSongScriptMath.ApplyHeightOffset(segment.EndPos, CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
                 CreateLine(parent, "PathSegment_" + i, start, end, lineWidth, PathColor);
             }
         }
@@ -662,15 +662,17 @@ namespace CameraSongScript.UI
                 ? Mathf.Clamp01((evaluationTime - segment.StartTime) / duration)
                 : 1f;
 
-            float easedPerc = Ease(perc, segment.EaseTransition);
+            float easedPerc = CameraSongScriptMath.Ease(perc, segment.EaseTransition);
 
-            Vector3 pos = ApplyHeightOffset(LerpVector3(segment.StartPos, segment.EndPos, easedPerc));
-            Vector3 rot = LerpVector3Angle(segment.StartRot, segment.EndRot, easedPerc);
+            Vector3 pos = CameraSongScriptMath.ApplyHeightOffset(
+                CameraSongScriptMath.LerpVector3(segment.StartPos, segment.EndPos, easedPerc),
+                CameraSongScriptConfig.Instance.CameraHeightOffsetCm);
+            Vector3 rot = CameraSongScriptMath.LerpVector3Angle(segment.StartRot, segment.EndRot, easedPerc);
             float fov = Mathf.Lerp(segment.StartFov, segment.EndFov, easedPerc);
 
             if (segment.TurnToHead)
             {
-                Vector3 headOffset = LerpVector3(segment.StartHeadOffset, segment.EndHeadOffset, easedPerc);
+                Vector3 headOffset = CameraSongScriptMath.LerpVector3(segment.StartHeadOffset, segment.EndHeadOffset, easedPerc);
                 // TODO: world-space preview still uses a fixed synthetic head target; revisit against actual avatar/HMD data.
                 Vector3 lookDirection = AvatarHeadTarget + headOffset - pos;
                 if (lookDirection != Vector3.zero)
@@ -703,50 +705,6 @@ namespace CameraSongScript.UI
                 return Mathf.Max(0f, _duration - EndPoseEpsilon);
 
             return clamped;
-        }
-
-        private static float Ease(float p, bool useEase)
-        {
-            if (!useEase)
-                return p;
-
-            if (p < 0.5f)
-                return 4f * p * p * p;
-
-            float f = (2f * p) - 2f;
-            return 0.5f * f * f * f + 1f;
-        }
-
-        private static void FindShortestDelta(ref Vector3 from, ref Vector3 to)
-        {
-            if (Mathf.DeltaAngle(from.x, to.x) < 0f)
-                from.x += 360f;
-            if (Mathf.DeltaAngle(from.y, to.y) < 0f)
-                from.y += 360f;
-            if (Mathf.DeltaAngle(from.z, to.z) < 0f)
-                from.z += 360f;
-        }
-
-        private static Vector3 LerpVector3(Vector3 from, Vector3 to, float percent)
-        {
-            return new Vector3(
-                Mathf.Lerp(from.x, to.x, percent),
-                Mathf.Lerp(from.y, to.y, percent),
-                Mathf.Lerp(from.z, to.z, percent));
-        }
-
-        private static Vector3 LerpVector3Angle(Vector3 from, Vector3 to, float percent)
-        {
-            return new Vector3(
-                Mathf.LerpAngle(from.x, to.x, percent),
-                Mathf.LerpAngle(from.y, to.y, percent),
-                Mathf.LerpAngle(from.z, to.z, percent));
-        }
-
-        private static Vector3 ApplyHeightOffset(Vector3 position)
-        {
-            position.y += CameraSongScriptConfig.Instance.CameraHeightOffsetCm / 100f;
-            return position;
         }
 
         private float ClampPreviewTime(float time)

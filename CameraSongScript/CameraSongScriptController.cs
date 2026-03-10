@@ -399,7 +399,7 @@ namespace CameraSongScript
             _lerp.StartFOV = movement.StartFOV != 0 ? movement.StartFOV : _defaultFOV;
             _lerp.EndFOV = movement.EndFOV != 0 ? movement.EndFOV : _defaultFOV;
 
-            FindShortestDelta(ref _lerp.StartRot, ref _lerp.EndRot);
+            CameraSongScriptMath.FindShortestDelta(ref _lerp.StartRot, ref _lerp.EndRot);
 
             bool useAudioSync = CameraSongScriptConfig.Instance.UseAudioSync;
 
@@ -424,24 +424,21 @@ namespace CameraSongScript
         /// </summary>
         private void ApplyToAllTokens()
         {
-            float easedPerc = Ease(_movePerc, _lerp.EaseTransition);
+            float easedPerc = CameraSongScriptMath.Ease(_movePerc, _lerp.EaseTransition);
 
-            Vector3 pos = LerpVector3(_lerp.StartPos, _lerp.EndPos, easedPerc);
+            Vector3 pos = CameraSongScriptMath.LerpVector3(_lerp.StartPos, _lerp.EndPos, easedPerc);
 
             // Y座標へのオフセット適用（Camera2モードではここで動的に適用する）
             int offsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
-            if (offsetCm != 0)
-            {
-                pos.y += offsetCm / 100f;
-            }
+            pos = CameraSongScriptMath.ApplyHeightOffset(pos, offsetCm);
 
-            Vector3 rot = LerpVector3Angle(_lerp.StartRot, _lerp.EndRot, easedPerc);
+            Vector3 rot = CameraSongScriptMath.LerpVector3Angle(_lerp.StartRot, _lerp.EndRot, easedPerc);
             float fov = Mathf.Lerp(_lerp.StartFOV, _lerp.EndFOV, easedPerc);
 
             // TurnToHead処理
             if (_lerp.TurnToHead)
             {
-                Vector3 headOffset = LerpVector3(_lerp.StartHeadOffset, _lerp.EndHeadOffset, easedPerc);
+                Vector3 headOffset = CameraSongScriptMath.LerpVector3(_lerp.StartHeadOffset, _lerp.EndHeadOffset, easedPerc);
                 Vector3 headPos = GetHMDPosition() + headOffset;
                 Vector3 lookDirection = headPos - pos;
 
@@ -500,49 +497,6 @@ namespace CameraSongScript
                 return headTransform.position;
             return Vector3.zero;
         }
-
-        #region ユーティリティ
-
-        private static void FindShortestDelta(ref Vector3 from, ref Vector3 to)
-        {
-            if (Mathf.DeltaAngle(from.x, to.x) < 0)
-                from.x += 360.0f;
-            if (Mathf.DeltaAngle(from.y, to.y) < 0)
-                from.y += 360.0f;
-            if (Mathf.DeltaAngle(from.z, to.z) < 0)
-                from.z += 360.0f;
-        }
-
-        private static Vector3 LerpVector3(Vector3 from, Vector3 to, float percent)
-        {
-            return new Vector3(Mathf.Lerp(from.x, to.x, percent), Mathf.Lerp(from.y, to.y, percent), Mathf.Lerp(from.z, to.z, percent));
-        }
-
-        private static Vector3 LerpVector3Angle(Vector3 from, Vector3 to, float percent)
-        {
-            return new Vector3(Mathf.LerpAngle(from.x, to.x, percent), Mathf.LerpAngle(from.y, to.y, percent), Mathf.LerpAngle(from.z, to.z, percent));
-        }
-
-        /// <summary>
-        /// キュービックイーズイン/アウト補間
-        /// </summary>
-        private static float Ease(float p, bool useEase)
-        {
-            if (!useEase)
-                return p;
-
-            if (p < 0.5f)
-            {
-                return 4 * p * p * p;
-            }
-            else
-            {
-                float f = ((2 * p) - 2);
-                return 0.5f * f * f * f + 1;
-            }
-        }
-
-        #endregion
 
         #region 公開プロパティ
 
