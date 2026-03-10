@@ -156,6 +156,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CameraPlusPlayStartResolver.cs" />
     <Compile Include="CameraSongScriptController.cs" />
+    <Compile Include="CameraSongScriptMath.cs" />
     <Compile Include="UI\BSMLtestFlowCoordinator.cs" />
     <Compile Include="UI\CameraSongScriptModSettingView.cs" />
     <Compile Include="UI\CameraSongScriptPreviewController.cs" />
