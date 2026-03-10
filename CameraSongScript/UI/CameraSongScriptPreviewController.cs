@@ -13,7 +13,7 @@ namespace CameraSongScript.UI
 {
     /// <summary>
     /// メニューシーン用のSongScriptプレビュー。
-    /// 可視ミニチュアは1/10スケール、RenderTexture用シーンは1/1スケールで構築する。
+    /// 可視ミニチュアは1/10スケールで表示し、RenderTextureは実ワールドを描画する。
     /// </summary>
     internal class CameraSongScriptPreviewController : IInitializable, IDisposable, ITickable
     {
@@ -26,12 +26,11 @@ namespace CameraSongScript.UI
         private const float StageBackZ = 1.0f;
         private const float StageDepthDown = 10.0f;
         private const int PreviewDisplayLayer = 5;
-        private const int PreviewRenderLayer = 31;
+        private const int MiniatureLayer = 5;
         private const int PreviewTextureWidth = 512;
         private const int PreviewTextureHeight = 288;
 
         private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.5f);
-        private static readonly Vector3 HiddenRenderOrigin = new Vector3(2048f, 2048f, 2048f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
         private static readonly Vector2 PreviewPanelSize = new Vector2(360f, 220f);
         private static readonly Color StageFrameColor = new Color(0.55f, 0.42f, 0.14f, 0.45f);
@@ -46,7 +45,6 @@ namespace CameraSongScript.UI
 
         private GameObject _visibleRoot;
         private Transform _miniatureRoot;
-        private Transform _renderRoot;
         private Transform _screenRoot;
         private Camera _previewCamera;
         private RenderTexture _previewTexture;
@@ -354,14 +352,8 @@ namespace CameraSongScript.UI
 
             _screenRoot = CreatePreviewScreen(_visibleRoot.transform);
 
-            _renderRoot = new GameObject("CameraSongScript Preview Render Root").transform;
-            _renderRoot.position = HiddenRenderOrigin;
-            _renderRoot.rotation = Quaternion.identity;
-            _renderRoot.localScale = Vector3.one;
-            CreatePreviewSceneContents(_renderRoot, 0.012f, 0.006f, false);
-
             SetLayerRecursively(_visibleRoot, PreviewDisplayLayer);
-            SetLayerRecursively(_renderRoot.gameObject, PreviewRenderLayer);
+            SetLayerRecursively(_miniatureRoot.gameObject, MiniatureLayer);
             _previewCamera = CreatePreviewCamera();
             UpdatePreviewRenderTextureAndView();
         }
@@ -497,9 +489,9 @@ namespace CameraSongScript.UI
                 previewCamera = cameraObject.AddComponent<Camera>();
             }
 
-            cameraObject.transform.SetParent(_renderRoot, false);
-            cameraObject.transform.localPosition = Vector3.zero;
-            cameraObject.transform.localRotation = Quaternion.identity;
+            cameraObject.transform.SetParent(null, false);
+            cameraObject.transform.position = Vector3.zero;
+            cameraObject.transform.rotation = Quaternion.identity;
             cameraObject.transform.localScale = Vector3.one;
             cameraObject.SetActive(true);
 
@@ -646,17 +638,8 @@ namespace CameraSongScript.UI
                 return;
 
             Quaternion rotation = Quaternion.Euler(pose.Rotation);
-            if (_renderRoot != null)
-            {
-                _previewCamera.transform.localPosition = pose.Position;
-                _previewCamera.transform.localRotation = rotation;
-            }
-            else
-            {
-                _previewCamera.transform.position = pose.Position;
-                _previewCamera.transform.rotation = rotation;
-            }
-
+            _previewCamera.transform.position = pose.Position;
+            _previewCamera.transform.rotation = rotation;
             _previewCamera.fieldOfView = pose.Fov;
         }
 
@@ -688,6 +671,7 @@ namespace CameraSongScript.UI
             if (segment.TurnToHead)
             {
                 Vector3 headOffset = LerpVector3(segment.StartHeadOffset, segment.EndHeadOffset, easedPerc);
+                // TODO: world-space preview still uses a fixed synthetic head target; revisit against actual avatar/HMD data.
                 Vector3 lookDirection = AvatarHeadTarget + headOffset - pos;
                 if (lookDirection != Vector3.zero)
                 {
@@ -817,12 +801,6 @@ namespace CameraSongScript.UI
                 _visibleRoot = null;
             }
 
-            if (_renderRoot != null)
-            {
-                UnityEngine.Object.Destroy(_renderRoot.gameObject);
-                _renderRoot = null;
-            }
-
             _miniatureRoot = null;
             _screenRoot = null;
             _miniCameraMarker = null;
@@ -918,7 +896,8 @@ namespace CameraSongScript.UI
 
         private static int GetPreviewCullingMask()
         {
-            return 1 << PreviewRenderLayer;
+            // TODO: Revisit whether helper UI objects such as the preview screen should also be excluded.
+            return ~(1 << MiniatureLayer);
         }
 
         private static Camera GetSourceCamera()
