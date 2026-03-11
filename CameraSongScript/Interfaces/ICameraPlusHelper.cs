@@ -28,5 +28,7 @@ namespace CameraSongScript.Interfaces
         /// 曲固有スクリプト検出時に切り替えるプロファイル名を設定する
         /// </summary>
         void SetSongSpecificScriptProfile(string profileName);
+
+        UnityEngine.Material GetPreviewMaterial();
     }
 }

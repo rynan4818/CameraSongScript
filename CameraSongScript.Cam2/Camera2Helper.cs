@@ -91,5 +91,14 @@ namespace CameraSongScript.Cam2
             var token = OverrideToken.GetTokenForCamera(camName);
             return token != null ? new Camera2Token(token) : null;
         }
+
+        public UnityEngine.Material GetPreviewMaterial()
+        {
+            if (Camera2.Plugin.Shader_VolumetricBlit != null)
+            {
+                return new UnityEngine.Material(Camera2.Plugin.Shader_VolumetricBlit);
+            }
+            return null;
+        }
     }
 }
