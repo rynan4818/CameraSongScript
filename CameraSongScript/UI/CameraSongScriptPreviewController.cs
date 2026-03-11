@@ -1,9 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -444,6 +445,21 @@ namespace CameraSongScript.UI
                 new Vector2(PreviewPanelSize.x - 16f, (PreviewPanelSize.x - 16f) * PreviewTextureHeight / (float)PreviewTextureWidth),
                 null,
                 Color.white);
+
+            Material customMaterial = null;
+            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            {
+                customMaterial = Plugin.CamHelper.GetPreviewMaterial();
+            }
+            else if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
+            {
+                customMaterial = Plugin.CamPlusHelper.GetPreviewMaterial();
+            }
+
+            if (customMaterial != null)
+            {
+                _previewDisplayImage.material = customMaterial;
+            }
 
             UpdatePreviewRenderTextureAndView();
 
@@ -954,14 +970,15 @@ namespace CameraSongScript.UI
             if (cameraObject == null)
                 return;
 
+            var destroyList = new string[] { "AudioListener", "LIV", "MainCamera", "MeshCollider", "TrackedPoseDriver" };
             Component[] components = cameraObject.GetComponents<Component>();
             for (int i = 0; i < components.Length; i++)
             {
                 Component component = components[i];
                 if (component == null || component is Transform || ReferenceEquals(component, previewCamera))
                     continue;
-
-                UnityEngine.Object.DestroyImmediate(component);
+                if (destroyList.Contains(component.GetType().Name))
+                    UnityEngine.Object.DestroyImmediate(component);
             }
         }
 

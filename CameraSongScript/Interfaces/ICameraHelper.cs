@@ -19,5 +19,6 @@ namespace CameraSongScript.Interfaces
         void SwitchToCustomScene(string sceneName);
         void ShowNormalScene();
         ICameraToken GetTokenForCamera(string camName);
+        UnityEngine.Material GetPreviewMaterial();
     }
 }

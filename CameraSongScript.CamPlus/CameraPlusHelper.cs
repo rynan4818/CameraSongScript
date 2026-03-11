@@ -140,5 +140,15 @@ namespace CameraSongScript.CamPlus
         }
 
         #endregion
+
+        public UnityEngine.Material GetPreviewMaterial()
+        {
+            var controller = GetController();
+            if (controller != null && controller.Shaders.TryGetValue("BeatSaber/BlitCopyWithDepth", out var shader))
+            {
+                return new UnityEngine.Material(shader);
+            }
+            return null;
+        }
     }
 }
