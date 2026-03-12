@@ -1,6 +1,7 @@
 using System;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Localization;
 using HMUI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -95,6 +96,7 @@ namespace CameraSongScript.UI
             CreateCanvas();
             CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded += OnConfigReloaded;
+            UiLocalization.LanguageChanged += OnLanguageChanged;
             UpdateContent();
         }
 
@@ -102,6 +104,7 @@ namespace CameraSongScript.UI
         {
             CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded -= OnConfigReloaded;
+            UiLocalization.LanguageChanged -= OnLanguageChanged;
             if (_rootObject != null)
                 Destroy(_rootObject);
         }
@@ -165,6 +168,21 @@ namespace CameraSongScript.UI
                 catch (Exception ex)
                 {
                     Plugin.Log.Warn($"StatusView: Failed to update: {ex.Message}");
+                }
+            });
+        }
+
+        private void OnLanguageChanged()
+        {
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            {
+                try
+                {
+                    UpdateContent();
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"StatusView: Failed to apply language change: {ex.Message}");
                 }
             });
         }
@@ -241,23 +259,25 @@ namespace CameraSongScript.UI
             // 汎用スクリプト使用中の場合
             if (isCommon)
             {
-                string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)"
-                    ? "(Random)"
+                string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom
+                    ? UiLocalization.GetOptionDisplay(UiLocalization.OptionRandom, UiLocalization.OptionRandom)
                     : CameraSongScriptDetector.ResolvedCommonScriptDisplayName;
                 if (string.IsNullOrEmpty(commonName))
-                    commonName = CameraSongScriptConfig.Instance.SelectedCommonScript;
+                    commonName = UiLocalization.GetOptionDisplay(
+                        CameraSongScriptConfig.Instance.SelectedCommonScript,
+                        UiLocalization.OptionRandom);
 
-                string commonText = "<color=#FFAA00>CameraSongScript: COMMON</color>";
-                commonText += $"\n<color=#AAAAAA>Script:</color> {commonName}";
+                string commonText = UiLocalization.Get("panel-common");
+                commonText += "\n" + UiLocalization.Format("panel-script-line", commonName);
 
                 // ランダム時はオフセット表示なし（対象スクリプトが不明なため）
-                bool isRandom = CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)";
+                bool isRandom = CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom;
                 if (!isRandom)
                 {
                     int commonOffsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
                     if (commonOffsetCm != 0)
                     {
-                        commonText += $"\n<color=#FFFF00>Y Offset: {commonOffsetCm}cm</color>";
+                        commonText += "\n" + UiLocalization.Format("panel-y-offset-line", commonOffsetCm);
                     }
                 }
 
@@ -268,22 +288,22 @@ namespace CameraSongScript.UI
             // スクリプトなしの場合
             if (!hasScript)
             {
-                _statusText.text = "<color=#888888>CameraSongScript: NONE</color>";
+                _statusText.text = UiLocalization.Get("panel-none");
                 return;
             }
 
             // 機能が無効の場合
             if (!enabled)
             {
-                _statusText.text = AppendCamera2UnsupportedWarning("<color=#888888>CameraSongScript: OFF</color>");
+                _statusText.text = AppendCamera2UnsupportedWarning(UiLocalization.Get("panel-off"));
                 return;
             }
 
             // 以下、有効かつスクリプトありの場合
             string scriptName = CameraSongScriptDetector.SelectedScriptDisplayName;
 
-            string statusLine = $"<color=#00FF00>CameraSongScript: ON</color>";
-            string scriptLine = $"<color=#AAAAAA>Script:</color> {scriptName}";
+            string statusLine = UiLocalization.Get("panel-on");
+            string scriptLine = UiLocalization.Format("panel-script-line", scriptName);
 
             var meta = CameraSongScriptDetector.CurrentMetadata;
             string metaLine = string.Empty;
@@ -293,14 +313,14 @@ namespace CameraSongScript.UI
                     ? meta.cameraScriptAuthorName : "--";
                 string song = !string.IsNullOrEmpty(meta.songName)
                     ? meta.songName : "--";
-                metaLine = $"<color=#AAAAAA>Author:</color> {author} <color=#AAAAAA>| Song:</color> {song}";
+                metaLine = UiLocalization.Format("panel-author-song-line", author, song);
             }
 
             int offsetCm = CameraSongScriptConfig.Instance.CameraHeightOffsetCm;
             string offsetLine = string.Empty;
             if (offsetCm != 0)
             {
-                offsetLine = $"<color=#FFFF00>Y Offset: {offsetCm}cm</color>";
+                offsetLine = UiLocalization.Format("panel-y-offset-line", offsetCm);
             }
 
             string fullText = statusLine;
@@ -318,7 +338,9 @@ namespace CameraSongScript.UI
             if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
                 return statusText;
 
-            string warningText = $"<color=#FF5555>Warning: Unsupported in Camera2 - {CameraSongScriptDetector.CurrentUnsupportedFeatureSummary}</color>";
+            string warningText = UiLocalization.Format(
+                "warning-camera2-unsupported",
+                CameraSongScriptDetector.CurrentUnsupportedFeatureSummary);
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 

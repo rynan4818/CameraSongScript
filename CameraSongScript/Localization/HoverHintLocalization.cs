@@ -83,8 +83,8 @@ namespace CameraSongScript.Localization
             },
             ["hint-hover-hint-language"] = new Dictionary<string, string>
             {
-                [Lang_EN] = "Select hover-hint display language",
-                [Lang_JA] = "hover-hintの表示言語を選択"
+                [Lang_EN] = "Select UI display language",
+                [Lang_JA] = "UI表示言語を選択"
             },
             ["hint-show-hover-hints"] = new Dictionary<string, string>
             {

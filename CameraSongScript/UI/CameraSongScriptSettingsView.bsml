@@ -1,32 +1,32 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
   <settings-container id="settings-container" child-control-width="true" child-expand-width="true" size-delta-y="0">
     <horizontal pad-bottom="2">
-      <text text="Camera Mod:" font-size="3.5" color="#AAAAAA" align="Right"/>
+      <text text="~label-camera-mod" font-size="3.5" color="#AAAAAA" align="Right"/>
       <text text="~detected-camera-mod" font-size="3.5" rich-text="true" align="Center"/>
     </horizontal>
     <horizontal>
-      <toggle-setting text="Enabled" value="enabled" apply-on-change="true" hover-hint="~hint-enabled"/>
+      <toggle-setting text="~toggle-enabled" value="enabled" apply-on-change="true" hover-hint="~hint-enabled"/>
     </horizontal>
     <horizontal>
       <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="script-file-dropdown" text="Script File" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
+      <dropdown-list-setting id="script-file-dropdown" text="~label-script-file" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
     </horizontal>
     <horizontal active="~has-metadata">
       <vertical bg="round-rect-panel" pad="1">
         <horizontal>
-          <text text="Camera: " font-size="3.5" color="#00FF00" align="Right" />
+          <text text="~label-meta-camera" font-size="3.5" color="#00FF00" align="Right" />
           <text text="~meta-author" font-size="3.5" align="Left" />
         </horizontal>
         <horizontal>
-          <text text="Song: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~label-meta-song" font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-song" font-size="3" align="Left" />
-          <text text="Mapper: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~label-meta-mapper" font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-mapper" font-size="3" align="Left" />
         </horizontal>
         <horizontal active="~has-meta-height">
-          <text text="Avatar Height: " font-size="3" color="#AAAAAA" align="Right" />
+          <text text="~label-meta-height" font-size="3" color="#AAAAAA" align="Right" />
           <text text="~meta-height" font-size="3" align="Left" />
         </horizontal>
         <horizontal active="~has-meta-description">
@@ -35,21 +35,21 @@
       </vertical>
     </horizontal>
     <horizontal>
-      <slider-setting id="camera-height-offset" text="Height Y Offset (cm)" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" interactable="~is-offset-interactable" hover-hint="~hint-height-offset" />
+      <slider-setting id="camera-height-offset" text="~label-height-offset" value="camera-height-offset" min="-200" max="200" increment="1" integer-only="true" apply-on-change="true" show-buttons="true" interactable="~is-offset-interactable" hover-hint="~hint-height-offset" />
     </horizontal>
     <horizontal>
-      <button id="camera-height-reset-btn" text="Reset Offset" on-click="reset-camera-height" align="Right" min-width="15" interactable="~is-offset-interactable" hover-hint="~hint-height-reset"/>
+      <button id="camera-height-reset-btn" text="~button-reset-offset" on-click="reset-camera-height" align="Right" min-width="15" interactable="~is-offset-interactable" hover-hint="~hint-height-reset"/>
     </horizontal>
     <horizontal pad-top="2">
-      <text text="--- プレビュー ---" font-size="3.5" color="#66CCFF" align="Center"/>
+      <text text="~section-preview" font-size="3.5" color="#66CCFF" align="Center"/>
     </horizontal>
     <horizontal>
       <text text="~preview-status" font-size="3" color="#CCCCCC" align="Left" word-wrapping="true" />
     </horizontal>
     <horizontal>
-      <button text="表示・開始" on-click="preview-show-start" min-width="18" interactable="~can-preview" />
-      <button text="停止" on-click="preview-stop" min-width="12" interactable="~is-preview-visible" />
-      <button text="消去" on-click="preview-clear" min-width="12" interactable="~is-preview-visible" />
+      <button text="~button-preview-show-start" on-click="preview-show-start" min-width="18" interactable="~can-preview" />
+      <button text="~button-preview-stop" on-click="preview-stop" min-width="12" interactable="~is-preview-visible" />
+      <button text="~button-preview-clear" on-click="preview-clear" min-width="12" interactable="~is-preview-visible" />
     </horizontal>
     <horizontal>
       <button text="X2" on-click="preview-speed-x2" min-width="10" interactable="~can-preview" />
@@ -58,60 +58,60 @@
       <button text="X16" on-click="preview-speed-x16" min-width="10" interactable="~can-preview" />
     </horizontal>
     <horizontal>
-      <slider-setting id="preview-position-slider" text="再生位置" value="preview-position" min="0" max="1" increment="0.05" apply-on-change="true" show-buttons="true" formatter="format-preview-time" interactable="~can-preview" />
+      <slider-setting id="preview-position-slider" text="~label-preview-position" value="preview-position" min="0" max="1" increment="0.05" apply-on-change="true" show-buttons="true" formatter="format-preview-time" interactable="~can-preview" />
     </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
-        <toggle-setting text="Use Audio Sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
+        <toggle-setting text="~toggle-use-audio-sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting text="Target Camera" value="target-cameras" size-delta-x="50" options="target-camera-options" apply-on-change="true" hover-hint="~hint-target-camera"/>
+        <dropdown-list-setting id="target-camera-dropdown" text="~label-target-camera" value="target-cameras" size-delta-x="50" options="target-camera-options" apply-on-change="true" hover-hint="~hint-target-camera"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting id="custom-scene-dropdown" text="Custom Scene" size-delta-x="50" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="~hint-custom-scene"/>
+        <dropdown-list-setting id="custom-scene-dropdown" text="~label-custom-scene" size-delta-x="50" value="selected-custom-scene" options="custom-scene-options" apply-on-change="true" hover-hint="~hint-custom-scene"/>
       </horizontal>
       <horizontal>
-        <button text="Add 'CameraSongScript' Custom Scene" on-click="add-custom-scene" hover-hint="~hint-add-custom-scene" />
+        <button text="~button-add-custom-scene" on-click="add-custom-scene" hover-hint="~hint-add-custom-scene" />
       </horizontal>
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
-        <dropdown-list-setting text="SongScript Profile" value="song-specific-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
+        <dropdown-list-setting id="song-specific-profile-dropdown" text="~label-songscript-profile" value="song-specific-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
     </macro.if>
     <horizontal pad-top="2">
-      <text text="--- Common Script ---" font-size="3.5" color="#FFAA00" align="Center"/>
+      <text text="~section-common-script" font-size="3.5" color="#FFAA00" align="Center"/>
     </horizontal>
     <horizontal>
-      <toggle-setting text="Fallback to Common" value="use-common-fallback" apply-on-change="true" hover-hint="~hint-common-fallback"/>
+      <toggle-setting text="~toggle-fallback-to-common" value="use-common-fallback" apply-on-change="true" hover-hint="~hint-common-fallback"/>
     </horizontal>
     <horizontal>
-      <toggle-setting text="Force Common Script" value="force-common-script" apply-on-change="true" hover-hint="~hint-force-common"/>
+      <toggle-setting text="~toggle-force-common-script" value="force-common-script" apply-on-change="true" hover-hint="~hint-force-common"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="common-script-dropdown" text="Common Script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true" hover-hint="~hint-common-script-file"/>
+      <dropdown-list-setting id="common-script-dropdown" text="~label-common-script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true" hover-hint="~hint-common-script-file"/>
     </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
-        <dropdown-list-setting text="CS Target Camera" value="common-target-camera" size-delta-x="50" options="common-target-camera-options" apply-on-change="true" hover-hint="~hint-common-target-camera"/>
+        <dropdown-list-setting id="common-target-camera-dropdown" text="~label-common-target-camera" value="common-target-camera" size-delta-x="50" options="common-target-camera-options" apply-on-change="true" hover-hint="~hint-common-target-camera"/>
       </horizontal>
       <horizontal>
-        <dropdown-list-setting text="CS Custom Scene" value="common-custom-scene" size-delta-x="50" options="common-custom-scene-options" apply-on-change="true" hover-hint="~hint-common-custom-scene"/>
+        <dropdown-list-setting id="common-custom-scene-dropdown" text="~label-common-custom-scene" value="common-custom-scene" size-delta-x="50" options="common-custom-scene-options" apply-on-change="true" hover-hint="~hint-common-custom-scene"/>
       </horizontal>
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
-        <dropdown-list-setting text="CS Profile" value="common-profile" size-delta-x="50" options="common-profile-options" apply-on-change="true" hover-hint="~hint-common-profile"/>
+        <dropdown-list-setting id="common-profile-dropdown" text="~label-common-profile" value="common-profile" size-delta-x="50" options="common-profile-options" apply-on-change="true" hover-hint="~hint-common-profile"/>
       </horizontal>
     </macro.if>
     <horizontal pad-top="2">
-      <text text="--- Status Panel ---" font-size="3.5" color="#FFAA00" align="Center"/>
+      <text text="~section-status-panel" font-size="3.5" color="#FFAA00" align="Center"/>
     </horizontal>
     <horizontal>
-      <toggle-setting text="Show Status Panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>
+      <toggle-setting text="~toggle-show-status-panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting text="Panel Position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="~hint-panel-position"/>
+      <dropdown-list-setting id="status-panel-position-dropdown" text="~label-panel-position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="~hint-panel-position"/>
     </horizontal>
   </settings-container>
 </bg>

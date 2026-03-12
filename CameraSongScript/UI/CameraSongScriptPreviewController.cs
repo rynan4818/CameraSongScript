@@ -19,7 +19,7 @@ namespace CameraSongScript.UI
     internal class CameraSongScriptPreviewController : IInitializable, IDisposable, ITickable
     {
         private const float DefaultFov = 90f;
-        private const float MiniatureScale = 0.1f;
+        private const float MiniatureScale = 0.15f;
         private const float ScreenScale = 0.0025f;
         private const float EndPoseEpsilon = 0.0001f;
         private const float StageHalfWidth = 1.5f;
@@ -28,11 +28,11 @@ namespace CameraSongScript.UI
         private const float StageDepthDown = 10.0f;
         private const int PreviewDisplayLayer = 5;
         private const int MiniatureLayer = 5;
-        private const int PreviewTextureWidth = 512;
-        private const int PreviewTextureHeight = 288;
+        private const int PreviewTextureWidth = 1280;
+        private const int PreviewTextureHeight = 720;
         private const float PathRevealDuration = 2.5f;
 
-        private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.5f);
+        private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.6f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
         private static readonly Vector2 PreviewPanelSize = new Vector2(360f, 360f * PreviewTextureHeight / (float)PreviewTextureWidth);
         private static readonly Color StageFrameColor = new Color(0.55f, 0.42f, 0.14f, 0.45f);
