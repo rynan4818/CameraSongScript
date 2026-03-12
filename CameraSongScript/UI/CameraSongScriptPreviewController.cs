@@ -34,7 +34,7 @@ namespace CameraSongScript.UI
 
         private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.5f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
-        private static readonly Vector2 PreviewPanelSize = new Vector2(360f, 220f);
+        private static readonly Vector2 PreviewPanelSize = new Vector2(360f, 360f * PreviewTextureHeight / (float)PreviewTextureWidth);
         private static readonly Color StageFrameColor = new Color(0.55f, 0.42f, 0.14f, 0.45f);
         private static readonly Color PathColor = new Color(0.06f, 0.28f, 0.38f, 0.35f);
         private static readonly Color AvatarColor = new Color(0.86f, 0.86f, 0.9f, 1f);
@@ -363,7 +363,7 @@ namespace CameraSongScript.UI
             SetLayerRecursively(_visibleRoot, PreviewDisplayLayer);
             SetLayerRecursively(_miniatureRoot.gameObject, MiniatureLayer);
             _previewCamera = CreatePreviewCamera();
-            UpdatePreviewRenderTextureAndView();
+            EnsurePreviewRenderTarget();
             StartPathRevealAnimation();
         }
 
@@ -375,7 +375,7 @@ namespace CameraSongScript.UI
             return includeCameraMarker ? CreateCameraMarker(parent) : null;
         }
 
-        private void UpdatePreviewRenderTextureAndView()
+        private void EnsurePreviewRenderTarget()
         {
             bool needsNewTexture = _previewTexture == null
                 || _previewTexture.width != PreviewTextureWidth
@@ -432,19 +432,20 @@ namespace CameraSongScript.UI
             screenCanvas.overrideSorting = true;
             screenCanvas.sortingOrder = 60;
 
-            CreatePreviewScreenElement(
-                screenTransform,
-                "PreviewBackground",
-                PreviewPanelSize,
-                Texture2D.whiteTexture,
-                new Color(0.02f, 0.02f, 0.03f, 0.96f));
+            GameObject imageObject = new GameObject("PreviewImage", typeof(RawImage));
+            imageObject.transform.SetParent(screenTransform, false);
 
-            _previewDisplayImage = CreatePreviewScreenElement(
-                screenTransform,
-                "PreviewImage",
-                new Vector2(PreviewPanelSize.x - 16f, (PreviewPanelSize.x - 16f) * PreviewTextureHeight / (float)PreviewTextureWidth),
-                null,
-                Color.white);
+            _previewDisplayImage = imageObject.GetComponent<RawImage>();
+            _previewDisplayImage.color = Color.white;
+            _previewDisplayImage.raycastTarget = false;
+
+            RectTransform imageTransform = _previewDisplayImage.rectTransform;
+            imageTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            imageTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            imageTransform.pivot = new Vector2(0.5f, 0.5f);
+            imageTransform.sizeDelta = PreviewPanelSize;
+            imageTransform.anchoredPosition = Vector2.zero;
+            imageTransform.localScale = Vector3.one;
 
             Material customMaterial = null;
             if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
@@ -461,29 +462,7 @@ namespace CameraSongScript.UI
                 _previewDisplayImage.material = customMaterial;
             }
 
-            UpdatePreviewRenderTextureAndView();
-
             return screenTransform;
-        }
-
-        private static RawImage CreatePreviewScreenElement(RectTransform parent, string name, Vector2 size, Texture texture, Color color)
-        {
-            GameObject imageObject = new GameObject(name, typeof(RawImage));
-            imageObject.transform.SetParent(parent, false);
-
-            RawImage image = imageObject.GetComponent<RawImage>();
-            image.texture = texture;
-            image.color = color;
-            image.raycastTarget = false;
-
-            RectTransform rectTransform = image.rectTransform;
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.sizeDelta = size;
-            rectTransform.anchoredPosition = Vector2.zero;
-            rectTransform.localScale = Vector3.one;
-            return image;
         }
 
         private Camera CreatePreviewCamera()
@@ -523,8 +502,6 @@ namespace CameraSongScript.UI
             previewCamera.enabled = false;
             previewCamera.stereoTargetEye = StereoTargetEyeMask.None;
             previewCamera.depth = -1000f;
-            UpdatePreviewRenderTextureAndView();
-            SyncPreviewCameraSourceSettings(previewCamera);
             return previewCamera;
         }
 
@@ -867,55 +844,40 @@ namespace CameraSongScript.UI
             StateChanged?.Invoke();
         }
 
-        private void SyncPreviewCameraSourceSettings(Camera previewCamera)
-        {
-            if (previewCamera == null)
-                return;
-
-            UpdatePreviewRenderTextureAndView();
-
-            RenderTexture targetTexture = _previewTexture;
-            Camera sourceCamera = GetSourceCamera();
-            int previewCullingMask = GetPreviewCullingMask();
-
-            previewCamera.clearFlags = CameraClearFlags.SolidColor;
-            previewCamera.backgroundColor = new Color(0.015f, 0.015f, 0.02f, 1f);
-            previewCamera.cullingMask = previewCullingMask;
-            previewCamera.tag = "Untagged";
-            previewCamera.enabled = false;
-            previewCamera.stereoTargetEye = StereoTargetEyeMask.None;
-            previewCamera.targetTexture = targetTexture;
-            previewCamera.rect = new Rect(0f, 0f, 1f, 1f);
-            previewCamera.depthTextureMode = DepthTextureMode.None;
-
-            if (sourceCamera != null)
-            {
-                previewCamera.orthographic = sourceCamera.orthographic;
-                previewCamera.nearClipPlane = sourceCamera.nearClipPlane;
-                previewCamera.farClipPlane = sourceCamera.farClipPlane;
-            }
-            else
-            {
-                previewCamera.orthographic = false;
-                previewCamera.nearClipPlane = 0.01f;
-                previewCamera.farClipPlane = 100f;
-            }
-
-            previewCamera.aspect = targetTexture != null && targetTexture.height > 0
-                ? (float)targetTexture.width / targetTexture.height
-                : 16f / 9f;
-        }
-
-        private void PreparePreviewRender(bool forceRender = false)
+        private void RenderPreviewCamera()
         {
             if (_previewCamera == null)
                 return;
 
-            UpdatePreviewRenderTextureAndView();
+            EnsurePreviewRenderTarget();
             if (_previewTexture == null)
                 return;
 
-            SyncPreviewCameraSourceSettings(_previewCamera);
+            Camera sourceCamera = GetSourceCamera();
+            _previewCamera.clearFlags = CameraClearFlags.SolidColor;
+            _previewCamera.backgroundColor = new Color(0.015f, 0.015f, 0.02f, 1f);
+            _previewCamera.cullingMask = GetPreviewCullingMask();
+            _previewCamera.tag = "Untagged";
+            _previewCamera.enabled = false;
+            _previewCamera.stereoTargetEye = StereoTargetEyeMask.None;
+            _previewCamera.targetTexture = _previewTexture;
+            _previewCamera.rect = new Rect(0f, 0f, 1f, 1f);
+            _previewCamera.depthTextureMode = DepthTextureMode.None;
+
+            if (sourceCamera != null)
+            {
+                _previewCamera.orthographic = sourceCamera.orthographic;
+                _previewCamera.nearClipPlane = sourceCamera.nearClipPlane;
+                _previewCamera.farClipPlane = sourceCamera.farClipPlane;
+            }
+            else
+            {
+                _previewCamera.orthographic = false;
+                _previewCamera.nearClipPlane = 0.01f;
+                _previewCamera.farClipPlane = 100f;
+            }
+
+            _previewCamera.aspect = (float)_previewTexture.width / _previewTexture.height;
 
             GameObject cameraObject = _previewCamera.gameObject;
             if (!cameraObject.activeSelf)
@@ -924,19 +886,13 @@ namespace CameraSongScript.UI
             _previewCamera.enabled = true;
             try
             {
-                if (forceRender)
-                    _previewCamera.Render();
+                _previewCamera.Render();
             }
             finally
             {
                 if (_previewCamera != null)
                     _previewCamera.enabled = false;
             }
-        }
-
-        private void RenderPreviewCamera()
-        {
-            PreparePreviewRender(true);
         }
 
         private static int GetPreviewCullingMask()
