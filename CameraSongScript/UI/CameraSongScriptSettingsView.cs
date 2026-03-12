@@ -48,6 +48,7 @@ namespace CameraSongScript.UI
             CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
+            UiLocalization.LanguageChanged += OnLanguageChanged;
         }
 
         public void Dispose()
@@ -55,6 +56,7 @@ namespace CameraSongScript.UI
             CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
+            UiLocalization.LanguageChanged -= OnLanguageChanged;
             GameplaySetup.instance?.RemoveTab(TabName);
         }
 
@@ -67,6 +69,7 @@ namespace CameraSongScript.UI
             }
 
             RefreshPreviewBindings();
+            RefreshLocalizedUi();
         }
 
         protected void Update()
@@ -100,6 +103,120 @@ namespace CameraSongScript.UI
                 return;
 
             RefreshPreviewBindings();
+        }
+
+        private void OnLanguageChanged()
+        {
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            {
+                try
+                {
+                    RefreshLocalizedUi();
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SettingsView: Failed to refresh localized UI: {ex.Message}");
+                }
+            });
+        }
+
+        private void RefreshLocalizedUi()
+        {
+            NotifyPropertyChanged(nameof(LabelCameraMod));
+            NotifyPropertyChanged(nameof(ToggleEnabled));
+            NotifyPropertyChanged(nameof(LabelScriptFile));
+            NotifyPropertyChanged(nameof(LabelMetaCamera));
+            NotifyPropertyChanged(nameof(LabelMetaSong));
+            NotifyPropertyChanged(nameof(LabelMetaMapper));
+            NotifyPropertyChanged(nameof(LabelMetaHeight));
+            NotifyPropertyChanged(nameof(LabelHeightOffset));
+            NotifyPropertyChanged(nameof(ButtonResetOffset));
+            NotifyPropertyChanged(nameof(SectionPreview));
+            NotifyPropertyChanged(nameof(ButtonPreviewShowStart));
+            NotifyPropertyChanged(nameof(ButtonPreviewStop));
+            NotifyPropertyChanged(nameof(ButtonPreviewClear));
+            NotifyPropertyChanged(nameof(LabelPreviewPosition));
+            NotifyPropertyChanged(nameof(ToggleUseAudioSync));
+            NotifyPropertyChanged(nameof(LabelTargetCamera));
+            NotifyPropertyChanged(nameof(LabelCustomScene));
+            NotifyPropertyChanged(nameof(ButtonAddCustomScene));
+            NotifyPropertyChanged(nameof(LabelSongScriptProfile));
+            NotifyPropertyChanged(nameof(SectionCommonScript));
+            NotifyPropertyChanged(nameof(ToggleFallbackToCommon));
+            NotifyPropertyChanged(nameof(ToggleForceCommonScript));
+            NotifyPropertyChanged(nameof(LabelCommonScript));
+            NotifyPropertyChanged(nameof(LabelCommonTargetCamera));
+            NotifyPropertyChanged(nameof(LabelCommonCustomScene));
+            NotifyPropertyChanged(nameof(LabelCommonProfile));
+            NotifyPropertyChanged(nameof(SectionStatusPanel));
+            NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
+            NotifyPropertyChanged(nameof(LabelPanelPosition));
+            NotifyPropertyChanged(nameof(DetectedCameraMod));
+            NotifyPropertyChanged(nameof(ScriptFileOptions));
+            NotifyPropertyChanged(nameof(SelectedScriptFile));
+            NotifyPropertyChanged(nameof(CustomSceneOptions));
+            NotifyPropertyChanged(nameof(SelectedCustomScene));
+            NotifyPropertyChanged(nameof(TargetCameraOptions));
+            NotifyPropertyChanged(nameof(TargetCameras));
+            NotifyPropertyChanged(nameof(ProfileOptions));
+            NotifyPropertyChanged(nameof(SongSpecificProfile));
+            NotifyPropertyChanged(nameof(CommonScriptOptions));
+            NotifyPropertyChanged(nameof(SelectedCommonScript));
+            NotifyPropertyChanged(nameof(CommonTargetCameraOptions));
+            NotifyPropertyChanged(nameof(CommonTargetCamera));
+            NotifyPropertyChanged(nameof(CommonCustomSceneOptions));
+            NotifyPropertyChanged(nameof(CommonCustomScene));
+            NotifyPropertyChanged(nameof(CommonProfileOptions));
+            NotifyPropertyChanged(nameof(CommonProfile));
+            NotifyPropertyChanged(nameof(StatusPanelPositionOptions));
+            NotifyPropertyChanged(nameof(StatusPanelPosition));
+            NotifyPropertyChanged(nameof(SongScriptStatus));
+            NotifyPropertyChanged(nameof(PreviewStatus));
+
+            RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
+            RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
+            RefreshDropdown(customSceneDropdown, CustomSceneOptions);
+            RefreshDropdown(songSpecificProfileDropdown, ProfileOptions);
+            RefreshDropdown(commonScriptDropdown, CommonScriptOptions);
+            RefreshDropdown(commonTargetCameraDropdown, CommonTargetCameraOptions);
+            RefreshDropdown(commonCustomSceneDropdown, CommonCustomSceneOptions);
+            RefreshDropdown(commonProfileDropdown, CommonProfileOptions);
+            RefreshDropdown(statusPanelPositionDropdown, StatusPanelPositionOptions);
+
+            RefreshHoverHintBindings();
+            RefreshLayout();
+            _statusView?.UpdateContent();
+        }
+
+        private static void RefreshDropdown(DropDownListSetting dropdown, List<object> options)
+        {
+            if (dropdown == null)
+                return;
+
+            dropdown.values = options;
+            dropdown.UpdateChoices();
+            dropdown.ReceiveValue();
+        }
+
+        private void RefreshHoverHintBindings()
+        {
+            NotifyPropertyChanged(nameof(HintEnabled));
+            NotifyPropertyChanged(nameof(HintScriptFile));
+            NotifyPropertyChanged(nameof(HintHeightOffset));
+            NotifyPropertyChanged(nameof(HintHeightReset));
+            NotifyPropertyChanged(nameof(HintAudioSync));
+            NotifyPropertyChanged(nameof(HintTargetCamera));
+            NotifyPropertyChanged(nameof(HintCustomScene));
+            NotifyPropertyChanged(nameof(HintAddCustomScene));
+            NotifyPropertyChanged(nameof(HintScriptProfile));
+            NotifyPropertyChanged(nameof(HintShowStatusPanel));
+            NotifyPropertyChanged(nameof(HintPanelPosition));
+            NotifyPropertyChanged(nameof(HintCommonFallback));
+            NotifyPropertyChanged(nameof(HintForceCommon));
+            NotifyPropertyChanged(nameof(HintCommonScriptFile));
+            NotifyPropertyChanged(nameof(HintCommonTargetCamera));
+            NotifyPropertyChanged(nameof(HintCommonCustomScene));
+            NotifyPropertyChanged(nameof(HintCommonProfile));
         }
 
         /// <summary>
@@ -156,6 +273,97 @@ namespace CameraSongScript.UI
             });
         }
 
+        #region UI文言ローカライズ
+
+        [UIValue("label-camera-mod")]
+        public string LabelCameraMod => UiLocalization.Get("label-camera-mod");
+
+        [UIValue("toggle-enabled")]
+        public string ToggleEnabled => UiLocalization.Get("toggle-enabled");
+
+        [UIValue("label-script-file")]
+        public string LabelScriptFile => UiLocalization.Get("label-script-file");
+
+        [UIValue("label-meta-camera")]
+        public string LabelMetaCamera => UiLocalization.Get("label-meta-camera");
+
+        [UIValue("label-meta-song")]
+        public string LabelMetaSong => UiLocalization.Get("label-meta-song");
+
+        [UIValue("label-meta-mapper")]
+        public string LabelMetaMapper => UiLocalization.Get("label-meta-mapper");
+
+        [UIValue("label-meta-height")]
+        public string LabelMetaHeight => UiLocalization.Get("label-meta-height");
+
+        [UIValue("label-height-offset")]
+        public string LabelHeightOffset => UiLocalization.Get("label-height-offset");
+
+        [UIValue("button-reset-offset")]
+        public string ButtonResetOffset => UiLocalization.Get("button-reset-offset");
+
+        [UIValue("section-preview")]
+        public string SectionPreview => UiLocalization.Get("section-preview");
+
+        [UIValue("button-preview-show-start")]
+        public string ButtonPreviewShowStart => UiLocalization.Get("button-preview-show-start");
+
+        [UIValue("button-preview-stop")]
+        public string ButtonPreviewStop => UiLocalization.Get("button-preview-stop");
+
+        [UIValue("button-preview-clear")]
+        public string ButtonPreviewClear => UiLocalization.Get("button-preview-clear");
+
+        [UIValue("label-preview-position")]
+        public string LabelPreviewPosition => UiLocalization.Get("label-preview-position");
+
+        [UIValue("toggle-use-audio-sync")]
+        public string ToggleUseAudioSync => UiLocalization.Get("toggle-use-audio-sync");
+
+        [UIValue("label-target-camera")]
+        public string LabelTargetCamera => UiLocalization.Get("label-target-camera");
+
+        [UIValue("label-custom-scene")]
+        public string LabelCustomScene => UiLocalization.Get("label-custom-scene");
+
+        [UIValue("button-add-custom-scene")]
+        public string ButtonAddCustomScene => UiLocalization.Get("button-add-custom-scene");
+
+        [UIValue("label-songscript-profile")]
+        public string LabelSongScriptProfile => UiLocalization.Get("label-songscript-profile");
+
+        [UIValue("section-common-script")]
+        public string SectionCommonScript => UiLocalization.Get("section-common-script");
+
+        [UIValue("toggle-fallback-to-common")]
+        public string ToggleFallbackToCommon => UiLocalization.Get("toggle-fallback-to-common");
+
+        [UIValue("toggle-force-common-script")]
+        public string ToggleForceCommonScript => UiLocalization.Get("toggle-force-common-script");
+
+        [UIValue("label-common-script")]
+        public string LabelCommonScript => UiLocalization.Get("label-common-script");
+
+        [UIValue("label-common-target-camera")]
+        public string LabelCommonTargetCamera => UiLocalization.Get("label-common-target-camera");
+
+        [UIValue("label-common-custom-scene")]
+        public string LabelCommonCustomScene => UiLocalization.Get("label-common-custom-scene");
+
+        [UIValue("label-common-profile")]
+        public string LabelCommonProfile => UiLocalization.Get("label-common-profile");
+
+        [UIValue("section-status-panel")]
+        public string SectionStatusPanel => UiLocalization.Get("section-status-panel");
+
+        [UIValue("toggle-show-status-panel")]
+        public string ToggleShowStatusPanel => UiLocalization.Get("toggle-show-status-panel");
+
+        [UIValue("label-panel-position")]
+        public string LabelPanelPosition => UiLocalization.Get("label-panel-position");
+
+        #endregion
+
         #region 検出カメラMod表示
 
         [UIValue("detected-camera-mod")]
@@ -170,7 +378,10 @@ namespace CameraSongScript.UI
                     case CameraModType.CameraPlus:
                         return "<color=#00FF00>CameraPlus</color>";
                     default:
-                        return "<color=#FF0000>None</color>";
+                        return string.Format(
+                            CultureInfo.InvariantCulture,
+                            "<color=#FF0000>{0}</color>",
+                            UiLocalization.Get("detected-none"));
                 }
             }
         }
@@ -205,6 +416,9 @@ namespace CameraSongScript.UI
         [UIComponent("script-file-dropdown")]
         public DropDownListSetting scriptFileDropdown;
 
+        [UIComponent("target-camera-dropdown")]
+        public DropDownListSetting targetCameraDropdown;
+
         [UIComponent("camera-height-offset")]
         public SliderSetting cameraHeightOffsetSlider;
 
@@ -213,6 +427,21 @@ namespace CameraSongScript.UI
 
         [UIComponent("preview-position-slider")]
         public SliderSetting previewPositionSlider;
+
+        [UIComponent("song-specific-profile-dropdown")]
+        public DropDownListSetting songSpecificProfileDropdown;
+
+        [UIComponent("common-target-camera-dropdown")]
+        public DropDownListSetting commonTargetCameraDropdown;
+
+        [UIComponent("common-custom-scene-dropdown")]
+        public DropDownListSetting commonCustomSceneDropdown;
+
+        [UIComponent("common-profile-dropdown")]
+        public DropDownListSetting commonProfileDropdown;
+
+        [UIComponent("status-panel-position-dropdown")]
+        public DropDownListSetting statusPanelPositionDropdown;
 
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
@@ -225,7 +454,7 @@ namespace CameraSongScript.UI
                     list.Add(fileName);
                 }
                 if (list.Count == 0)
-                    list.Add("(none)");
+                    list.Add(UiLocalization.GetOptionDisplay(UiLocalization.OptionNone, UiLocalization.OptionNone));
                 return list;
             }
         }
@@ -249,12 +478,12 @@ namespace CameraSongScript.UI
                     }
                     return CameraSongScriptDetector.SelectedScriptDisplayName;
                 }
-                return "(none)";
+                return UiLocalization.GetOptionDisplay(UiLocalization.OptionNone, UiLocalization.OptionNone);
             }
             set
             {
-                string fileName = value as string;
-                if (!string.IsNullOrEmpty(fileName) && fileName != "(none)")
+                string fileName = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNone);
+                if (!string.IsNullOrEmpty(fileName) && fileName != UiLocalization.OptionNone)
                 {
                     CameraSongScriptDetector.UpdateSelectedScript(fileName);
                     SongSettingsManager.UpdateCurrentScriptFileName(fileName);
@@ -339,7 +568,7 @@ namespace CameraSongScript.UI
         /// </summary>
         private bool IsCommonRandom =>
             CameraSongScriptDetector.IsUsingCommonScript &&
-            CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)";
+            CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom;
 
         /// <summary>
         /// オフセットスライダーとリセットボタンの操作可否
@@ -514,7 +743,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(Default)" };
+                var list = new List<string> { UiLocalization.OptionDefault };
                 if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
                 {
                     try
@@ -530,23 +759,25 @@ namespace CameraSongScript.UI
                         Plugin.Log.Warn($"SettingsView: Failed to get custom scenes: {ex.Message}");
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionDefault);
             }
         }
 
         [UIComponent("custom-scene-dropdown")]
         public DropDownListSetting customSceneDropdown;
 
-        private string _selectedCustomScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch ?? "(Default)";
+        private string _selectedCustomScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch ?? UiLocalization.OptionDefault;
 
         [UIValue("selected-custom-scene")]
         public object SelectedCustomScene
         {
-            get => _selectedCustomScene;
+            get => UiLocalization.GetOptionDisplay(
+                string.IsNullOrEmpty(_selectedCustomScene) ? UiLocalization.OptionDefault : _selectedCustomScene,
+                UiLocalization.OptionDefault);
             set
             {
-                string scene = value as string;
-                _selectedCustomScene = scene ?? "(Default)";
+                string scene = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionDefault);
+                _selectedCustomScene = string.IsNullOrEmpty(scene) ? UiLocalization.OptionDefault : scene;
                 
                 // 設定に保存（実際の切り替えはゲームシーン開始時に自動で行われる）
                 CameraSongScriptConfig.Instance.CustomSceneToSwitch = _selectedCustomScene;
@@ -562,7 +793,7 @@ namespace CameraSongScript.UI
                 IEnumerable<string> camerasToAdd;
 
                 // All または 未指定の場合は有効なすべてのカメラを追加、そうでない場合は指定カメラのみ追加
-                if (string.IsNullOrEmpty(targetCam) || targetCam == "(All)")
+                if (string.IsNullOrEmpty(targetCam) || targetCam == UiLocalization.OptionAll)
                 {
                     camerasToAdd = Plugin.CamHelper.GetAvailableCameras();
                 }
@@ -575,7 +806,8 @@ namespace CameraSongScript.UI
                 
                 // ドロップダウンのリストとUIを更新
                 NotifyPropertyChanged(nameof(CustomSceneOptions));
-                customSceneDropdown?.UpdateChoices();
+                NotifyPropertyChanged(nameof(SelectedCustomScene));
+                RefreshDropdown(customSceneDropdown, CustomSceneOptions);
             }
         }
 
@@ -591,7 +823,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(All)" };
+                var list = new List<string> { UiLocalization.OptionAll };
                 if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
                 {
                     try
@@ -604,7 +836,7 @@ namespace CameraSongScript.UI
                         Plugin.Log.Warn($"SettingsView: Failed to get available cameras: {ex.Message}");
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionAll);
             }
         }
 
@@ -614,12 +846,14 @@ namespace CameraSongScript.UI
             get
             {
                 string cam = CameraSongScriptConfig.Instance.TargetCameras;
-                return string.IsNullOrEmpty(cam) ? "(All)" : cam;
+                return UiLocalization.GetOptionDisplay(
+                    string.IsNullOrEmpty(cam) ? UiLocalization.OptionAll : cam,
+                    UiLocalization.OptionAll);
             }
             set
             {
-                string cam = value as string;
-                if (cam == "(All)") cam = string.Empty;
+                string cam = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionAll);
+                if (cam == UiLocalization.OptionAll) cam = string.Empty;
                 CameraSongScriptConfig.Instance.TargetCameras = cam ?? string.Empty;
             }
         }
@@ -636,7 +870,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(NoChange)", "(Delete)" };
+                var list = new List<string> { UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
                 if (Plugin.IsCamPlusHelperReady)
                 {
                     foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
@@ -645,7 +879,7 @@ namespace CameraSongScript.UI
                             list.Add(profile);
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
             }
         }
 
@@ -654,15 +888,17 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (!Plugin.IsCamPlusHelperReady) return "(NoChange)";
+                if (!Plugin.IsCamPlusHelperReady) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
                 string profile = CameraSongScriptDetector.ResolvedProfileName;
-                if (string.IsNullOrEmpty(profile)) return "(NoChange)";
-                return profile;
+                if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
+                return UiLocalization.GetOptionDisplay(profile, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
             }
             set
             {
                 if (!Plugin.IsCamPlusHelperReady) return;
-                string profile = value as string ?? "(NoChange)";
+                string profile = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
+                if (string.IsNullOrEmpty(profile))
+                    profile = UiLocalization.OptionNoChange;
 
                 // グローバル設定として保存
                 CameraSongScriptConfig.Instance.SongScriptProfile = profile;
@@ -724,7 +960,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object>();
+                var list = new List<string>();
                 if (CommonScriptCache.IsReady)
                 {
                     foreach (var name in CommonScriptCache.GetDisplayNames())
@@ -733,8 +969,8 @@ namespace CameraSongScript.UI
                     }
                 }
                 if (list.Count == 0)
-                    list.Add("(none)");
-                return list;
+                    list.Add(UiLocalization.OptionNone);
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionRandom, UiLocalization.OptionNone);
             }
         }
 
@@ -748,14 +984,14 @@ namespace CameraSongScript.UI
                 {
                     var names = CommonScriptCache.GetDisplayNames();
                     if (names.Contains(selected))
-                        return selected;
+                        return UiLocalization.GetOptionDisplay(selected, UiLocalization.OptionRandom);
                 }
-                return "(Random)";
+                return UiLocalization.GetOptionDisplay(UiLocalization.OptionRandom, UiLocalization.OptionRandom);
             }
             set
             {
-                string name = value as string;
-                if (!string.IsNullOrEmpty(name) && name != "(none)")
+                string name = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionRandom, UiLocalization.OptionNone);
+                if (!string.IsNullOrEmpty(name) && name != UiLocalization.OptionNone)
                 {
                     CameraSongScriptConfig.Instance.SelectedCommonScript = name;
                     CameraSongScriptDetector.ReevaluateCommonScriptUsage();
@@ -783,7 +1019,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(Same as SongScript)" };
+                var list = new List<string> { UiLocalization.OptionSameAsSongScript };
                 if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
                 {
                     try
@@ -796,7 +1032,7 @@ namespace CameraSongScript.UI
                         Plugin.Log.Warn($"SettingsView: Failed to get available cameras for CS: {ex.Message}");
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionSameAsSongScript);
             }
         }
 
@@ -806,13 +1042,15 @@ namespace CameraSongScript.UI
             get
             {
                 string cam = CameraSongScriptConfig.Instance.CommonScriptTargetCamera;
-                return string.IsNullOrEmpty(cam) ? "(Same as SongScript)" : cam;
+                return UiLocalization.GetOptionDisplay(
+                    string.IsNullOrEmpty(cam) ? UiLocalization.OptionSameAsSongScript : cam,
+                    UiLocalization.OptionSameAsSongScript);
             }
             set
             {
-                string cam = value as string;
+                string cam = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionSameAsSongScript);
                 CameraSongScriptConfig.Instance.CommonScriptTargetCamera =
-                    (cam == "(Same as SongScript)") ? string.Empty : (cam ?? string.Empty);
+                    (cam == UiLocalization.OptionSameAsSongScript) ? string.Empty : (cam ?? string.Empty);
                 _statusView?.UpdateContent();
             }
         }
@@ -822,7 +1060,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(Same as SongScript)" };
+                var list = new List<string> { UiLocalization.OptionSameAsSongScript };
                 if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
                 {
                     try
@@ -838,7 +1076,7 @@ namespace CameraSongScript.UI
                         Plugin.Log.Warn($"SettingsView: Failed to get custom scenes for CS: {ex.Message}");
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionSameAsSongScript);
             }
         }
 
@@ -848,13 +1086,15 @@ namespace CameraSongScript.UI
             get
             {
                 string scene = CameraSongScriptConfig.Instance.CommonScriptCustomScene;
-                return string.IsNullOrEmpty(scene) ? "(Same as SongScript)" : scene;
+                return UiLocalization.GetOptionDisplay(
+                    string.IsNullOrEmpty(scene) ? UiLocalization.OptionSameAsSongScript : scene,
+                    UiLocalization.OptionSameAsSongScript);
             }
             set
             {
-                string scene = value as string;
+                string scene = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionSameAsSongScript);
                 CameraSongScriptConfig.Instance.CommonScriptCustomScene =
-                    (scene == "(Same as SongScript)") ? string.Empty : (scene ?? string.Empty);
+                    (scene == UiLocalization.OptionSameAsSongScript) ? string.Empty : (scene ?? string.Empty);
                 _statusView?.UpdateContent();
             }
         }
@@ -866,7 +1106,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var list = new List<object> { "(Same as SongScript)", "(NoChange)", "(Delete)" };
+                var list = new List<string> { UiLocalization.OptionSameAsSongScript, UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
                 if (Plugin.IsCamPlusHelperReady)
                 {
                     foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
@@ -875,7 +1115,11 @@ namespace CameraSongScript.UI
                             list.Add(profile);
                     }
                 }
-                return list;
+                return UiLocalization.LocalizeOptions(
+                    list,
+                    UiLocalization.OptionSameAsSongScript,
+                    UiLocalization.OptionNoChange,
+                    UiLocalization.OptionDelete);
             }
         }
 
@@ -885,15 +1129,27 @@ namespace CameraSongScript.UI
             get
             {
                 string profile = CameraSongScriptConfig.Instance.CommonScriptProfile;
-                if (string.IsNullOrEmpty(profile)) return "(Same as SongScript)";
+                if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(
+                    UiLocalization.OptionSameAsSongScript,
+                    UiLocalization.OptionSameAsSongScript);
                 // 旧バージョンの "(Default)" 設定を "(Delete)" に変換
-                if (profile == "(Default)") return "(Delete)";
-                return profile;
+                if (profile == UiLocalization.OptionDefault) return UiLocalization.GetOptionDisplay(
+                    UiLocalization.OptionDelete,
+                    UiLocalization.OptionDelete);
+                return UiLocalization.GetOptionDisplay(
+                    profile,
+                    UiLocalization.OptionSameAsSongScript,
+                    UiLocalization.OptionNoChange,
+                    UiLocalization.OptionDelete);
             }
             set
             {
-                string profile = value as string;
-                if (profile == "(Same as SongScript)") profile = string.Empty;
+                string profile = UiLocalization.ToCanonicalOption(
+                    value as string,
+                    UiLocalization.OptionSameAsSongScript,
+                    UiLocalization.OptionNoChange,
+                    UiLocalization.OptionDelete);
+                if (profile == UiLocalization.OptionSameAsSongScript) profile = string.Empty;
                 CameraSongScriptConfig.Instance.CommonScriptProfile = profile ?? string.Empty;
                 CameraSongScriptDetector.SyncCameraPlusPath();
                 _statusView?.UpdateContent();
@@ -909,7 +1165,9 @@ namespace CameraSongScript.UI
             if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
                 return statusText;
 
-            string warningText = $"<color=#FF5555>Warning: Unsupported in Camera2 - {CameraSongScriptDetector.CurrentUnsupportedFeatureSummary}</color>";
+            string warningText = UiLocalization.Format(
+                "warning-camera2-unsupported",
+                CameraSongScriptDetector.CurrentUnsupportedFeatureSummary);
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 
@@ -923,11 +1181,13 @@ namespace CameraSongScript.UI
 
                 if (isCommon)
                 {
-                    string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript;
+                    string commonName = UiLocalization.GetOptionDisplay(
+                        CameraSongScriptConfig.Instance.SelectedCommonScript,
+                        UiLocalization.OptionRandom);
                     if (count > 0)
-                        return AppendCamera2UnsupportedWarning($"<color=#FFAA00>Common Script: {commonName}</color> <color=#AAAAAA>({count} SongScript available)</color>");
+                        return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-common-with-count", commonName, count));
                     else
-                        return AppendCamera2UnsupportedWarning($"<color=#FFAA00>Common Script: {commonName}</color>");
+                        return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-common", commonName));
                 }
 
                 if (count > 0)
@@ -935,11 +1195,11 @@ namespace CameraSongScript.UI
                     string selected = CameraSongScriptDetector.HasSongScript
                         ? CameraSongScriptDetector.SelectedScriptDisplayName
                         : "?";
-                    return AppendCamera2UnsupportedWarning($"<color=#00FF00>{count} script(s) found - {selected}</color>");
+                    return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-found", count, selected));
                 }
                 else
                 {
-                    return AppendCamera2UnsupportedWarning("<color=#888888>No camera scripts</color>");
+                    return AppendCamera2UnsupportedWarning(UiLocalization.Get("song-status-none"));
                 }
             }
         }
@@ -974,17 +1234,18 @@ namespace CameraSongScript.UI
             get
             {
                 if (_previewController == null)
-                    return "プレビュー: 初期化中";
+                    return UiLocalization.Get("preview-initializing");
 
                 if (_previewController.IsVisible)
                 {
-                    string state = _previewController.IsPlaying ? "再生中" : "停止中";
+                    string state = _previewController.IsPlaying
+                        ? UiLocalization.Get("preview-state-playing")
+                        : UiLocalization.Get("preview-state-stopped");
                     string displayName = string.IsNullOrEmpty(_previewController.LoadedScriptDisplayName)
                         ? "--"
                         : _previewController.LoadedScriptDisplayName;
-                    return string.Format(
-                        CultureInfo.InvariantCulture,
-                        "プレビュー: {0} | {1} / {2} | {3} | x{4}",
+                    return UiLocalization.Format(
+                        "preview-active",
                         displayName,
                         FormatPreviewClock(_previewController.CurrentTime),
                         FormatPreviewClock(_previewController.Duration),
@@ -992,7 +1253,7 @@ namespace CameraSongScript.UI
                         _previewController.SpeedMultiplier);
                 }
 
-                return CanPreview ? "プレビュー: 準備完了" : "プレビュー: スクリプトなし";
+                return CanPreview ? UiLocalization.Get("preview-ready") : UiLocalization.Get("preview-no-script");
             }
         }
 
@@ -1139,13 +1400,7 @@ namespace CameraSongScript.UI
         [UIValue("status-panel-position-options")]
         public List<object> StatusPanelPositionOptions
         {
-            get
-            {
-                var list = new List<object>();
-                foreach (var name in CameraSongScriptStatusView.GetPresetNames())
-                    list.Add(name);
-                return list;
-            }
+            get => UiLocalization.GetStatusPanelPositionOptions();
         }
 
         [UIValue("status-panel-position")]
@@ -1153,25 +1408,14 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var names = CameraSongScriptStatusView.GetPresetNames();
                 int idx = CameraSongScriptConfig.Instance.StatusPanelPosition;
-                if (idx >= 0 && idx < names.Length)
-                    return names[idx];
-                return names[0];
+                return UiLocalization.GetStatusPanelPositionDisplayName(idx);
             }
             set
             {
-                string selected = value as string;
-                var names = CameraSongScriptStatusView.GetPresetNames();
-                for (int i = 0; i < names.Length; i++)
-                {
-                    if (names[i] == selected)
-                    {
-                        CameraSongScriptConfig.Instance.StatusPanelPosition = i;
-                        _statusView?.SetPosition(i);
-                        break;
-                    }
-                }
+                int index = UiLocalization.GetStatusPanelPositionIndex(value as string);
+                CameraSongScriptConfig.Instance.StatusPanelPosition = index;
+                _statusView?.SetPosition(index);
             }
         }
 
