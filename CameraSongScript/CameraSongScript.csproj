@@ -155,7 +155,9 @@
     <Compile Include="Models\CommonScriptCache.cs" />
     <Compile Include="Models\SongScriptFolderCache.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
+    <Compile Include="Localization\HoverHintLocalizationResources.cs" />
     <Compile Include="Localization\UiLocalization.cs" />
+    <Compile Include="Localization\UiLocalizationResources.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CameraPlusPlayStartResolver.cs" />

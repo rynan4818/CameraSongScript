@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
+using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using HMUI;
 using IPA.Utilities;
@@ -701,7 +702,7 @@ namespace CameraSongScript.Detectors
 
             // CameraPlusモードでは曲選択時にパスを解決する（プレイ終了時に再抽選される）
             // Camera2モードでは指定スクリプトのみ即時解決（ランダムはプレイ開始時に解決）
-            if (CameraModDetector.IsCameraPlus || config.SelectedCommonScript != "(Random)")
+            if (CameraModDetector.IsCameraPlus || config.SelectedCommonScript != UiLocalization.OptionRandom)
             {
                 ResolveAndSetCommonScriptPath();
             }
@@ -725,7 +726,9 @@ namespace CameraSongScript.Detectors
                     }
                 }
 
-                string displayInfo = config.SelectedCommonScript == "(Random)" ? "(Random)" : ResolvedCommonScriptDisplayName;
+                string displayInfo = config.SelectedCommonScript == UiLocalization.OptionRandom
+                    ? UiLocalization.OptionRandom
+                    : ResolvedCommonScriptDisplayName;
                 Plugin.Log.Info($"CameraSongScriptDetector: Common script will be used: {displayInfo}");
             }
         }
@@ -743,7 +746,7 @@ namespace CameraSongScript.Detectors
             ResolvedCommonScriptContainsCameraEffect = false;
             ResolvedCommonScriptContainsWindowControl = false;
 
-            if (config.SelectedCommonScript == "(Random)")
+            if (config.SelectedCommonScript == UiLocalization.OptionRandom)
             {
                 var entry = CommonScriptCache.GetRandom();
                 if (entry != null)

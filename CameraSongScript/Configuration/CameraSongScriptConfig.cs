@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using CameraSongScript.Localization;
 using IPA.Config.Stores;
 
 [assembly: InternalsVisibleTo(GeneratedStore.AssemblyVisibilityTarget)]
@@ -192,9 +193,9 @@ namespace CameraSongScript.Configuration
         public virtual bool ForceCommonScript { get; set; } = false;
 
         /// <summary>
-        /// 選択中の汎用スクリプト表示名 ("(Random)" or ファイル名)
+        /// 選択中の汎用スクリプト表示名 (UiLocalization.OptionRandom またはファイル名)
         /// </summary>
-        public virtual string SelectedCommonScript { get; set; } = "(Random)";
+        public virtual string SelectedCommonScript { get; set; } = UiLocalization.OptionRandom;
 
         /// <summary>
         /// [CameraPlus] 汎用スクリプト使用時のプロファイル（空文字列 = SongScript設定と同じ）

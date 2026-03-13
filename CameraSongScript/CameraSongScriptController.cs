@@ -98,7 +98,7 @@ namespace CameraSongScript
             if (useCommon)
             {
                 // Camera2: ランダムの場合は毎回プレイ開始時に再選択する
-                if (CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)")
+                if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                 {
                     CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
                 }

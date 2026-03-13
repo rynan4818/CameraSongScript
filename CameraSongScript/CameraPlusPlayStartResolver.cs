@@ -1,5 +1,6 @@
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Localization;
 using System;
 using Zenject;
 
@@ -20,7 +21,7 @@ namespace CameraSongScript
                 return;
 
             // プレイ終了時にランダム汎用スクリプトを再抽選し、次回プレイに備える
-            if (CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)")
+            if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
             {
                 CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
                 CameraSongScriptDetector.SyncCameraPlusPath();

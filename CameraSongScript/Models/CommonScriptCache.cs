@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using CameraSongScript.Localization;
 
 namespace CameraSongScript.Models
 {
@@ -131,11 +132,11 @@ namespace CameraSongScript.Models
         }
 
         /// <summary>
-        /// UI表示用の表示名リスト（先頭に "(Random)" を含む）を返す
+        /// UI表示用の表示名リスト（先頭に UiLocalization.OptionRandom を含む）を返す
         /// </summary>
         public static List<string> GetDisplayNames()
         {
-            var list = new List<string> { "(Random)" };
+            var list = new List<string> { UiLocalization.OptionRandom };
             foreach (var entry in _scripts)
             {
                 list.Add(entry.DisplayName);

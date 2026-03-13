@@ -1,5 +1,6 @@
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using System;
 using System.Collections.Generic;
@@ -79,7 +80,7 @@ namespace CameraSongScript.UI
                     if (!string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptPath))
                         return File.Exists(CameraSongScriptDetector.ResolvedCommonScriptPath);
 
-                    if (CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)")
+                    if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                         return CommonScriptCache.Scripts.Count > 0;
 
                     string path = CommonScriptCache.GetPathByDisplayName(CameraSongScriptConfig.Instance.SelectedCommonScript);
@@ -242,7 +243,7 @@ namespace CameraSongScript.UI
 
             if (CameraSongScriptDetector.IsUsingCommonScript)
             {
-                if (CameraSongScriptConfig.Instance.SelectedCommonScript == "(Random)")
+                if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                 {
                     if (preserveRandomSelection && !string.IsNullOrEmpty(_loadedScriptPath) && File.Exists(_loadedScriptPath))
                     {
