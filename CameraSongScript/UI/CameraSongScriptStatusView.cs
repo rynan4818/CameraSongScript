@@ -19,77 +19,7 @@ namespace CameraSongScript.UI
         private Canvas _canvas;
         private CurvedTextMeshPro _statusText;
 
-        private static readonly string[] PresetNames = new string[]
-        {
-            "LeftUpperRight",
-            "LeftUpperLeft",
-            "LeftLowerRight",
-            "LeftLowerLeft",
-            "CenterUpperRight",
-            "CenterUpperLeft",
-            "CenterLowerRight",
-            "CenterLowerLeft",
-            "RightUpperRight",
-            "RightUpperLeft",
-            "RightLowerRight",
-            "RightLowerLeft"
-        };
-
-        public static string[] GetPresetNames() => PresetNames;
-
-        /// <summary>
-        /// コンフィグからプリセットインデックスに対応する位置を取得する
-        /// </summary>
-        private static Vector3 GetPresetPositionFromConfig(int index)
-        {
-            var cfg = CameraSongScriptConfig.Instance;
-            switch (index)
-            {
-                case 0: return new Vector3(cfg.PresetLeftUpperRightPosX, cfg.PresetLeftUpperRightPosY, cfg.PresetLeftUpperRightPosZ);
-                case 1: return new Vector3(cfg.PresetLeftUpperLeftPosX, cfg.PresetLeftUpperLeftPosY, cfg.PresetLeftUpperLeftPosZ);
-                case 2: return new Vector3(cfg.PresetLeftLowerRightPosX, cfg.PresetLeftLowerRightPosY, cfg.PresetLeftLowerRightPosZ);
-                case 3: return new Vector3(cfg.PresetLeftLowerLeftPosX, cfg.PresetLeftLowerLeftPosY, cfg.PresetLeftLowerLeftPosZ);
-
-                case 4: return new Vector3(cfg.PresetCenterUpperRightPosX, cfg.PresetCenterUpperRightPosY, cfg.PresetCenterUpperRightPosZ);
-                case 5: return new Vector3(cfg.PresetCenterUpperLeftPosX, cfg.PresetCenterUpperLeftPosY, cfg.PresetCenterUpperLeftPosZ);
-                case 6: return new Vector3(cfg.PresetCenterLowerRightPosX, cfg.PresetCenterLowerRightPosY, cfg.PresetCenterLowerRightPosZ);
-                case 7: return new Vector3(cfg.PresetCenterLowerLeftPosX, cfg.PresetCenterLowerLeftPosY, cfg.PresetCenterLowerLeftPosZ);
-
-                case 8: return new Vector3(cfg.PresetRightUpperRightPosX, cfg.PresetRightUpperRightPosY, cfg.PresetRightUpperRightPosZ);
-                case 9: return new Vector3(cfg.PresetRightUpperLeftPosX, cfg.PresetRightUpperLeftPosY, cfg.PresetRightUpperLeftPosZ);
-                case 10: return new Vector3(cfg.PresetRightLowerRightPosX, cfg.PresetRightLowerRightPosY, cfg.PresetRightLowerRightPosZ);
-                case 11: return new Vector3(cfg.PresetRightLowerLeftPosX, cfg.PresetRightLowerLeftPosY, cfg.PresetRightLowerLeftPosZ);
-
-                default: return new Vector3(cfg.PresetLeftUpperRightPosX, cfg.PresetLeftUpperRightPosY, cfg.PresetLeftUpperRightPosZ);
-            }
-        }
-
-        /// <summary>
-        /// コンフィグからプリセットインデックスに対応する回転を取得する
-        /// </summary>
-        private static Vector3 GetPresetRotationFromConfig(int index)
-        {
-            var cfg = CameraSongScriptConfig.Instance;
-            switch (index)
-            {
-                case 0: return new Vector3(cfg.PresetLeftUpperRightRotX, cfg.PresetLeftUpperRightRotY, cfg.PresetLeftUpperRightRotZ);
-                case 1: return new Vector3(cfg.PresetLeftUpperLeftRotX, cfg.PresetLeftUpperLeftRotY, cfg.PresetLeftUpperLeftRotZ);
-                case 2: return new Vector3(cfg.PresetLeftLowerRightRotX, cfg.PresetLeftLowerRightRotY, cfg.PresetLeftLowerRightRotZ);
-                case 3: return new Vector3(cfg.PresetLeftLowerLeftRotX, cfg.PresetLeftLowerLeftRotY, cfg.PresetLeftLowerLeftRotZ);
-
-                case 4: return new Vector3(cfg.PresetCenterUpperRightRotX, cfg.PresetCenterUpperRightRotY, cfg.PresetCenterUpperRightRotZ);
-                case 5: return new Vector3(cfg.PresetCenterUpperLeftRotX, cfg.PresetCenterUpperLeftRotY, cfg.PresetCenterUpperLeftRotZ);
-                case 6: return new Vector3(cfg.PresetCenterLowerRightRotX, cfg.PresetCenterLowerRightRotY, cfg.PresetCenterLowerRightRotZ);
-                case 7: return new Vector3(cfg.PresetCenterLowerLeftRotX, cfg.PresetCenterLowerLeftRotY, cfg.PresetCenterLowerLeftRotZ);
-
-                case 8: return new Vector3(cfg.PresetRightUpperRightRotX, cfg.PresetRightUpperRightRotY, cfg.PresetRightUpperRightRotZ);
-                case 9: return new Vector3(cfg.PresetRightUpperLeftRotX, cfg.PresetRightUpperLeftRotY, cfg.PresetRightUpperLeftRotZ);
-                case 10: return new Vector3(cfg.PresetRightLowerRightRotX, cfg.PresetRightLowerRightRotY, cfg.PresetRightLowerRightRotZ);
-                case 11: return new Vector3(cfg.PresetRightLowerLeftRotX, cfg.PresetRightLowerLeftRotY, cfg.PresetRightLowerLeftRotZ);
-
-                default: return new Vector3(cfg.PresetLeftUpperRightRotX, cfg.PresetLeftUpperRightRotY, cfg.PresetLeftUpperRightRotZ);
-            }
-        }
+        public static string[] GetPresetNames() => StatusPanelPresetCatalog.GetLegacyNames();
 
         public void Initialize()
         {
@@ -123,9 +53,9 @@ namespace CameraSongScript.UI
             var rectTransform = _canvas.transform as RectTransform;
             rectTransform.sizeDelta = new Vector2(cfg.StatusCanvasWidth, cfg.StatusCanvasHeight);
 
-            int posIndex = Mathf.Clamp(cfg.StatusPanelPosition, 0, PresetNames.Length - 1);
-            _rootObject.transform.position = GetPresetPositionFromConfig(posIndex);
-            _rootObject.transform.eulerAngles = GetPresetRotationFromConfig(posIndex);
+            int posIndex = StatusPanelPresetCatalog.ClampIndex(cfg.StatusPanelPosition);
+            _rootObject.transform.position = StatusPanelPresetCatalog.GetPosition(cfg, posIndex);
+            _rootObject.transform.eulerAngles = StatusPanelPresetCatalog.GetRotation(cfg, posIndex);
             float s = cfg.StatusScale;
             _rootObject.transform.localScale = new Vector3(s, s, s);
 
@@ -216,9 +146,9 @@ namespace CameraSongScript.UI
             var cfg = CameraSongScriptConfig.Instance;
 
             // 位置・回転
-            int posIndex = Mathf.Clamp(cfg.StatusPanelPosition, 0, PresetNames.Length - 1);
-            _rootObject.transform.position = GetPresetPositionFromConfig(posIndex);
-            _rootObject.transform.eulerAngles = GetPresetRotationFromConfig(posIndex);
+            int posIndex = StatusPanelPresetCatalog.ClampIndex(cfg.StatusPanelPosition);
+            _rootObject.transform.position = StatusPanelPresetCatalog.GetPosition(cfg, posIndex);
+            _rootObject.transform.eulerAngles = StatusPanelPresetCatalog.GetRotation(cfg, posIndex);
 
             // スケール
             float s = cfg.StatusScale;
@@ -350,9 +280,10 @@ namespace CameraSongScript.UI
         public void SetPosition(int presetIndex)
         {
             if (_rootObject == null) return;
-            int idx = Mathf.Clamp(presetIndex, 0, PresetNames.Length - 1);
-            _rootObject.transform.position = GetPresetPositionFromConfig(idx);
-            _rootObject.transform.eulerAngles = GetPresetRotationFromConfig(idx);
+            int idx = StatusPanelPresetCatalog.ClampIndex(presetIndex);
+            var cfg = CameraSongScriptConfig.Instance;
+            _rootObject.transform.position = StatusPanelPresetCatalog.GetPosition(cfg, idx);
+            _rootObject.transform.eulerAngles = StatusPanelPresetCatalog.GetRotation(cfg, idx);
         }
 
         /// <summary>
@@ -360,7 +291,19 @@ namespace CameraSongScript.UI
         /// </summary>
         public void SetVisible(bool visible)
         {
+            if (_rootObject == null)
+                return;
+
+            if (!visible)
+            {
+                _rootObject.SetActive(false);
+                return;
+            }
+
             UpdateContent();
         }
     }
 }
+
+
+

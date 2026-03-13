@@ -23,7 +23,7 @@ namespace CameraSongScript.UI
     /// Camera2/CameraPlus両対応
     /// </summary>
     [HotReload]
-    public class CameraSongScriptSettingsView : BSMLAutomaticViewController, IInitializable, IDisposable
+    public partial class CameraSongScriptSettingsView : BSMLAutomaticViewController, IInitializable, IDisposable
     {
         public const string TabName = "CameraSongScript";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
@@ -159,7 +159,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(TargetCameraOptions));
             NotifyPropertyChanged(nameof(TargetCameras));
             NotifyPropertyChanged(nameof(ProfileOptions));
-            NotifyPropertyChanged(nameof(SongSpecificProfile));
+            NotifyPropertyChanged(nameof(SongScriptProfile));
             NotifyPropertyChanged(nameof(CommonScriptOptions));
             NotifyPropertyChanged(nameof(SelectedCommonScript));
             NotifyPropertyChanged(nameof(CommonTargetCameraOptions));
@@ -176,7 +176,7 @@ namespace CameraSongScript.UI
             RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
             RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
             RefreshDropdown(customSceneDropdown, CustomSceneOptions);
-            RefreshDropdown(songSpecificProfileDropdown, ProfileOptions);
+            RefreshDropdown(songScriptProfileDropdown, ProfileOptions);
             RefreshDropdown(commonScriptDropdown, CommonScriptOptions);
             RefreshDropdown(commonTargetCameraDropdown, CommonTargetCameraOptions);
             RefreshDropdown(commonCustomSceneDropdown, CommonCustomSceneOptions);
@@ -220,7 +220,7 @@ namespace CameraSongScript.UI
         }
 
         /// <summary>
-        /// スキャン完了時コールバック（バックグラウンドスレッドから呼ばれるためメインスレッドへディスパッチ）
+        /// スキャン完了時コールバック（UI更新を安全に行うためメインスレッドへディスパッチ）
         /// </summary>
         private void OnScanCompleted()
         {
@@ -235,7 +235,7 @@ namespace CameraSongScript.UI
                     CameraSongScriptDetector.SyncCameraPlusPath();
 
                     // プロファイルドロップダウンのUIを現在の曲の設定に更新する
-                    NotifyPropertyChanged(nameof(SongSpecificProfile));
+                    NotifyPropertyChanged(nameof(SongScriptProfile));
 
                     if (scriptFileDropdown != null)
                     {
@@ -428,8 +428,8 @@ namespace CameraSongScript.UI
         [UIComponent("preview-position-slider")]
         public SliderSetting previewPositionSlider;
 
-        [UIComponent("song-specific-profile-dropdown")]
-        public DropDownListSetting songSpecificProfileDropdown;
+        [UIComponent("song-script-profile-dropdown")]
+        public DropDownListSetting songScriptProfileDropdown;
 
         [UIComponent("common-target-camera-dropdown")]
         public DropDownListSetting commonTargetCameraDropdown;
@@ -733,430 +733,8 @@ namespace CameraSongScript.UI
 
         #endregion
 
-        #region Camera2専用設定
-
-        [UIValue("show-camera2-settings")]
-        public bool ShowCamera2Settings => CameraModDetector.IsCamera2;
-
-        [UIValue("custom-scene-options")]
-        public List<object> CustomSceneOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionDefault };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
-                {
-                    try
-                    {
-                        var scenes = Plugin.CamHelper.CustomScenes;
-                        if (scenes != null)
-                        {
-                            foreach (var scene in scenes) list.Add(scene);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Warn($"SettingsView: Failed to get custom scenes: {ex.Message}");
-                    }
-                }
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionDefault);
-            }
-        }
-
-        [UIComponent("custom-scene-dropdown")]
-        public DropDownListSetting customSceneDropdown;
-
-        private string _selectedCustomScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch ?? UiLocalization.OptionDefault;
-
-        [UIValue("selected-custom-scene")]
-        public object SelectedCustomScene
-        {
-            get => UiLocalization.GetOptionDisplay(
-                string.IsNullOrEmpty(_selectedCustomScene) ? UiLocalization.OptionDefault : _selectedCustomScene,
-                UiLocalization.OptionDefault);
-            set
-            {
-                string scene = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionDefault);
-                _selectedCustomScene = string.IsNullOrEmpty(scene) ? UiLocalization.OptionDefault : scene;
-                
-                // 設定に保存（実際の切り替えはゲームシーン開始時に自動で行われる）
-                CameraSongScriptConfig.Instance.CustomSceneToSwitch = _selectedCustomScene;
-            }
-        }
-
-        [UIAction("add-custom-scene")]
-        public void AddCustomScene()
-        {
-            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
-            {
-                var targetCam = CameraSongScriptConfig.Instance.TargetCameras;
-                IEnumerable<string> camerasToAdd;
-
-                // All または 未指定の場合は有効なすべてのカメラを追加、そうでない場合は指定カメラのみ追加
-                if (string.IsNullOrEmpty(targetCam) || targetCam == UiLocalization.OptionAll)
-                {
-                    camerasToAdd = Plugin.CamHelper.GetAvailableCameras();
-                }
-                else
-                {
-                    camerasToAdd = new List<string> { targetCam };
-                }
-
-                Plugin.CamHelper.CreateOrUpdateCustomScene("CameraSongScript", camerasToAdd);
-                
-                // ドロップダウンのリストとUIを更新
-                NotifyPropertyChanged(nameof(CustomSceneOptions));
-                NotifyPropertyChanged(nameof(SelectedCustomScene));
-                RefreshDropdown(customSceneDropdown, CustomSceneOptions);
-            }
-        }
-
-        [UIValue("use-audio-sync")]
-        public bool UseAudioSync
-        {
-            get => CameraSongScriptConfig.Instance.UseAudioSync;
-            set => CameraSongScriptConfig.Instance.UseAudioSync = value;
-        }
-
-        [UIValue("target-camera-options")]
-        public List<object> TargetCameraOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionAll };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
-                {
-                    try
-                    {
-                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
-                        foreach (var cam in cams) list.Add(cam);
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Warn($"SettingsView: Failed to get available cameras: {ex.Message}");
-                    }
-                }
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionAll);
-            }
-        }
-
-        [UIValue("target-cameras")]
-        public object TargetCameras
-        {
-            get
-            {
-                string cam = CameraSongScriptConfig.Instance.TargetCameras;
-                return UiLocalization.GetOptionDisplay(
-                    string.IsNullOrEmpty(cam) ? UiLocalization.OptionAll : cam,
-                    UiLocalization.OptionAll);
-            }
-            set
-            {
-                string cam = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionAll);
-                if (cam == UiLocalization.OptionAll) cam = string.Empty;
-                CameraSongScriptConfig.Instance.TargetCameras = cam ?? string.Empty;
-            }
-        }
-
-        #endregion
-
-        #region CameraPlus専用設定
-
-        [UIValue("show-cameraplus-settings")]
-        public bool ShowCameraPlusSettings => CameraModDetector.IsCameraPlus;
-
-        [UIValue("profile-options")]
-        public List<object> ProfileOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
-                if (Plugin.IsCamPlusHelperReady)
-                {
-                    foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
-                    {
-                        if (!string.IsNullOrEmpty(profile))
-                            list.Add(profile);
-                    }
-                }
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
-            }
-        }
-
-        [UIValue("song-specific-profile")]
-        public object SongSpecificProfile
-        {
-            get
-            {
-                if (!Plugin.IsCamPlusHelperReady) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
-                string profile = CameraSongScriptDetector.ResolvedProfileName;
-                if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
-                return UiLocalization.GetOptionDisplay(profile, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
-            }
-            set
-            {
-                if (!Plugin.IsCamPlusHelperReady) return;
-                string profile = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
-                if (string.IsNullOrEmpty(profile))
-                    profile = UiLocalization.OptionNoChange;
-
-                // グローバル設定として保存
-                CameraSongScriptConfig.Instance.SongScriptProfile = profile;
-
-                // 解決済みプロファイル名を直接更新
-                CameraSongScriptDetector.SetResolvedProfileName(profile);
-
-                // 即座に全体のパス・プロファイル状態を同期
-                CameraSongScriptDetector.SyncCameraPlusPath();
-            }
-        }
 
 
-        #endregion
-
-        #region 汎用スクリプト設定
-
-        [UIValue("use-common-fallback")]
-        public bool UseCommonFallback
-        {
-            get => CameraSongScriptConfig.Instance.UseCommonScriptAsFallback;
-            set
-            {
-                CameraSongScriptConfig.Instance.UseCommonScriptAsFallback = value;
-                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
-                NotifyPropertyChanged(nameof(SongScriptStatus));
-                NotifyPropertyChanged(nameof(IsOffsetInteractable));
-                NotifyPropertyChanged(nameof(CameraHeightOffset));
-                if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
-                RefreshLayout();
-                _statusView?.UpdateContent();
-                HandlePreviewSelectionChanged();
-            }
-        }
-
-        [UIValue("force-common-script")]
-        public bool ForceCommonScript
-        {
-            get => CameraSongScriptConfig.Instance.ForceCommonScript;
-            set
-            {
-                CameraSongScriptConfig.Instance.ForceCommonScript = value;
-                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
-                NotifyPropertyChanged(nameof(SongScriptStatus));
-                NotifyPropertyChanged(nameof(IsOffsetInteractable));
-                NotifyPropertyChanged(nameof(CameraHeightOffset));
-                if (cameraHeightOffsetSlider != null) cameraHeightOffsetSlider.ReceiveValue();
-                RefreshLayout();
-                _statusView?.UpdateContent();
-                HandlePreviewSelectionChanged();
-            }
-        }
-
-        [UIComponent("common-script-dropdown")]
-        public DropDownListSetting commonScriptDropdown;
-
-        [UIValue("common-script-options")]
-        public List<object> CommonScriptOptions
-        {
-            get
-            {
-                var list = new List<string>();
-                if (CommonScriptCache.IsReady)
-                {
-                    foreach (var name in CommonScriptCache.GetDisplayNames())
-                    {
-                        list.Add(name);
-                    }
-                }
-                if (list.Count == 0)
-                    list.Add(UiLocalization.OptionNone);
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionRandom, UiLocalization.OptionNone);
-            }
-        }
-
-        [UIValue("selected-common-script")]
-        public object SelectedCommonScript
-        {
-            get
-            {
-                string selected = CameraSongScriptConfig.Instance.SelectedCommonScript;
-                if (!string.IsNullOrEmpty(selected) && CommonScriptCache.IsReady)
-                {
-                    var names = CommonScriptCache.GetDisplayNames();
-                    if (names.Contains(selected))
-                        return UiLocalization.GetOptionDisplay(selected, UiLocalization.OptionRandom);
-                }
-                return UiLocalization.GetOptionDisplay(UiLocalization.OptionRandom, UiLocalization.OptionRandom);
-            }
-            set
-            {
-                string name = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionRandom, UiLocalization.OptionNone);
-                if (!string.IsNullOrEmpty(name) && name != UiLocalization.OptionNone)
-                {
-                    CameraSongScriptConfig.Instance.SelectedCommonScript = name;
-                    CameraSongScriptDetector.ReevaluateCommonScriptUsage();
-                    NotifyPropertyChanged(nameof(SongScriptStatus));
-
-                    // 汎用スクリプト選択変更後のオフセット関連UI更新
-                    NotifyPropertyChanged(nameof(IsOffsetInteractable));
-                    NotifyPropertyChanged(nameof(CameraHeightOffset));
-                    if (cameraHeightOffsetSlider != null)
-                    {
-                        cameraHeightOffsetSlider.ReceiveValue();
-                    }
-
-                    RefreshLayout();
-                    _statusView?.UpdateContent();
-                    HandlePreviewSelectionChanged();
-                }
-            }
-        }
-
-        // --- Camera2用: 汎用スクリプト専用設定 ---
-
-        [UIValue("common-target-camera-options")]
-        public List<object> CommonTargetCameraOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionSameAsSongScript };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
-                {
-                    try
-                    {
-                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
-                        foreach (var cam in cams) list.Add(cam);
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Warn($"SettingsView: Failed to get available cameras for CS: {ex.Message}");
-                    }
-                }
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionSameAsSongScript);
-            }
-        }
-
-        [UIValue("common-target-camera")]
-        public object CommonTargetCamera
-        {
-            get
-            {
-                string cam = CameraSongScriptConfig.Instance.CommonScriptTargetCamera;
-                return UiLocalization.GetOptionDisplay(
-                    string.IsNullOrEmpty(cam) ? UiLocalization.OptionSameAsSongScript : cam,
-                    UiLocalization.OptionSameAsSongScript);
-            }
-            set
-            {
-                string cam = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionSameAsSongScript);
-                CameraSongScriptConfig.Instance.CommonScriptTargetCamera =
-                    (cam == UiLocalization.OptionSameAsSongScript) ? string.Empty : (cam ?? string.Empty);
-                _statusView?.UpdateContent();
-            }
-        }
-
-        [UIValue("common-custom-scene-options")]
-        public List<object> CommonCustomSceneOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionSameAsSongScript };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
-                {
-                    try
-                    {
-                        var scenes = Plugin.CamHelper.CustomScenes;
-                        if (scenes != null)
-                        {
-                            foreach (var scene in scenes) list.Add(scene);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Warn($"SettingsView: Failed to get custom scenes for CS: {ex.Message}");
-                    }
-                }
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionSameAsSongScript);
-            }
-        }
-
-        [UIValue("common-custom-scene")]
-        public object CommonCustomScene
-        {
-            get
-            {
-                string scene = CameraSongScriptConfig.Instance.CommonScriptCustomScene;
-                return UiLocalization.GetOptionDisplay(
-                    string.IsNullOrEmpty(scene) ? UiLocalization.OptionSameAsSongScript : scene,
-                    UiLocalization.OptionSameAsSongScript);
-            }
-            set
-            {
-                string scene = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionSameAsSongScript);
-                CameraSongScriptConfig.Instance.CommonScriptCustomScene =
-                    (scene == UiLocalization.OptionSameAsSongScript) ? string.Empty : (scene ?? string.Empty);
-                _statusView?.UpdateContent();
-            }
-        }
-
-        // --- CameraPlus用: 汎用スクリプト専用設定 ---
-
-        [UIValue("common-profile-options")]
-        public List<object> CommonProfileOptions
-        {
-            get
-            {
-                var list = new List<string> { UiLocalization.OptionSameAsSongScript, UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
-                if (Plugin.IsCamPlusHelperReady)
-                {
-                    foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
-                    {
-                        if (!string.IsNullOrEmpty(profile))
-                            list.Add(profile);
-                    }
-                }
-                return UiLocalization.LocalizeOptions(
-                    list,
-                    UiLocalization.OptionSameAsSongScript,
-                    UiLocalization.OptionNoChange,
-                    UiLocalization.OptionDelete);
-            }
-        }
-
-        [UIValue("common-profile")]
-        public object CommonProfile
-        {
-            get
-            {
-                string profile = CameraSongScriptConfig.Instance.CommonScriptProfile;
-                if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(
-                    UiLocalization.OptionSameAsSongScript,
-                    UiLocalization.OptionSameAsSongScript);
-                // 旧バージョンの "(Default)" 設定を "(Delete)" に変換
-                if (profile == UiLocalization.OptionDefault) return UiLocalization.GetOptionDisplay(
-                    UiLocalization.OptionDelete,
-                    UiLocalization.OptionDelete);
-                return UiLocalization.GetOptionDisplay(
-                    profile,
-                    UiLocalization.OptionSameAsSongScript,
-                    UiLocalization.OptionNoChange,
-                    UiLocalization.OptionDelete);
-            }
-            set
-            {
-                string profile = UiLocalization.ToCanonicalOption(
-                    value as string,
-                    UiLocalization.OptionSameAsSongScript,
-                    UiLocalization.OptionNoChange,
-                    UiLocalization.OptionDelete);
-                if (profile == UiLocalization.OptionSameAsSongScript) profile = string.Empty;
-                CameraSongScriptConfig.Instance.CommonScriptProfile = profile ?? string.Empty;
-                CameraSongScriptDetector.SyncCameraPlusPath();
-                _statusView?.UpdateContent();
-            }
-        }
-
-        #endregion
 
         #region SongScript検出状態
 
@@ -1206,183 +784,6 @@ namespace CameraSongScript.UI
 
         #endregion
 
-        #region プレビュー設定
-
-        [UIValue("can-preview")]
-        public bool CanPreview => _previewController != null && _previewController.CanPreviewSelection;
-
-        [UIValue("is-preview-visible")]
-        public bool IsPreviewVisible => _previewController != null && _previewController.IsVisible;
-
-        [UIValue("preview-position")]
-        public float PreviewPosition
-        {
-            get => _previewController != null ? _previewController.CurrentTime : 0f;
-            set
-            {
-                if (_suppressPreviewSeek || _previewController == null)
-                    return;
-
-                _previewController.Seek(value, true);
-                RefreshPreviewBindings();
-            }
-        }
-
-        [UIValue("preview-status")]
-        public string PreviewStatus
-        {
-            get
-            {
-                if (_previewController == null)
-                    return UiLocalization.Get("preview-initializing");
-
-                if (_previewController.IsVisible)
-                {
-                    string state = _previewController.IsPlaying
-                        ? UiLocalization.Get("preview-state-playing")
-                        : UiLocalization.Get("preview-state-stopped");
-                    string displayName = string.IsNullOrEmpty(_previewController.LoadedScriptDisplayName)
-                        ? "--"
-                        : _previewController.LoadedScriptDisplayName;
-                    return UiLocalization.Format(
-                        "preview-active",
-                        displayName,
-                        FormatPreviewClock(_previewController.CurrentTime),
-                        FormatPreviewClock(_previewController.Duration),
-                        state,
-                        _previewController.SpeedMultiplier);
-                }
-
-                return CanPreview ? UiLocalization.Get("preview-ready") : UiLocalization.Get("preview-no-script");
-            }
-        }
-
-        [UIAction("preview-show-start")]
-        private void PreviewShowStart()
-        {
-            _previewController?.ShowAndStart();
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-stop")]
-        private void PreviewStop()
-        {
-            _previewController?.Stop();
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-clear")]
-        private void PreviewClear()
-        {
-            _previewController?.Clear();
-            _lastPreviewUiTime = float.NegativeInfinity;
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-speed-x2")]
-        private void PreviewSpeedX2()
-        {
-            _previewController?.StartAtSpeed(2);
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-speed-x4")]
-        private void PreviewSpeedX4()
-        {
-            _previewController?.StartAtSpeed(4);
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-speed-x8")]
-        private void PreviewSpeedX8()
-        {
-            _previewController?.StartAtSpeed(8);
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("preview-speed-x16")]
-        private void PreviewSpeedX16()
-        {
-            _previewController?.StartAtSpeed(16);
-            RefreshPreviewBindings();
-        }
-
-        [UIAction("format-preview-time")]
-        private string FormatPreviewSliderValue(float value)
-        {
-            return FormatPreviewClock(value);
-        }
-
-        private void HandlePreviewSelectionChanged()
-        {
-            _previewController?.HandleSelectionChanged();
-            _lastPreviewUiTime = float.NegativeInfinity;
-            RefreshPreviewBindings();
-        }
-
-        private void HandlePreviewVisualChanged()
-        {
-            _previewController?.HandleVisualChange();
-            _lastPreviewUiTime = float.NegativeInfinity;
-            RefreshPreviewBindings();
-        }
-
-        private void RefreshPreviewBindings()
-        {
-            if (_previewController != null)
-            {
-                _lastPreviewUiTime = _previewController.CurrentTime;
-                _lastPreviewVisible = _previewController.IsVisible;
-                _lastPreviewPlaying = _previewController.IsPlaying;
-                _lastPreviewSpeed = _previewController.SpeedMultiplier;
-            }
-
-            NotifyPropertyChanged(nameof(CanPreview));
-            NotifyPropertyChanged(nameof(IsPreviewVisible));
-            NotifyPropertyChanged(nameof(PreviewPosition));
-            NotifyPropertyChanged(nameof(PreviewStatus));
-            SyncPreviewSlider();
-        }
-
-        private void RefreshPreviewRuntimeUi()
-        {
-            NotifyPropertyChanged(nameof(PreviewPosition));
-            NotifyPropertyChanged(nameof(PreviewStatus));
-            SyncPreviewSlider();
-        }
-
-        private void SyncPreviewSlider()
-        {
-            if (previewPositionSlider == null || previewPositionSlider.slider == null)
-                return;
-
-            float maxValue = Mathf.Max(_previewController != null ? _previewController.Duration : 0f, PreviewSliderStep);
-            previewPositionSlider.slider.minValue = 0f;
-            previewPositionSlider.slider.maxValue = maxValue;
-            previewPositionSlider.increments = PreviewSliderStep;
-            previewPositionSlider.slider.numberOfSteps = Mathf.Max(2, Mathf.RoundToInt(maxValue / PreviewSliderStep) + 1);
-            previewPositionSlider.interactable = CanPreview;
-
-            _suppressPreviewSeek = true;
-            previewPositionSlider.Value = Mathf.Clamp(_previewController != null ? _previewController.CurrentTime : 0f, 0f, maxValue);
-            _suppressPreviewSeek = false;
-        }
-
-        private static string FormatPreviewClock(float seconds)
-        {
-            if (seconds < 0f)
-                seconds = 0f;
-
-            TimeSpan time = TimeSpan.FromSeconds(seconds);
-            return string.Format(
-                CultureInfo.InvariantCulture,
-                "{0:00}:{1:00}.{2:00}",
-                (int)time.TotalMinutes,
-                time.Seconds,
-                time.Milliseconds / 10);
-        }
-
-        #endregion
 
         #region ステータスパネル設定
 
@@ -1478,3 +879,5 @@ namespace CameraSongScript.UI
         #endregion
     }
 }
+
+

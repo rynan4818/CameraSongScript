@@ -76,7 +76,7 @@
     </macro.if>
     <macro.if value="show-cameraplus-settings">
       <horizontal>
-        <dropdown-list-setting id="song-specific-profile-dropdown" text="~label-songscript-profile" value="song-specific-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
+        <dropdown-list-setting id="song-script-profile-dropdown" text="~label-songscript-profile" value="song-script-profile" size-delta-x="50" options="profile-options" apply-on-change="true" hover-hint="~hint-script-profile"/>
       </horizontal>
     </macro.if>
     <horizontal pad-top="2">
@@ -115,3 +115,4 @@
     </horizontal>
   </settings-container>
 </bg>
+

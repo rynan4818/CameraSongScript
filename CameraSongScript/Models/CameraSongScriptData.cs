@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -133,7 +132,7 @@ namespace CameraSongScript.Models
         /// </summary>
         private static float ParseFloat(string value)
         {
-            return float.Parse(value.Replace(',', '.'), CultureInfo.InvariantCulture);
+            return NumericStringParser.Parse(value);
         }
 
         private static Vector3 ParseVector3(string x, string y, string z)
@@ -152,3 +151,4 @@ namespace CameraSongScript.Models
         }
     }
 }
+

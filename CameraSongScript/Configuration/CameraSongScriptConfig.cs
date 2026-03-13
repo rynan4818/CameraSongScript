@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using IPA.Config.Stores;
@@ -74,7 +74,7 @@ namespace CameraSongScript.Configuration
         public virtual bool ShowStatusPanel { get; set; } = true;
 
         /// <summary>
-        /// ステータスインジケータパネルのプリセット位置インデックス（0=Left, 1=Right, 2=Bottom）
+        /// ステータスインジケータパネルのプリセット位置インデックス
         /// </summary>
         public virtual int StatusPanelPosition { get; set; } = 0;
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using CameraSongScript.Configuration;
 
 namespace CameraSongScript.Localization
 {
@@ -396,37 +397,8 @@ namespace CameraSongScript.Localization
             }
         };
 
-        private static readonly string[] _statusPanelPresetKeys = new string[]
-        {
-            "status-panel-left-upper-right",
-            "status-panel-left-upper-left",
-            "status-panel-left-lower-right",
-            "status-panel-left-lower-left",
-            "status-panel-center-upper-right",
-            "status-panel-center-upper-left",
-            "status-panel-center-lower-right",
-            "status-panel-center-lower-left",
-            "status-panel-right-upper-right",
-            "status-panel-right-upper-left",
-            "status-panel-right-lower-right",
-            "status-panel-right-lower-left"
-        };
-
-        private static readonly string[] _statusPanelLegacyNames = new string[]
-        {
-            "LeftUpperRight",
-            "LeftUpperLeft",
-            "LeftLowerRight",
-            "LeftLowerLeft",
-            "CenterUpperRight",
-            "CenterUpperLeft",
-            "CenterLowerRight",
-            "CenterLowerLeft",
-            "RightUpperRight",
-            "RightUpperLeft",
-            "RightLowerRight",
-            "RightLowerLeft"
-        };
+        private static readonly string[] _statusPanelPresetKeys = StatusPanelPresetCatalog.GetLocalizationKeys();
+        private static readonly string[] _statusPanelLegacyNames = StatusPanelPresetCatalog.GetLegacyNames();
 
         public static event Action LanguageChanged;
 
@@ -596,3 +568,4 @@ namespace CameraSongScript.Localization
         }
     }
 }
+

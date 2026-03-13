@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Models;
+using HMUI;
 using IPA.Utilities;
 using Newtonsoft.Json;
 
@@ -20,7 +21,7 @@ namespace CameraSongScript.Detectors
     /// metadata.mapIdによるマッチングで検出・統合する
     /// ファイルI/Oは非同期で実行し、メインスレッドをブロックしない
     /// </summary>
-    internal class CameraSongScriptDetector
+    internal partial class CameraSongScriptDetector
     {
         private static string _latestSelectedSong = string.Empty;
         private static CancellationTokenSource _scanCts;
@@ -38,7 +39,7 @@ namespace CameraSongScript.Detectors
 
         /// <summary>
         /// スキャン完了時に発火するイベント（UIの更新通知用）
-        /// 注意: バックグラウンドスレッドから呼ばれる可能性がある
+        /// スキャン結果の反映後、メインスレッド上で呼び出される。
         /// </summary>
         public static event Action ScanCompleted;
 
@@ -158,13 +159,10 @@ namespace CameraSongScript.Detectors
                 if (customLevel.customLevelPath != _latestSelectedSong)
                 {
                     _latestSelectedSong = customLevel.customLevelPath;
-                    CurrentLevelPath = customLevel.customLevelPath;
-                    _currentLevelId = customLevel.levelID;
 #if DEBUG
                     Plugin.Log.Notice($"Selected CustomLevel Path:\n {customLevel.customLevelPath}");
 #endif
-                    // 前回のスキャンをキャンセルして新しいスキャンを開始
-                    StartScanAsync(customLevel.customLevelPath, customLevel.levelID);
+                    RequestScan(customLevel.customLevelPath, customLevel.levelID);
                 }
             }
         }
@@ -174,7 +172,7 @@ namespace CameraSongScript.Detectors
             if (string.IsNullOrEmpty(CurrentLevelPath) || string.IsNullOrEmpty(_currentLevelId))
                 return;
 
-            StartScanAsync(CurrentLevelPath, _currentLevelId);
+            RequestScan(CurrentLevelPath, _currentLevelId);
         }
 
         /// <summary>
@@ -211,11 +209,16 @@ namespace CameraSongScript.Detectors
                 ct = _scanCts.Token;
             }
 
+            string configuredSelectedScript = CameraSongScriptConfig.Instance.SelectedScriptFile;
             Task.Run(() =>
             {
                 try
                 {
-                    ScanForScriptFiles(levelPath, levelId, ct);
+                    ScanResult scanResult = CollectScanResult(levelPath, levelId, configuredSelectedScript, ct);
+                    if (scanResult == null || ct.IsCancellationRequested)
+                        return;
+
+                    ApplyScanResultOnMainThread(levelPath, levelId, scanResult, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -895,27 +898,20 @@ namespace CameraSongScript.Detectors
 
                 if (movementScript?.JsonMovements != null)
                 {
-                    string sep = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-                    string sepCheck = (sep == "." ? "," : ".");
-
                     foreach (var movement in movementScript.JsonMovements)
                     {
-                        if (movement.startPos != null && !string.IsNullOrEmpty(movement.startPos.y))
+                        if (movement.startPos != null &&
+                            !string.IsNullOrEmpty(movement.startPos.y) &&
+                            NumericStringParser.TryParse(movement.startPos.y, out float startY))
                         {
-                            string yStr = movement.startPos.y.Contains(sepCheck) ? movement.startPos.y.Replace(sepCheck, sep) : movement.startPos.y;
-                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float startY))
-                            {
-                                movement.startPos.y = (startY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            }
+                            movement.startPos.y = (startY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
                         }
 
-                        if (movement.endPos != null && !string.IsNullOrEmpty(movement.endPos.y))
+                        if (movement.endPos != null &&
+                            !string.IsNullOrEmpty(movement.endPos.y) &&
+                            NumericStringParser.TryParse(movement.endPos.y, out float endY))
                         {
-                            string yStr = movement.endPos.y.Contains(sepCheck) ? movement.endPos.y.Replace(sepCheck, sep) : movement.endPos.y;
-                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float endY))
-                            {
-                                movement.endPos.y = (endY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            }
+                            movement.endPos.y = (endY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
                         }
                     }
 
@@ -944,6 +940,7 @@ namespace CameraSongScript.Detectors
                 EffectiveScriptPath = SelectedScriptPath;
             }
         }
+
         /// <summary>
         /// 汎用スクリプト用: オフセットがある場合に一時ファイルを生成し、そのパスを返す。
         /// オフセットが0またはCameraPlusモードでない場合は元のパスをそのまま返す。
@@ -966,27 +963,20 @@ namespace CameraSongScript.Detectors
 
                 if (movementScript?.JsonMovements != null)
                 {
-                    string sep = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-                    string sepCheck = (sep == "." ? "," : ".");
-
                     foreach (var movement in movementScript.JsonMovements)
                     {
-                        if (movement.startPos != null && !string.IsNullOrEmpty(movement.startPos.y))
+                        if (movement.startPos != null &&
+                            !string.IsNullOrEmpty(movement.startPos.y) &&
+                            NumericStringParser.TryParse(movement.startPos.y, out float startY))
                         {
-                            string yStr = movement.startPos.y.Contains(sepCheck) ? movement.startPos.y.Replace(sepCheck, sep) : movement.startPos.y;
-                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float startY))
-                            {
-                                movement.startPos.y = (startY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            }
+                            movement.startPos.y = (startY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
                         }
 
-                        if (movement.endPos != null && !string.IsNullOrEmpty(movement.endPos.y))
+                        if (movement.endPos != null &&
+                            !string.IsNullOrEmpty(movement.endPos.y) &&
+                            NumericStringParser.TryParse(movement.endPos.y, out float endY))
                         {
-                            string yStr = movement.endPos.y.Contains(sepCheck) ? movement.endPos.y.Replace(sepCheck, sep) : movement.endPos.y;
-                            if (float.TryParse(yStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float endY))
-                            {
-                                movement.endPos.y = (endY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
-                            }
+                            movement.endPos.y = (endY + offsetMeters).ToString(System.Globalization.CultureInfo.InvariantCulture);
                         }
                     }
 
@@ -1011,5 +1001,8 @@ namespace CameraSongScript.Detectors
 
             return commonScriptPath;
         }
-    }
+}
+
+
+
 }
