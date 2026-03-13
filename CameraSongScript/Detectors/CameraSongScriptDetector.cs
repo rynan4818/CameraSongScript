@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
@@ -165,6 +167,14 @@ namespace CameraSongScript.Detectors
                     StartScanAsync(customLevel.customLevelPath, customLevel.levelID);
                 }
             }
+        }
+
+        public static void ReevaluateCurrentLevel()
+        {
+            if (string.IsNullOrEmpty(CurrentLevelPath) || string.IsNullOrEmpty(_currentLevelId))
+                return;
+
+            StartScanAsync(CurrentLevelPath, _currentLevelId);
         }
 
         /// <summary>
@@ -429,11 +439,7 @@ namespace CameraSongScript.Detectors
         /// </summary>
         private static string ExtractZipEntryToTemp(string zipPath, string entryName)
         {
-            string tempDir = Path.Combine(UnityGame.UserDataPath, "CameraSongScript");
-            if (!Directory.Exists(tempDir))
-                Directory.CreateDirectory(tempDir);
-
-            string tempPath = Path.Combine(tempDir, "Temp_ZipScript.json");
+            string tempPath = GetTempScriptPath("Temp_ZipScript", zipPath, entryName);
 
             using (var zip = ZipFile.OpenRead(zipPath))
             {
@@ -451,6 +457,26 @@ namespace CameraSongScript.Detectors
 
             Plugin.Log.Info($"CameraSongScriptDetector: Extracted zip entry '{entryName}' to temp file.");
             return tempPath;
+        }
+
+        private static string GetTempScriptPath(string prefix, params string[] identityParts)
+        {
+            string tempDir = Path.Combine(UnityGame.UserDataPath, "CameraSongScript");
+            if (!Directory.Exists(tempDir))
+                Directory.CreateDirectory(tempDir);
+
+            string identity = string.Join("|", identityParts.Select(part => part ?? string.Empty));
+            using (var sha1 = SHA1.Create())
+            {
+                byte[] hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(identity));
+                var sb = new StringBuilder(hash.Length * 2);
+                foreach (byte b in hash)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return Path.Combine(tempDir, $"{prefix}_{sb}.json");
+            }
         }
 
         /// <summary>
@@ -893,11 +919,7 @@ namespace CameraSongScript.Detectors
                         }
                     }
 
-                    string tempDir = Path.Combine(Environment.CurrentDirectory, "UserData", "CameraSongScript");
-                    if (!Directory.Exists(tempDir))
-                        Directory.CreateDirectory(tempDir);
-
-                    string tempFilePath = Path.Combine(tempDir, "Temp_OffsetScript.json");
+                    string tempFilePath = GetTempScriptPath("Temp_OffsetScript", SelectedScriptPath, offsetCm.ToString());
 
                     var settings = new JsonSerializerSettings
                     {
@@ -968,11 +990,7 @@ namespace CameraSongScript.Detectors
                         }
                     }
 
-                    string tempDir = Path.Combine(Environment.CurrentDirectory, "UserData", "CameraSongScript");
-                    if (!Directory.Exists(tempDir))
-                        Directory.CreateDirectory(tempDir);
-
-                    string tempFilePath = Path.Combine(tempDir, "Temp_CommonOffsetScript.json");
+                    string tempFilePath = GetTempScriptPath("Temp_CommonOffsetScript", commonScriptPath, offsetCm.ToString());
 
                     var settings = new JsonSerializerSettings
                     {

@@ -14,6 +14,8 @@ namespace CameraSongScript.Models
     {
         private static string _lastHashedPath = null;
         private static string _lastHashValue = null;
+        private static long _lastHashedLength = -1;
+        private static DateTime _lastHashedWriteTimeUtc = DateTime.MinValue;
 
         /// <summary>
         /// 指定されたファイルのSHA1ハッシュを計算して小文字の16進数文字列で返す
@@ -22,7 +24,11 @@ namespace CameraSongScript.Models
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
 
-            if (_lastHashedPath == filePath && _lastHashValue != null)
+            var fileInfo = new FileInfo(filePath);
+            if (_lastHashedPath == filePath &&
+                _lastHashValue != null &&
+                _lastHashedLength == fileInfo.Length &&
+                _lastHashedWriteTimeUtc == fileInfo.LastWriteTimeUtc)
             {
                 return _lastHashValue;
             }
@@ -40,6 +46,8 @@ namespace CameraSongScript.Models
                     }
                     _lastHashValue = sb.ToString();
                     _lastHashedPath = filePath;
+                    _lastHashedLength = fileInfo.Length;
+                    _lastHashedWriteTimeUtc = fileInfo.LastWriteTimeUtc;
                     return _lastHashValue;
                 }
             }

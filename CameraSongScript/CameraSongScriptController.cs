@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using CameraSongScript.Interfaces;
+using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
@@ -55,9 +56,9 @@ namespace CameraSongScript
         // Camera2のゲームシーン読み込み完了待ちフラグ
         private bool _pendingCustomSceneSwitch = false;
         private int _customSceneSwitchDelay = 0;
-
         // 汎用スクリプト使用時フラグ
         private bool _isUsingCommonScript = false;
+        private string _resolvedCustomSceneToSwitch = string.Empty;
 
         public void Initialize()
         {
@@ -134,16 +135,10 @@ namespace CameraSongScript
             // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
 
             // Camera2のゲームシーン読み込み完了後にカスタムシーンを適用する
-            string customScene;
-            if (useCommon && !string.IsNullOrEmpty(CameraSongScriptConfig.Instance.CommonScriptCustomScene))
-            {
-                customScene = CameraSongScriptConfig.Instance.CommonScriptCustomScene;
-            }
-            else
-            {
-                customScene = CameraSongScriptConfig.Instance.CustomSceneToSwitch;
-            }
-            if (CameraModDetector.IsCamera2 && !string.IsNullOrEmpty(customScene) && customScene != "(Default)")
+            _resolvedCustomSceneToSwitch = ResolveCustomSceneToSwitch(useCommon);
+            if (CameraModDetector.IsCamera2 &&
+                !string.IsNullOrEmpty(_resolvedCustomSceneToSwitch) &&
+                _resolvedCustomSceneToSwitch != UiLocalization.OptionDefault)
             {
                 _pendingCustomSceneSwitch = true;
                 _customSceneSwitchDelay = 2; // 2フレーム待機（Camera2のコルーチン完了後）
@@ -153,7 +148,7 @@ namespace CameraSongScript
         public void Dispose()
         {
             // カスタムシーンの復元
-            if (CameraModDetector.IsCamera2)
+            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
             {
                 Plugin.CamHelper.RestoreGameSceneSetup();
             }
@@ -184,7 +179,7 @@ namespace CameraSongScript
                 if (_customSceneSwitchDelay <= 0)
                 {
                     _pendingCustomSceneSwitch = false;
-                    Plugin.CamHelper.PreGameSceneCurrentSetup(CameraSongScriptConfig.Instance.CustomSceneToSwitch);
+                    Plugin.CamHelper.PreGameSceneCurrentSetup(_resolvedCustomSceneToSwitch);
                 }
             }
 
@@ -352,6 +347,14 @@ namespace CameraSongScript
         {
             if (!_paused) return;
             _paused = false;
+        }
+
+        private static string ResolveCustomSceneToSwitch(bool useCommon)
+        {
+            if (useCommon && !string.IsNullOrEmpty(CameraSongScriptConfig.Instance.CommonScriptCustomScene))
+                return CameraSongScriptConfig.Instance.CommonScriptCustomScene;
+
+            return CameraSongScriptConfig.Instance.CustomSceneToSwitch;
         }
 
         /// <summary>

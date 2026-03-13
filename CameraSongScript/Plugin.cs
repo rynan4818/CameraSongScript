@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
+using CameraSongScript.Detectors;
 using CameraSongScript.Installers;
 using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
@@ -50,10 +51,12 @@ namespace CameraSongScript
             _ = InitSongDetailsCacheAsync();
 
             // 3. SongScriptsフォルダのスキャン・キャッシュ構築（非同期）
-            _ = SongScriptFolderCache.ScanAsync();
+            var songScriptScanTask = SongScriptFolderCache.ScanAsync();
+            _ = ReevaluateSelectedLevelWhenReady(songScriptScanTask, "SongScripts");
 
             // 4. CommonScriptsフォルダのスキャン・キャッシュ構築（非同期）
-            _ = CommonScriptCache.ScanAsync();
+            var commonScriptScanTask = CommonScriptCache.ScanAsync();
+            _ = ReevaluateSelectedLevelWhenReady(commonScriptScanTask, "CommonScripts");
 
             // 5. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
             if (CameraModDetector.IsCamera2)
@@ -121,6 +124,19 @@ namespace CameraSongScript
             catch (Exception ex)
             {
                 Log.Warn($"SongDetailsCache initialization failed: {ex.Message}");
+            }
+        }
+
+        private static async Task ReevaluateSelectedLevelWhenReady(Task cacheScanTask, string cacheName)
+        {
+            try
+            {
+                await cacheScanTask;
+                CameraSongScriptDetector.ReevaluateCurrentLevel();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Failed to re-evaluate the selected level after {cacheName} scan: {ex.Message}");
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
@@ -19,37 +20,32 @@ namespace CameraSongScript.Models
     public static class SongSettingsManager
     {
         private static readonly string SettingsFilePath = Path.Combine(UnityGame.UserDataPath, "CameraSongScript_SongSettings.json");
+        private static readonly object _initializeLock = new object();
+        private static readonly SemaphoreSlim _saveLock = new SemaphoreSlim(1, 1);
         private static SettingsData _settingsData = new SettingsData();
+        private static Task _initializeTask;
         private static bool _isInitialized = false;
         private static string _currentSongKey = null;
 
         /// <summary>
         /// データの初期化（ロード）を非同期で行う
         /// </summary>
-        public static async Task InitializeAsync()
+        public static Task InitializeAsync()
         {
-            if (_isInitialized) return;
-
-            if (File.Exists(SettingsFilePath))
+            lock (_initializeLock)
             {
-                try
+                if (_isInitialized)
                 {
-                    using (StreamReader reader = new StreamReader(SettingsFilePath))
-                    {
-                        string json = await reader.ReadToEndAsync();
-                        var data = JsonConvert.DeserializeObject<SettingsData>(json);
-                        if (data != null)
-                        {
-                            _settingsData = data;
-                        }
-                    }
+                    return Task.CompletedTask;
                 }
-                catch (Exception ex)
+
+                if (_initializeTask == null)
                 {
-                    Plugin.Log?.Error($"Failed to load song settings: {ex.Message}");
+                    _initializeTask = Task.Run((Action)LoadSettings);
                 }
+
+                return _initializeTask;
             }
-            _isInitialized = true;
         }
 
         /// <summary>
@@ -57,19 +53,24 @@ namespace CameraSongScript.Models
         /// </summary>
         public static async Task SaveSettingsAsync()
         {
-            if (!_isInitialized) return;
+            await InitializeAsync().ConfigureAwait(false);
+            await _saveLock.WaitAsync().ConfigureAwait(false);
 
             try
             {
                 string json = JsonConvert.SerializeObject(_settingsData, Formatting.Indented);
                 using (StreamWriter writer = new StreamWriter(SettingsFilePath, false))
                 {
-                    await writer.WriteAsync(json);
+                    await writer.WriteAsync(json).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
                 Plugin.Log?.Error($"Failed to save song settings: {ex.Message}");
+            }
+            finally
+            {
+                _saveLock.Release();
             }
         }
 
@@ -105,6 +106,8 @@ namespace CameraSongScript.Models
         /// </summary>
         public static SongSpecificSettings GetCurrentSettings()
         {
+            EnsureInitialized();
+
             if (string.IsNullOrEmpty(_currentSongKey)) return null;
             
             if (_settingsData.SongSettings.TryGetValue(_currentSongKey, out var settings))
@@ -119,6 +122,8 @@ namespace CameraSongScript.Models
         /// </summary>
         public static void UpdateCurrentScriptFileName(string fileName)
         {
+            EnsureInitialized();
+
             if (string.IsNullOrEmpty(_currentSongKey)) return;
 
             var settings = _settingsData.SongSettings.GetOrAdd(_currentSongKey, new SongSpecificSettings());
@@ -131,7 +136,46 @@ namespace CameraSongScript.Models
         /// <summary>
         /// スクリプトオフセット用の辞書を提供する
         /// </summary>
-        public static ConcurrentDictionary<string, int> ScriptOffsetsDict => _settingsData.ScriptOffsets;
+        public static ConcurrentDictionary<string, int> ScriptOffsetsDict
+        {
+            get
+            {
+                EnsureInitialized();
+                return _settingsData.ScriptOffsets;
+            }
+        }
 
+        private static void EnsureInitialized()
+        {
+            InitializeAsync().GetAwaiter().GetResult();
+        }
+
+        private static void LoadSettings()
+        {
+            if (_isInitialized)
+                return;
+
+            if (File.Exists(SettingsFilePath))
+            {
+                try
+                {
+                    using (StreamReader reader = new StreamReader(SettingsFilePath))
+                    {
+                        string json = reader.ReadToEnd();
+                        var data = JsonConvert.DeserializeObject<SettingsData>(json);
+                        if (data != null)
+                        {
+                            _settingsData = data;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log?.Error($"Failed to load song settings: {ex.Message}");
+                }
+            }
+
+            _isInitialized = true;
+        }
     }
 }

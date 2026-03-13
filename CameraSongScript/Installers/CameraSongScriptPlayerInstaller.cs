@@ -10,7 +10,14 @@ namespace CameraSongScript.Installers
             // CameraPlusモードではCameraPlus自身のCameraMovement.csがスクリプトを実行する
             if (CameraModDetector.IsCamera2)
             {
-                this.Container.BindInterfacesAndSelfTo<CameraSongScriptController>().AsSingle().NonLazy();
+                if (Plugin.IsCamHelperReady)
+                {
+                    this.Container.BindInterfacesAndSelfTo<CameraSongScriptController>().AsSingle().NonLazy();
+                }
+                else
+                {
+                    Plugin.Log?.Warn("CameraSongScriptController binding skipped because the Camera2 helper is not ready.");
+                }
             }
             else if (CameraModDetector.IsCameraPlus)
             {
