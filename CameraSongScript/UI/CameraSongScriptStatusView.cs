@@ -15,6 +15,9 @@ namespace CameraSongScript.UI
     /// </summary>
     public class CameraSongScriptStatusView : MonoBehaviour, IInitializable, IDisposable
     {
+        [Inject]
+        private CameraSongScriptDetector _scriptDetector = null;
+
         private GameObject _rootObject;
         private Canvas _canvas;
         private CurvedTextMeshPro _statusText;
@@ -24,7 +27,7 @@ namespace CameraSongScript.UI
         public void Initialize()
         {
             CreateCanvas();
-            CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
+            _scriptDetector.ScanCompleted += OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded += OnConfigReloaded;
             UiLocalization.LanguageChanged += OnLanguageChanged;
             UpdateContent();
@@ -32,7 +35,7 @@ namespace CameraSongScript.UI
 
         public void Dispose()
         {
-            CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
+            _scriptDetector.ScanCompleted -= OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded -= OnConfigReloaded;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             if (_rootObject != null)
@@ -174,8 +177,8 @@ namespace CameraSongScript.UI
 
             bool show = CameraSongScriptConfig.Instance.ShowStatusPanel;
             bool enabled = CameraSongScriptConfig.Instance.Enabled;
-            bool hasScript = CameraSongScriptDetector.HasSongScript;
-            bool isCommon = CameraSongScriptDetector.IsUsingCommonScript;
+            bool hasScript = _scriptDetector.HasSongScript;
+            bool isCommon = _scriptDetector.IsUsingCommonScript;
 
             // 表示設定OFFの場合は完全に非表示
             if (!show)
@@ -191,7 +194,7 @@ namespace CameraSongScript.UI
             {
                 string commonName = CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom
                     ? UiLocalization.GetOptionDisplay(UiLocalization.OptionRandom, UiLocalization.OptionRandom)
-                    : CameraSongScriptDetector.ResolvedCommonScriptDisplayName;
+                    : _scriptDetector.ResolvedCommonScriptDisplayName;
                 if (string.IsNullOrEmpty(commonName))
                     commonName = UiLocalization.GetOptionDisplay(
                         CameraSongScriptConfig.Instance.SelectedCommonScript,
@@ -230,12 +233,12 @@ namespace CameraSongScript.UI
             }
 
             // 以下、有効かつスクリプトありの場合
-            string scriptName = CameraSongScriptDetector.SelectedScriptDisplayName;
+            string scriptName = _scriptDetector.SelectedScriptDisplayName;
 
             string statusLine = UiLocalization.Get("panel-on");
             string scriptLine = UiLocalization.Format("panel-script-line", scriptName);
 
-            var meta = CameraSongScriptDetector.CurrentMetadata;
+            var meta = _scriptDetector.CurrentMetadata;
             string metaLine = string.Empty;
             if (meta != null)
             {
@@ -263,14 +266,14 @@ namespace CameraSongScript.UI
             _statusText.text = AppendCamera2UnsupportedWarning(fullText);
         }
 
-        private static string AppendCamera2UnsupportedWarning(string statusText)
+        private string AppendCamera2UnsupportedWarning(string statusText)
         {
-            if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
+            if (!CameraModDetector.IsCamera2 || !_scriptDetector.HasCurrentUnsupportedFeatures)
                 return statusText;
 
             string warningText = UiLocalization.Format(
                 "warning-camera2-unsupported",
-                CameraSongScriptDetector.CurrentUnsupportedFeatureSummary);
+                _scriptDetector.CurrentUnsupportedFeatureSummary);
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 

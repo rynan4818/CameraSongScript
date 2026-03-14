@@ -44,6 +44,9 @@ namespace CameraSongScript.UI
         private static Material _lineMaterial;
         private static Material _solidMaterialTemplate;
 
+        [Inject]
+        private CameraSongScriptDetector _scriptDetector = null;
+
         private readonly List<TimelineSegment> _segments = new List<TimelineSegment>();
         private readonly List<LineRenderer> _pathLineRenderers = new List<LineRenderer>();
 
@@ -75,10 +78,10 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (CameraSongScriptDetector.IsUsingCommonScript)
+                if (_scriptDetector.IsUsingCommonScript)
                 {
-                    if (!string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptPath))
-                        return File.Exists(CameraSongScriptDetector.ResolvedCommonScriptPath);
+                    if (!string.IsNullOrEmpty(_scriptDetector.ResolvedCommonScriptPath))
+                        return File.Exists(_scriptDetector.ResolvedCommonScriptPath);
 
                     if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                         return CommonScriptCache.Scripts.Count > 0;
@@ -87,7 +90,7 @@ namespace CameraSongScript.UI
                     return !string.IsNullOrEmpty(path) && File.Exists(path);
                 }
 
-                return CameraSongScriptDetector.HasSongScript && File.Exists(CameraSongScriptDetector.SelectedScriptPath);
+                return _scriptDetector.HasSongScript && File.Exists(_scriptDetector.SelectedScriptPath);
             }
         }
 
@@ -241,7 +244,7 @@ namespace CameraSongScript.UI
             path = string.Empty;
             displayName = string.Empty;
 
-            if (CameraSongScriptDetector.IsUsingCommonScript)
+            if (_scriptDetector.IsUsingCommonScript)
             {
                 if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                 {
@@ -266,18 +269,18 @@ namespace CameraSongScript.UI
                     displayName = CameraSongScriptConfig.Instance.SelectedCommonScript ?? string.Empty;
                 }
 
-                if (string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptPath))
+                if (string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(_scriptDetector.ResolvedCommonScriptPath))
                 {
-                    path = CameraSongScriptDetector.ResolvedCommonScriptPath;
-                    displayName = string.IsNullOrEmpty(CameraSongScriptDetector.ResolvedCommonScriptDisplayName)
+                    path = _scriptDetector.ResolvedCommonScriptPath;
+                    displayName = string.IsNullOrEmpty(_scriptDetector.ResolvedCommonScriptDisplayName)
                         ? displayName
-                        : CameraSongScriptDetector.ResolvedCommonScriptDisplayName;
+                        : _scriptDetector.ResolvedCommonScriptDisplayName;
                 }
             }
-            else if (CameraSongScriptDetector.HasSongScript)
+            else if (_scriptDetector.HasSongScript)
             {
-                path = CameraSongScriptDetector.SelectedScriptPath;
-                displayName = CameraSongScriptDetector.SelectedScriptDisplayName;
+                path = _scriptDetector.SelectedScriptPath;
+                displayName = _scriptDetector.SelectedScriptDisplayName;
             }
 
             if (string.IsNullOrEmpty(displayName) && !string.IsNullOrEmpty(path))

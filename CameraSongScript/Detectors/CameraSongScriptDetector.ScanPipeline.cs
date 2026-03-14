@@ -30,7 +30,7 @@ namespace CameraSongScript.Detectors
             public int TotalCount => ChartCount + SongScriptFolderCount;
         }
 
-        private static void RequestScan(string levelPath, string levelId)
+        private void RequestScan(string levelPath, string levelId)
         {
             DispatchToMainThread(() =>
             {
@@ -40,7 +40,7 @@ namespace CameraSongScript.Detectors
             });
         }
 
-        private static void DispatchToMainThread(Action action)
+        private void DispatchToMainThread(Action action)
         {
             if (action == null)
                 return;
@@ -55,7 +55,7 @@ namespace CameraSongScript.Detectors
             action();
         }
 
-        private static ScanResult CollectScanResult(string levelPath, string levelId, string configuredSelectedScript, CancellationToken ct)
+        private ScanResult CollectScanResult(string levelPath, string levelId, string configuredSelectedScript, CancellationToken ct)
         {
             var chartCandidates = new List<ScriptCandidate>();
 
@@ -138,7 +138,7 @@ namespace CameraSongScript.Detectors
             };
         }
 
-        private static DefaultScriptSelection SelectConfiguredDefaultScript(List<string> validFiles, Dictionary<string, ScriptCandidate> candidateMap, string configuredSelectedScript)
+        private DefaultScriptSelection SelectConfiguredDefaultScript(List<string> validFiles, Dictionary<string, ScriptCandidate> candidateMap, string configuredSelectedScript)
         {
             var selection = new DefaultScriptSelection();
             if (validFiles.Count == 0)
@@ -172,7 +172,7 @@ namespace CameraSongScript.Detectors
 {
     internal partial class CameraSongScriptDetector
     {
-        private static void ApplyScanResultOnMainThread(string levelPath, string levelId, ScanResult scanResult, CancellationToken ct)
+        private void ApplyScanResultOnMainThread(string levelPath, string levelId, ScanResult scanResult, CancellationToken ct)
         {
             DispatchToMainThread(() =>
             {

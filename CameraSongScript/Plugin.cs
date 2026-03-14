@@ -35,6 +35,7 @@ namespace CameraSongScript
             Log.Info("CameraSongScript initialized.");
 
             // Zenjectインストーラー登録
+            zenjector.Install<CameraSongScriptAppInstaller>(Location.App);
             zenjector.Install<CameraSongScriptPlayerInstaller>(Location.Player);
             zenjector.Install<CameraSongScriptMenuInstaller>(Location.Menu);
         }
@@ -132,7 +133,7 @@ namespace CameraSongScript
             try
             {
                 await cacheScanTask;
-                CameraSongScriptDetector.ReevaluateCurrentLevel();
+                CameraSongScriptDetector.Instance?.ReevaluateCurrentLevel();
             }
             catch (Exception ex)
             {

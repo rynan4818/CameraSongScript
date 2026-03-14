@@ -22,6 +22,7 @@ namespace CameraSongScript
 #pragma warning disable 0649
         [Inject] private AudioTimeSyncController _audioTimeSyncController;
         [Inject(Optional = true)] private PauseController _pauseController;
+        [Inject] private CameraSongScriptDetector _scriptDetector;
 #pragma warning restore 0649
 
         private bool _dataLoaded = false;
@@ -36,8 +37,9 @@ namespace CameraSongScript
         // AudioSync用
         private float _movementStartTime, _movementEndTime, _movementNextStartTime;
 
-        // リアルタイム計測用（DateTime.Now より低コスト）
+        // 非AudioSync時の経過時間（ポーズ中は加算しない）
         private float _movementStartRealtime, _movementEndRealtime, _movementDelayEndRealtime;
+        private float _movementElapsedRealtime;
 
         // ポーズ対応
         private bool _paused = false;
@@ -62,8 +64,8 @@ namespace CameraSongScript
 
         public void Initialize()
         {
-            bool useCommon = CameraSongScriptDetector.IsUsingCommonScript;
-            bool hasNormalScript = CameraSongScriptDetector.HasSongScript;
+            bool useCommon = _scriptDetector.IsUsingCommonScript;
+            bool hasNormalScript = _scriptDetector.HasSongScript;
 
             // ForceCommonの場合はEnabled無視
             if (!useCommon && !CameraSongScriptConfig.Instance.Enabled)
@@ -100,9 +102,9 @@ namespace CameraSongScript
                 // Camera2: ランダムの場合は毎回プレイ開始時に再選択する
                 if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
                 {
-                    CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
+                    _scriptDetector.ResolveAndSetCommonScriptPath();
                 }
-                scriptPath = CameraSongScriptDetector.ResolvedCommonScriptPath;
+                scriptPath = _scriptDetector.ResolvedCommonScriptPath;
 
                 if (string.IsNullOrEmpty(scriptPath))
                 {
@@ -120,7 +122,7 @@ namespace CameraSongScript
             }
             else
             {
-                scriptPath = CameraSongScriptDetector.SelectedScriptPath;
+                scriptPath = _scriptDetector.SelectedScriptPath;
             }
 
             // SongScriptをロード
@@ -200,7 +202,8 @@ namespace CameraSongScript
             }
             else
             {
-                float now = Time.realtimeSinceStartup;
+                _movementElapsedRealtime += Time.unscaledDeltaTime;
+                float now = _movementElapsedRealtime;
                 if (_movePerc == 1 && _movementDelayEndRealtime <= now)
                     UpdatePosAndRot();
 
@@ -251,6 +254,8 @@ namespace CameraSongScript
                 {
                     _movementNextStartTime = 0;
                 }
+
+                _movementElapsedRealtime = 0f;
 
                 _eventID = 0;
                 _isFirstTick = true;
@@ -334,6 +339,7 @@ namespace CameraSongScript
         {
             _dataLoaded = false;
             _paused = false;
+            _movementElapsedRealtime = 0f;
             ReleaseAllTokens();
         }
 
@@ -414,7 +420,7 @@ namespace CameraSongScript
             }
             else
             {
-                _movementStartRealtime = Time.realtimeSinceStartup;
+                _movementStartRealtime = _movementElapsedRealtime;
                 _movementEndRealtime = _movementStartRealtime + movement.Duration;
                 _movementDelayEndRealtime = _movementStartRealtime + movement.Duration + movement.Delay;
             }

@@ -23,7 +23,7 @@ namespace CameraSongScript.UI
             set
             {
                 CameraSongScriptConfig.Instance.UseCommonScriptAsFallback = value;
-                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                _scriptDetector.ReevaluateCommonScriptUsage();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
@@ -41,7 +41,7 @@ namespace CameraSongScript.UI
             set
             {
                 CameraSongScriptConfig.Instance.ForceCommonScript = value;
-                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                _scriptDetector.ReevaluateCommonScriptUsage();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
@@ -94,7 +94,7 @@ namespace CameraSongScript.UI
                 if (!string.IsNullOrEmpty(name) && name != UiLocalization.OptionNone)
                 {
                     CameraSongScriptConfig.Instance.SelectedCommonScript = name;
-                    CameraSongScriptDetector.ReevaluateCommonScriptUsage();
+                    _scriptDetector.ReevaluateCommonScriptUsage();
                     NotifyPropertyChanged(nameof(SongScriptStatus));
 
                     // 汎用スクリプト選択変更後のオフセット関連UI更新
@@ -251,7 +251,7 @@ namespace CameraSongScript.UI
                     UiLocalization.OptionDelete);
                 if (profile == UiLocalization.OptionSameAsSongScript) profile = string.Empty;
                 CameraSongScriptConfig.Instance.CommonScriptProfile = profile ?? string.Empty;
-                CameraSongScriptDetector.SyncCameraPlusPath();
+                _scriptDetector.SyncCameraPlusPath();
                 _statusView?.UpdateContent();
             }
         }

@@ -42,7 +42,7 @@ namespace CameraSongScript.UI
             get
             {
                 if (!Plugin.IsCamPlusHelperReady) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
-                string profile = CameraSongScriptDetector.ResolvedProfileName;
+                string profile = _scriptDetector.ResolvedProfileName;
                 if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
                 return UiLocalization.GetOptionDisplay(profile, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
             }
@@ -57,10 +57,10 @@ namespace CameraSongScript.UI
                 CameraSongScriptConfig.Instance.SongScriptProfile = profile;
 
                 // 解決済みプロファイル名を直接更新
-                CameraSongScriptDetector.SetResolvedProfileName(profile);
+                _scriptDetector.SetResolvedProfileName(profile);
 
                 // 即座に全体のパス・プロファイル状態を同期
-                CameraSongScriptDetector.SyncCameraPlusPath();
+                _scriptDetector.SyncCameraPlusPath();
             }
         }
 

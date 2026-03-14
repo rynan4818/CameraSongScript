@@ -15,17 +15,24 @@ namespace CameraSongScript
     /// </summary>
     public class CameraPlusPlayStartResolver : IDisposable
     {
+        private readonly CameraSongScriptDetector _scriptDetector;
+
+        internal CameraPlusPlayStartResolver(CameraSongScriptDetector scriptDetector)
+        {
+            _scriptDetector = scriptDetector;
+        }
+
         public void Dispose()
         {
-            if (!CameraSongScriptDetector.IsUsingCommonScript)
+            if (!_scriptDetector.IsUsingCommonScript)
                 return;
 
             // プレイ終了時にランダム汎用スクリプトを再抽選し、次回プレイに備える
             if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
             {
-                CameraSongScriptDetector.ResolveAndSetCommonScriptPath();
-                CameraSongScriptDetector.SyncCameraPlusPath();
-                Plugin.Log.Info($"CameraPlusPlayStartResolver: Re-randomized common script for next play: {CameraSongScriptDetector.ResolvedCommonScriptDisplayName}");
+                _scriptDetector.ResolveAndSetCommonScriptPath();
+                _scriptDetector.SyncCameraPlusPath();
+                Plugin.Log.Info($"CameraPlusPlayStartResolver: Re-randomized common script for next play: {_scriptDetector.ResolvedCommonScriptDisplayName}");
             }
         }
     }

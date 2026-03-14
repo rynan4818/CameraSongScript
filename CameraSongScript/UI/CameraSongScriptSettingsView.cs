@@ -34,6 +34,9 @@ namespace CameraSongScript.UI
         [Inject]
         private CameraSongScriptPreviewController _previewController = null;
 
+        [Inject]
+        private CameraSongScriptDetector _scriptDetector = null;
+
         private const float PreviewSliderStep = 0.05f;
         private bool _needsRefresh = false;
         private bool _suppressPreviewSeek = false;
@@ -45,7 +48,7 @@ namespace CameraSongScript.UI
         public void Initialize()
         {
             GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
-            CameraSongScriptDetector.ScanCompleted += OnScanCompleted;
+            _scriptDetector.ScanCompleted += OnScanCompleted;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
@@ -53,7 +56,7 @@ namespace CameraSongScript.UI
 
         public void Dispose()
         {
-            CameraSongScriptDetector.ScanCompleted -= OnScanCompleted;
+            _scriptDetector.ScanCompleted -= OnScanCompleted;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
@@ -231,8 +234,8 @@ namespace CameraSongScript.UI
                     // メインスレッド上でプロファイル名を再解決し、CameraPlusに同期する
                     // バックグラウンドスキャン完了時のSyncCameraPlusPath()は_currentSongKeyが
                     // 変わっている可能性があったため、ここで正しいキーで再解決する
-                    CameraSongScriptDetector.ResolveProfileName();
-                    CameraSongScriptDetector.SyncCameraPlusPath();
+                    _scriptDetector.ResolveProfileName();
+                    _scriptDetector.SyncCameraPlusPath();
 
                     // プロファイルドロップダウンのUIを現在の曲の設定に更新する
                     NotifyPropertyChanged(nameof(SongScriptProfile));
@@ -397,8 +400,8 @@ namespace CameraSongScript.UI
             set
             {
                 CameraSongScriptConfig.Instance.Enabled = value;
-                CameraSongScriptDetector.ReevaluateCommonScriptUsage();
-                CameraSongScriptDetector.SyncCameraPlusPath();
+                _scriptDetector.ReevaluateCommonScriptUsage();
+                _scriptDetector.SyncCameraPlusPath();
                 NotifyPropertyChanged(nameof(SongScriptStatus));
                 NotifyPropertyChanged(nameof(IsOffsetInteractable));
                 NotifyPropertyChanged(nameof(CameraHeightOffset));
@@ -449,7 +452,7 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<object>();
-                foreach (var fileName in CameraSongScriptDetector.AvailableScriptFiles)
+                foreach (var fileName in _scriptDetector.AvailableScriptFiles)
                 {
                     list.Add(fileName);
                 }
@@ -464,19 +467,19 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (CameraSongScriptDetector.HasSongScript)
+                if (_scriptDetector.HasSongScript)
                 {
                     var specificSettings = SongSettingsManager.GetCurrentSettings();
                     if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
                     {
                         // 譜面個別設定があれば、それに合わせて内部選択も更新しておく
-                        if (CameraSongScriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) &&
-                            CameraSongScriptDetector.SelectedScriptDisplayName != specificSettings.SelectedScriptFileName)
+                        if (_scriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) &&
+                            _scriptDetector.SelectedScriptDisplayName != specificSettings.SelectedScriptFileName)
                         {
-                            CameraSongScriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
+                            _scriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
                         }
                     }
-                    return CameraSongScriptDetector.SelectedScriptDisplayName;
+                    return _scriptDetector.SelectedScriptDisplayName;
                 }
                 return UiLocalization.GetOptionDisplay(UiLocalization.OptionNone, UiLocalization.OptionNone);
             }
@@ -485,7 +488,7 @@ namespace CameraSongScript.UI
                 string fileName = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNone);
                 if (!string.IsNullOrEmpty(fileName) && fileName != UiLocalization.OptionNone)
                 {
-                    CameraSongScriptDetector.UpdateSelectedScript(fileName);
+                    _scriptDetector.UpdateSelectedScript(fileName);
                     SongSettingsManager.UpdateCurrentScriptFileName(fileName);
 
                     NotifyPropertyChanged(nameof(SongScriptStatus));
@@ -567,7 +570,7 @@ namespace CameraSongScript.UI
         /// 汎用スクリプトがランダム選択中かどうか（オフセットUIの有効/無効判定用）
         /// </summary>
         private bool IsCommonRandom =>
-            CameraSongScriptDetector.IsUsingCommonScript &&
+            _scriptDetector.IsUsingCommonScript &&
             CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom;
 
         /// <summary>
@@ -598,32 +601,32 @@ namespace CameraSongScript.UI
                     // 個別保存モードの場合: スクリプトハッシュ別に保存する
                     if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
                     {
-                        if (CameraSongScriptDetector.IsUsingCommonScript)
+                        if (_scriptDetector.IsUsingCommonScript)
                         {
                             // 汎用スクリプト非ランダム: ResolvedCommonScriptPathのハッシュで保存
-                            string commonPath = CameraSongScriptDetector.ResolvedCommonScriptPath;
+                            string commonPath = _scriptDetector.ResolvedCommonScriptPath;
                             if (!string.IsNullOrEmpty(commonPath))
                             {
                                 ScriptOffsetManager.UpdateOffsetForScript(commonPath, value);
                             }
                         }
-                        else if (CameraSongScriptDetector.HasSongScript)
+                        else if (_scriptDetector.HasSongScript)
                         {
                             // 通常スクリプト: SelectedScriptPathのハッシュで保存
-                            ScriptOffsetManager.UpdateOffsetForScript(CameraSongScriptDetector.SelectedScriptPath, value);
+                            ScriptOffsetManager.UpdateOffsetForScript(_scriptDetector.SelectedScriptPath, value);
                         }
                     }
                     CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
 
-                    if (CameraSongScriptDetector.HasSongScript)
+                    if (_scriptDetector.HasSongScript)
                     {
-                        CameraSongScriptDetector.UpdateEffectiveScriptPath();
-                        CameraSongScriptDetector.SyncCameraPlusPath();
+                        _scriptDetector.UpdateEffectiveScriptPath();
+                        _scriptDetector.SyncCameraPlusPath();
                     }
-                    else if (CameraSongScriptDetector.IsUsingCommonScript)
+                    else if (_scriptDetector.IsUsingCommonScript)
                     {
                         // 汎用スクリプト: CameraPlusモードの場合はパス再同期
-                        CameraSongScriptDetector.SyncCameraPlusPath();
+                        _scriptDetector.SyncCameraPlusPath();
                     }
                     _statusView?.UpdateContent();
                     HandlePreviewVisualChanged();
@@ -652,14 +655,14 @@ namespace CameraSongScript.UI
         #region メタデータ表示
 
         [UIValue("has-metadata")]
-        public bool HasMetadata => CameraSongScriptDetector.CurrentMetadata != null;
+        public bool HasMetadata => _scriptDetector.CurrentMetadata != null;
 
         [UIValue("meta-author")]
         public string MetaAuthor
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 if (meta == null) return string.Empty;
                 return string.IsNullOrEmpty(meta.cameraScriptAuthorName) ? "--" : meta.cameraScriptAuthorName;
             }
@@ -670,7 +673,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 if (meta == null) return string.Empty;
                 string song = meta.songName ?? "";
                 string sub = meta.songSubName ?? "";
@@ -683,7 +686,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 if (meta == null) return string.Empty;
                 return string.IsNullOrEmpty(meta.levelAuthorName) ? "--" : meta.levelAuthorName;
             }
@@ -694,7 +697,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 return meta != null && meta.avatarHeight > 0;
             }
         }
@@ -704,7 +707,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 if (meta == null || meta.avatarHeight <= 0) return string.Empty;
                 return $"{meta.avatarHeight:0.#} cm";
             }
@@ -715,7 +718,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 return meta != null && !string.IsNullOrEmpty(meta.description);
             }
         }
@@ -725,7 +728,7 @@ namespace CameraSongScript.UI
         {
             get
             {
-                var meta = CameraSongScriptDetector.CurrentMetadata;
+                var meta = _scriptDetector.CurrentMetadata;
                 if (meta == null || string.IsNullOrEmpty(meta.description)) return string.Empty;
                 return meta.description;
             }
@@ -738,14 +741,14 @@ namespace CameraSongScript.UI
 
         #region SongScript検出状態
 
-        private static string AppendCamera2UnsupportedWarning(string statusText)
+        private string AppendCamera2UnsupportedWarning(string statusText)
         {
-            if (!CameraModDetector.IsCamera2 || !CameraSongScriptDetector.HasCurrentUnsupportedFeatures)
+            if (!CameraModDetector.IsCamera2 || !_scriptDetector.HasCurrentUnsupportedFeatures)
                 return statusText;
 
             string warningText = UiLocalization.Format(
                 "warning-camera2-unsupported",
-                CameraSongScriptDetector.CurrentUnsupportedFeatureSummary);
+                _scriptDetector.CurrentUnsupportedFeatureSummary);
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 
@@ -754,8 +757,8 @@ namespace CameraSongScript.UI
         {
             get
             {
-                int count = CameraSongScriptDetector.AvailableScriptFiles.Count;
-                bool isCommon = CameraSongScriptDetector.IsUsingCommonScript;
+                int count = _scriptDetector.AvailableScriptFiles.Count;
+                bool isCommon = _scriptDetector.IsUsingCommonScript;
 
                 if (isCommon)
                 {
@@ -770,8 +773,8 @@ namespace CameraSongScript.UI
 
                 if (count > 0)
                 {
-                    string selected = CameraSongScriptDetector.HasSongScript
-                        ? CameraSongScriptDetector.SelectedScriptDisplayName
+                    string selected = _scriptDetector.HasSongScript
+                        ? _scriptDetector.SelectedScriptDisplayName
                         : "?";
                     return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-found", count, selected));
                 }
