@@ -32,6 +32,7 @@ namespace CameraSongScript.UI
         private const int PreviewTextureWidth = 1280;
         private const int PreviewTextureHeight = 720;
         private const float PathRevealDuration = 2.5f;
+        private const float CameraPlusPreviewYawOffset = 180f;
 
         private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.6f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
@@ -55,7 +56,7 @@ namespace CameraSongScript.UI
         private Transform _screenRoot;
         private Camera _previewCamera;
         private RenderTexture _previewTexture;
-        private RawImage _previewDisplayImage;
+        private Renderer _previewRenderer;
         private Transform _miniCameraMarker;
         private float _currentTime;
         private float _duration;
@@ -417,39 +418,29 @@ namespace CameraSongScript.UI
                     : 16f / 9f;
             }
 
-            if (_previewDisplayImage != null)
-                _previewDisplayImage.texture = _previewTexture;
+            if (_previewRenderer != null && _previewRenderer.material != null)
+                _previewRenderer.material.SetTexture("_MainTex", _previewTexture);
         }
 
         private Transform CreatePreviewScreen(Transform parent)
         {
-            GameObject screenRootObject = new GameObject("PreviewScreen", typeof(Canvas));
+            GameObject screenRootObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            screenRootObject.name = "PreviewScreen";
+            RemoveCollider(screenRootObject);
+            
             screenRootObject.transform.SetParent(parent, false);
 
-            RectTransform screenTransform = screenRootObject.transform as RectTransform;
+            Transform screenTransform = screenRootObject.transform;
             screenTransform.localPosition = new Vector3(0f, 0.78f, 0.05f);
-            screenTransform.localScale = Vector3.one * ScreenScale;
-            screenTransform.sizeDelta = PreviewPanelSize;
+            
+            // Convert PreviewPanelSize (Vector2 width/height) to Quad Scale.
+            // ScreenScale scales the whole thing down.
+            float width = PreviewPanelSize.x * ScreenScale;
+            float height = PreviewPanelSize.y * ScreenScale;
+            screenTransform.localScale = new Vector3(width, height, 1f);
+            screenTransform.localRotation = GetPreviewScreenRotation(Vector3.forward);
 
-            Canvas screenCanvas = screenRootObject.GetComponent<Canvas>();
-            screenCanvas.renderMode = RenderMode.WorldSpace;
-            screenCanvas.overrideSorting = true;
-            screenCanvas.sortingOrder = 60;
-
-            GameObject imageObject = new GameObject("PreviewImage", typeof(RawImage));
-            imageObject.transform.SetParent(screenTransform, false);
-
-            _previewDisplayImage = imageObject.GetComponent<RawImage>();
-            _previewDisplayImage.color = Color.white;
-            _previewDisplayImage.raycastTarget = false;
-
-            RectTransform imageTransform = _previewDisplayImage.rectTransform;
-            imageTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            imageTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            imageTransform.pivot = new Vector2(0.5f, 0.5f);
-            imageTransform.sizeDelta = PreviewPanelSize;
-            imageTransform.anchoredPosition = Vector2.zero;
-            imageTransform.localScale = Vector3.one;
+            _previewRenderer = screenRootObject.GetComponent<MeshRenderer>();
 
             Material customMaterial = null;
             if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
@@ -459,11 +450,16 @@ namespace CameraSongScript.UI
             else if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
             {
                 customMaterial = Plugin.CamPlusHelper.GetPreviewMaterial();
+                Plugin.Log.Info($"customMaterial: {customMaterial}");
             }
 
             if (customMaterial != null)
             {
-                _previewDisplayImage.material = customMaterial;
+                _previewRenderer.material = customMaterial;
+            }
+            else
+            {
+                Plugin.Log.Warn("Preview: Failed to acquire custom preview material from camera mod helper. Using default material.");
             }
 
             return screenTransform;
@@ -792,7 +788,16 @@ namespace CameraSongScript.UI
             if (direction.sqrMagnitude < 0.0001f)
                 return;
 
-            _screenRoot.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            _screenRoot.rotation = GetPreviewScreenRotation(direction.normalized);
+        }
+
+        private static Quaternion GetPreviewScreenRotation(Vector3 forward)
+        {
+            Quaternion rotation = Quaternion.LookRotation(forward, Vector3.up);
+            if (CameraModDetector.IsCameraPlus)
+                rotation *= Quaternion.Euler(0f, CameraPlusPreviewYawOffset, 0f);
+
+            return rotation;
         }
 
         private void DestroyPreviewObjects()
@@ -801,10 +806,13 @@ namespace CameraSongScript.UI
             _isPathRevealActive = false;
             _pathRevealElapsed = 0f;
 
-            if (_previewDisplayImage != null)
+            if (_previewRenderer != null)
             {
-                _previewDisplayImage.texture = null;
-                _previewDisplayImage = null;
+                if (_previewRenderer.material != null)
+                {
+                    _previewRenderer.material.mainTexture = null;
+                }
+                _previewRenderer = null;
             }
 
             if (_previewCamera != null)

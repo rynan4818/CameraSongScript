@@ -146,7 +146,10 @@ namespace CameraSongScript.CamPlus
             var controller = GetController();
             if (controller != null && controller.Shaders.TryGetValue("BeatSaber/BlitCopyWithDepth", out var shader))
             {
-                return new UnityEngine.Material(shader);
+                var material = new UnityEngine.Material(shader);
+                material.SetFloat("_IsVRCameraOnly", 0f);
+                material.renderQueue = 3000;
+                return material;
             }
             return null;
         }
