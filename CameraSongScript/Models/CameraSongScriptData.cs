@@ -71,8 +71,10 @@ namespace CameraSongScript.Models
                     Plugin.Log.Warn($"SongScript: Failed to parse global settings: {ex.Message}");
                 }
 
-                foreach (JsonMovement jsonmovement in movementScriptJson.JsonMovements)
+                for (int movementIndex = 0; movementIndex < movementScriptJson.JsonMovements.Length; movementIndex++)
                 {
+                    JsonMovement jsonmovement = movementScriptJson.JsonMovements[movementIndex];
+
                     try
                     {
                         CameraSongScriptMovement newMovement = new CameraSongScriptMovement();
@@ -101,7 +103,16 @@ namespace CameraSongScript.Models
                         if (jsonmovement.Duration != null)
                             newMovement.Duration = Mathf.Clamp(ParseFloat(jsonmovement.Duration), MinDuration, float.MaxValue);
                         if (jsonmovement.Delay != null)
-                            newMovement.Delay = ParseFloat(jsonmovement.Delay);
+                        {
+                            float parsedDelay = ParseFloat(jsonmovement.Delay);
+                            if (parsedDelay < 0f)
+                            {
+                                Plugin.Log.Warn($"SongScript: Movement #{movementIndex + 1} has a negative Delay ({parsedDelay}). Clamping to 0.");
+                                parsedDelay = 0f;
+                            }
+
+                            newMovement.Delay = parsedDelay;
+                        }
 
                         // EaseTransition
                         if (jsonmovement.EaseTransition != null)
@@ -119,7 +130,7 @@ namespace CameraSongScript.Models
                     }
                     catch (Exception ex)
                     {
-                        Plugin.Log.Warn($"SongScript: Skipping malformed movement #{Movements.Count}: {ex.Message}");
+                        Plugin.Log.Warn($"SongScript: Skipping malformed movement #{movementIndex + 1}: {ex.Message}");
                     }
                 }
                 return true;

@@ -46,6 +46,7 @@ namespace CameraSongScript
         private bool _prevSectionHadVisibleObject = false;
 
         private const float DefaultFOV = 90f;
+        private const int MaxSectionAdvancePerTick = 1024;
 
         // カメラのデフォルトFOV
         private float _defaultFOV = DefaultFOV;
@@ -201,8 +202,18 @@ namespace CameraSongScript
                 if (_audioTimeSyncController == null)
                     return;
 
+                int sectionAdvanceCount = 0;
                 while (_movementNextStartTime <= _audioTimeSyncController.songTime)
+                {
+                    if (sectionAdvanceCount >= MaxSectionAdvancePerTick)
+                    {
+                        Plugin.Log.Warn($"SongScript: AudioSync section advance exceeded {MaxSectionAdvancePerTick} iterations in one tick. Check the script for negative Delay or extremely dense timing.");
+                        break;
+                    }
+
+                    sectionAdvanceCount++;
                     UpdatePosAndRot();
+                }
 
                 startTime = _movementStartTime;
                 endTime = _movementEndTime;
