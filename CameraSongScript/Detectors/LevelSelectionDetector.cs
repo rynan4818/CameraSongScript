@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using CameraSongScript.Models;
+using CameraSongScript.UI;
 using HMUI;
-using UnityEngine;
 using Zenject;
 
 namespace CameraSongScript.Detectors
@@ -11,13 +10,16 @@ namespace CameraSongScript.Detectors
     {
         private readonly StandardLevelDetailViewController _standardLevelDetail;
         private readonly CameraSongScriptDetector _scriptDetector;
+        private readonly CameraSongScriptPreviewController _previewController;
 
         internal LevelSelectionDetector(
             StandardLevelDetailViewController standardLevelDetail,
-            CameraSongScriptDetector scriptDetector)
+            CameraSongScriptDetector scriptDetector,
+            CameraSongScriptPreviewController previewController)
         {
             _standardLevelDetail = standardLevelDetail;
             _scriptDetector = scriptDetector;
+            _previewController = previewController;
         }
 
         public void Initialize()
@@ -26,6 +28,7 @@ namespace CameraSongScript.Detectors
             {
                 _standardLevelDetail.didChangeDifficultyBeatmapEvent += OnDifficultyChanged;
                 _standardLevelDetail.didChangeContentEvent += OnContentChanged;
+                _standardLevelDetail.didDeactivateEvent += OnLevelDetailDeactivated;
                 Plugin.Log.Info("CameraSongScriptDetector: Hooked into StandardLevelDetailViewController.");
             }
             
@@ -39,6 +42,7 @@ namespace CameraSongScript.Detectors
             {
                 _standardLevelDetail.didChangeDifficultyBeatmapEvent -= OnDifficultyChanged;
                 _standardLevelDetail.didChangeContentEvent -= OnContentChanged;
+                _standardLevelDetail.didDeactivateEvent -= OnLevelDetailDeactivated;
             }
         }
 
@@ -66,6 +70,11 @@ namespace CameraSongScript.Detectors
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
             _scriptDetector.SyncCameraPlusPath();
+        }
+
+        private void OnLevelDetailDeactivated(bool removedFromHierarchy, bool screenSystemDisabling)
+        {
+            _previewController?.Clear();
         }
 
         private void UpdateCurrentSongSettings(IDifficultyBeatmap beatmap)

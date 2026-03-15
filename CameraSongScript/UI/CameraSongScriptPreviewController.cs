@@ -831,6 +831,7 @@ namespace CameraSongScript.UI
 
             if (_visibleRoot != null)
             {
+                _visibleRoot.SetActive(false);
                 UnityEngine.Object.Destroy(_visibleRoot);
                 _visibleRoot = null;
             }

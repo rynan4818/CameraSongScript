@@ -30,7 +30,7 @@ namespace CameraSongScript.UI
                 if (_suppressPreviewSeek || _previewController == null)
                     return;
 
-                _previewController.Seek(value, true);
+                _previewController.Seek(value, _previewController.IsVisible);
                 RefreshPreviewBindings();
             }
         }
@@ -81,9 +81,17 @@ namespace CameraSongScript.UI
         [UIAction("preview-clear")]
         private void PreviewClear()
         {
-            _previewController?.Clear();
-            _lastPreviewUiTime = float.NegativeInfinity;
-            RefreshPreviewBindings();
+            _suppressPreviewSeek = true;
+            try
+            {
+                _previewController?.Clear();
+                _lastPreviewUiTime = float.NegativeInfinity;
+                RefreshPreviewBindings();
+            }
+            finally
+            {
+                _suppressPreviewSeek = false;
+            }
         }
 
         [UIAction("preview-speed-x2")]
