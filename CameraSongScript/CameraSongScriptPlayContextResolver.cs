@@ -1,6 +1,7 @@
 using System.IO;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Localization;
 using CameraSongScript.Models;
 
 namespace CameraSongScript
@@ -78,7 +79,13 @@ namespace CameraSongScript
 
         private CameraSongScriptPlayContext ResolveCommonScriptContext()
         {
-            if (string.IsNullOrEmpty(_scriptDetector.ResolvedCommonScriptPath))
+            bool isRandomCommonScript = CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom;
+
+            // Camera2 はプレイ開始時に実際のスクリプトを解決するため、毎回ここで再抽選する。
+            // CameraPlus はシーン遷移前に path を読むので、従来どおり前回プレイ終了時に
+            // 次回用の抽選結果を仕込んだ値を優先し、未解決時のみここで補完する。
+            if ((CameraModDetector.IsCamera2 && isRandomCommonScript) ||
+                string.IsNullOrEmpty(_scriptDetector.ResolvedCommonScriptPath))
             {
                 _scriptDetector.ResolveAndSetCommonScriptPath();
             }
