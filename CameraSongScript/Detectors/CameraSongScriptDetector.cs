@@ -101,6 +101,11 @@ namespace CameraSongScript.Detectors
         public MetadataElements CurrentMetadata { get; private set; }
 
         /// <summary>
+        /// 現在解決済みの汎用スクリプトに含まれるメタデータ
+        /// </summary>
+        public MetadataElements ResolvedCommonMetadata { get; private set; }
+
+        /// <summary>
         /// 現在選択中のSongScriptに含まれるCamera2非対応機能
         /// </summary>
         public bool SelectedScriptContainsCameraEffect { get; private set; }
@@ -195,6 +200,7 @@ namespace CameraSongScript.Detectors
             AvailableScriptFiles = new List<string>();
             _candidateMap = new Dictionary<string, ScriptCandidate>();
             CurrentMetadata = null;
+            ResolvedCommonMetadata = null;
             SelectedScriptContainsCameraEffect = false;
             SelectedScriptContainsWindowControl = false;
             IsUsingCommonScript = false;
@@ -689,6 +695,7 @@ namespace CameraSongScript.Detectors
             IsUsingCommonScript = false;
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedCommonMetadata = null;
 
             if (!CommonScriptCache.IsReady || CommonScriptCache.Scripts.Count == 0)
                 return;
@@ -750,6 +757,7 @@ namespace CameraSongScript.Detectors
             var config = CameraSongScriptConfig.Instance;
             ResolvedCommonScriptPath = string.Empty;
             ResolvedCommonScriptDisplayName = string.Empty;
+            ResolvedCommonMetadata = null;
             ResolvedCommonScriptContainsCameraEffect = false;
             ResolvedCommonScriptContainsWindowControl = false;
 
@@ -776,6 +784,24 @@ namespace CameraSongScript.Detectors
             LoadResolvedCommonScriptCompatibility(ResolvedCommonScriptPath);
         }
 
+        public string GetSelectedScriptFileName()
+        {
+            if (!string.IsNullOrEmpty(SelectedScriptDisplayName) &&
+                _candidateMap.TryGetValue(SelectedScriptDisplayName, out var candidate))
+            {
+                return GetScriptFileName(candidate);
+            }
+
+            return string.IsNullOrEmpty(SelectedScriptPath) ? string.Empty : Path.GetFileName(SelectedScriptPath);
+        }
+
+        public string GetResolvedCommonScriptFileName()
+        {
+            return string.IsNullOrEmpty(ResolvedCommonScriptPath)
+                ? string.Empty
+                : Path.GetFileName(ResolvedCommonScriptPath);
+        }
+
         /// <summary>
         /// 状態をリセットする
         /// </summary>
@@ -794,6 +820,7 @@ namespace CameraSongScript.Detectors
             SelectedScriptDisplayName = string.Empty;
             EffectiveScriptPath = string.Empty;
             CurrentMetadata = null;
+            ResolvedCommonMetadata = null;
             SelectedScriptContainsCameraEffect = false;
             SelectedScriptContainsWindowControl = false;
             AvailableScriptFiles = new List<string>();
@@ -823,15 +850,28 @@ namespace CameraSongScript.Detectors
 
         private void LoadResolvedCommonScriptCompatibility(string filePath)
         {
+            ResolvedCommonMetadata = null;
             ResolvedCommonScriptContainsCameraEffect = false;
             ResolvedCommonScriptContainsWindowControl = false;
 
             if (!TryLoadScriptInfo(filePath, "common script", out var parsed))
                 return;
 
+            ResolvedCommonMetadata = parsed.metadata;
             PopulateUnsupportedFeatureFlags(parsed, out var containsCameraEffect, out var containsWindowControl);
             ResolvedCommonScriptContainsCameraEffect = containsCameraEffect;
             ResolvedCommonScriptContainsWindowControl = containsWindowControl;
+        }
+
+        private static string GetScriptFileName(ScriptCandidate candidate)
+        {
+            if (candidate == null)
+                return string.Empty;
+
+            if (!string.IsNullOrEmpty(candidate.ZipEntryName))
+                return Path.GetFileName(candidate.ZipEntryName);
+
+            return string.IsNullOrEmpty(candidate.FilePath) ? string.Empty : Path.GetFileName(candidate.FilePath);
         }
 
         private bool TryLoadScriptInfo(string filePath, string scriptLabel, out MovementScriptJson parsed)

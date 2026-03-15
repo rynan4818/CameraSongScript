@@ -20,8 +20,10 @@ namespace CameraSongScript
         internal static IPALogger Log { get; private set; }
         internal static ICameraHelper CamHelper { get; private set; }
         internal static ICameraPlusHelper CamPlusHelper { get; private set; }
+        internal static IHttpSiraStatusHelper HttpSiraStatusHelper { get; private set; }
         internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
         internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
+        internal static bool IsHttpSiraStatusHelperReady => HttpSiraStatusHelper != null && HttpSiraStatusHelper.IsInitialized;
 
         internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
         internal static bool IsSongDetailsReady => SongDetailsInstance != null;
@@ -79,6 +81,7 @@ namespace CameraSongScript
                 }
             }
 
+            EnsureHttpSiraStatusHelperLoaded();
             Log.Info("CameraSongScript started.");
         }
 
@@ -86,6 +89,29 @@ namespace CameraSongScript
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
+        }
+
+        internal static void EnsureHttpSiraStatusHelperLoaded()
+        {
+            if (IsHttpSiraStatusHelperReady)
+            {
+                return;
+            }
+
+            if (!IsAssemblyLoaded("HttpSiraStatus"))
+            {
+                return;
+            }
+
+            HttpSiraStatusHelper = CreateAdapter<IHttpSiraStatusHelper>(
+                "CameraSongScript.HttpSiraStatus",
+                "CameraSongScript.HttpSiraStatus.HttpSiraStatusHelper");
+
+            if (HttpSiraStatusHelper == null || !HttpSiraStatusHelper.Initialize())
+            {
+                Log.Error("HttpSiraStatus adapter initialization failed.");
+                HttpSiraStatusHelper = null;
+            }
         }
 
         /// <summary>
@@ -110,6 +136,19 @@ namespace CameraSongScript
                 Log.Error($"Failed to create adapter '{typeName}': {ex.Message}");
                 return null;
             }
+        }
+
+        private static bool IsAssemblyLoaded(string assemblyName)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (string.Equals(assembly.GetName().Name, assemblyName, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

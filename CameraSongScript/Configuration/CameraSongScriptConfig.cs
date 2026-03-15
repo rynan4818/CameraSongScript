@@ -77,7 +77,7 @@ namespace CameraSongScript.Configuration
         /// <summary>
         /// ステータスインジケータパネルのプリセット位置インデックス
         /// </summary>
-        public virtual int StatusPanelPosition { get; set; } = 0;
+        public virtual int StatusPanelPosition { get; set; } = 11;
 
         // --- ステータスパネル プリセット設定 (12種類) ---
 

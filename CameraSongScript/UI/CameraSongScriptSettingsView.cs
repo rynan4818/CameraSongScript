@@ -725,7 +725,7 @@ namespace CameraSongScript.UI
             get
             {
                 var meta = _scriptDetector.CurrentMetadata;
-                return meta != null && meta.avatarHeight > 0;
+                return meta != null && meta.avatarHeight.HasValue && meta.avatarHeight.Value > 0;
             }
         }
 
@@ -735,8 +735,8 @@ namespace CameraSongScript.UI
             get
             {
                 var meta = _scriptDetector.CurrentMetadata;
-                if (meta == null || meta.avatarHeight <= 0) return string.Empty;
-                return $"{meta.avatarHeight:0.#} cm";
+                if (meta == null || !meta.avatarHeight.HasValue || meta.avatarHeight.Value <= 0) return string.Empty;
+                return $"{meta.avatarHeight.Value:0.#} cm";
             }
         }
 

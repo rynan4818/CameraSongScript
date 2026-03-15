@@ -150,9 +150,9 @@ namespace CameraSongScript.Models
         public string songAuthorName { get; set; }
         public string levelAuthorName { get; set; }
         public string mapId { get; set; }
-        public double bpm { get; set; }
-        public double duration { get; set; }
-        public double avatarHeight { get; set; }
+        public double? bpm { get; set; }
+        public double? duration { get; set; }
+        public double? avatarHeight { get; set; }
         public string description { get; set; }
     }
 

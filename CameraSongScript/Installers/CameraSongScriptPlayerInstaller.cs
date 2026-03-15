@@ -6,6 +6,15 @@ namespace CameraSongScript.Installers
     {
         public override void InstallBindings()
         {
+            Plugin.EnsureHttpSiraStatusHelperLoaded();
+
+            this.Container.Bind<CameraSongScriptPlayContextResolver>().AsSingle();
+
+            if (Plugin.IsHttpSiraStatusHelperReady)
+            {
+                this.Container.BindInterfacesAndSelfTo<CameraSongScriptHttpSiraStatusSender>().AsSingle().NonLazy();
+            }
+
             // CameraSongScriptControllerはCamera2モードのみバインド
             // CameraPlusモードではCameraPlus自身のCameraMovement.csがスクリプトを実行する
             if (CameraModDetector.IsCamera2)

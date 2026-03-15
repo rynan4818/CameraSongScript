@@ -7,7 +7,6 @@ using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Configuration;
-using CameraSongScript.Detectors;
 using Zenject;
 
 namespace CameraSongScript
@@ -21,7 +20,7 @@ namespace CameraSongScript
     {
         private readonly AudioTimeSyncController _audioTimeSyncController;
         private readonly PauseController _pauseController;
-        private readonly CameraSongScriptDetector _scriptDetector;
+        private readonly CameraSongScriptPlayContextResolver _playContextResolver;
         private Transform _cachedHeadTransform;
 
         private bool _dataLoaded = false;
@@ -66,36 +65,18 @@ namespace CameraSongScript
         internal CameraSongScriptController(
             AudioTimeSyncController audioTimeSyncController,
             [InjectOptional] PauseController pauseController,
-            CameraSongScriptDetector scriptDetector)
+            CameraSongScriptPlayContextResolver playContextResolver)
         {
             _audioTimeSyncController = audioTimeSyncController;
             _pauseController = pauseController;
-            _scriptDetector = scriptDetector;
+            _playContextResolver = playContextResolver;
         }
 
         public void Initialize()
         {
-            bool useCommon = _scriptDetector.IsUsingCommonScript;
-            bool hasNormalScript = _scriptDetector.HasSongScript;
-
-            // ForceCommonの場合はEnabled無視
-            if (!useCommon && !CameraSongScriptConfig.Instance.Enabled)
+            var playContext = _playContextResolver.Resolve();
+            if (!playContext.HasScript)
                 return;
-
-            if (!useCommon && !hasNormalScript)
-                return;
-
-            if (CameraModDetector.IsCamera2 && !Plugin.IsCamHelperReady)
-            {
-                Plugin.Log.Error("SongScript: Camera2 adapter is not initialized.");
-                return;
-            }
-
-            if (CameraModDetector.IsCameraPlus && !Plugin.IsCamPlusHelperReady)
-            {
-                Plugin.Log.Error("SongScript: CameraPlus adapter is not initialized.");
-                return;
-            }
 
             // ポーズ対応
             if (_pauseController != null)
@@ -104,40 +85,10 @@ namespace CameraSongScript
                 _pauseController.didPauseEvent += Pause;
             }
 
-            // スクリプトパスの決定
-            string scriptPath;
-            _isUsingCommonScript = useCommon;
-
-            if (useCommon)
-            {
-                // Camera2: ランダムの場合は毎回プレイ開始時に再選択する
-                if (CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom)
-                {
-                    _scriptDetector.ResolveAndSetCommonScriptPath();
-                }
-                scriptPath = _scriptDetector.ResolvedCommonScriptPath;
-
-                if (string.IsNullOrEmpty(scriptPath))
-                {
-                    Plugin.Log.Warn("SongScript: Common script path could not be resolved.");
-                    return;
-                }
-
-                // 汎用スクリプト確定後にハッシュ対応表からオフセットを復元する
-                // ランダム時はここで初めてスクリプトが確定するため、このタイミングで復元が必要
-                if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
-                {
-                    int savedOffset = ScriptOffsetManager.GetOffsetForScript(scriptPath);
-                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
-                }
-            }
-            else
-            {
-                scriptPath = _scriptDetector.SelectedScriptPath;
-            }
+            _isUsingCommonScript = playContext.Status == CameraSongScriptPlaybackStatus.CommonScript;
 
             // SongScriptをロード
-            LoadSongScript(scriptPath);
+            LoadSongScript(playContext.ScriptPath);
 
             if (_dataLoaded && _data.ActiveInPauseMenu && _pauseController != null)
             {
@@ -148,7 +99,7 @@ namespace CameraSongScript
             // ActiveInPauseMenu=falseの場合はポーズ対応のイベントを維持
 
             // Camera2のゲームシーン読み込み完了後にカスタムシーンを適用する
-            _resolvedCustomSceneToSwitch = ResolveCustomSceneToSwitch(useCommon);
+            _resolvedCustomSceneToSwitch = ResolveCustomSceneToSwitch(_isUsingCommonScript);
             if (CameraModDetector.IsCamera2 &&
                 !string.IsNullOrEmpty(_resolvedCustomSceneToSwitch) &&
                 _resolvedCustomSceneToSwitch != UiLocalization.OptionDefault)

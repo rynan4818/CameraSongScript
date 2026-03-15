@@ -142,11 +142,13 @@
     <Compile Include="Detectors\CameraSongScriptDetector.ScanPipeline.cs" />
     <Compile Include="Interfaces\ICameraHelper.cs" />
     <Compile Include="Interfaces\ICameraPlusHelper.cs" />
+    <Compile Include="Interfaces\IHttpSiraStatusHelper.cs" />
     <Compile Include="Interfaces\ICameraToken.cs" />
     <Compile Include="Installers\CameraSongScriptAppInstaller.cs" />
     <Compile Include="Installers\CameraSongScriptMenuInstaller.cs" />
     <Compile Include="Installers\CameraSongScriptPlayerInstaller.cs" />
     <Compile Include="Models\MovementScriptJson.cs" />
+    <Compile Include="Models\CameraSongScriptPlayContext.cs" />
     <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Models\NumericStringParser.cs" />
@@ -161,6 +163,8 @@
     <Compile Include="Localization\UiLocalizationResources.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="CameraSongScriptHttpSiraStatusSender.cs" />
+    <Compile Include="CameraSongScriptPlayContextResolver.cs" />
     <Compile Include="CameraPlusPlayStartResolver.cs" />
     <Compile Include="CameraSongScriptController.cs" />
     <Compile Include="CameraSongScriptMath.cs" />
