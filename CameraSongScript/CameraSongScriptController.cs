@@ -22,6 +22,7 @@ namespace CameraSongScript
         private readonly AudioTimeSyncController _audioTimeSyncController;
         private readonly PauseController _pauseController;
         private readonly CameraSongScriptDetector _scriptDetector;
+        private Transform _cachedHeadTransform;
 
         private bool _dataLoaded = false;
         private CameraSongScriptData _data;
@@ -47,6 +48,7 @@ namespace CameraSongScript
 
         private const float DefaultFOV = 90f;
         private const int MaxSectionAdvancePerTick = 1024;
+        private static readonly Vector3 DefaultHmdPosition = new Vector3(0f, 1.6f, 0f);
 
         // カメラのデフォルトFOV
         private float _defaultFOV = DefaultFOV;
@@ -520,10 +522,18 @@ namespace CameraSongScript
         /// </summary>
         private Vector3 GetHMDPosition()
         {
-            var headTransform = Camera.main?.transform;
+            var headTransform = _cachedHeadTransform;
+            if (headTransform == null)
+            {
+                headTransform = Camera.main?.transform;
+                if (headTransform != null)
+                    _cachedHeadTransform = headTransform;
+            }
+
             if (headTransform != null)
                 return headTransform.position;
-            return Vector3.zero;
+
+            return DefaultHmdPosition;
         }
 
         #region 公開プロパティ
