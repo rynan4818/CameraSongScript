@@ -60,6 +60,9 @@
     <horizontal>
       <slider-setting id="preview-position-slider" text="~label-preview-position" value="preview-position" min="0" max="1" increment="0.05" apply-on-change="true" show-buttons="true" formatter="format-preview-time" interactable="~can-preview" />
     </horizontal>
+    <horizontal pad-top="2" active="~show-camera-mod-settings-section">
+      <text text="~section-camera-mod-settings" font-size="3.5" color="#66CC88" align="Center"/>
+    </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>
         <toggle-setting text="~toggle-use-audio-sync" value="use-audio-sync" apply-on-change="true" hover-hint="~hint-audio-sync"/>
@@ -90,6 +93,9 @@
     </horizontal>
     <horizontal>
       <dropdown-list-setting id="common-script-dropdown" text="~label-common-script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true" hover-hint="~hint-common-script-file"/>
+    </horizontal>
+    <horizontal pad-top="2" active="~show-camera-mod-settings-section">
+      <text text="~section-camera-mod-settings" font-size="3.5" color="#66CC88" align="Center"/>
     </horizontal>
     <macro.if value="show-camera2-settings">
       <horizontal>

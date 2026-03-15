@@ -180,6 +180,21 @@ namespace CameraSongScript.Configuration
         /// <summary>ステータスパネルのスケール（uniform）</summary>
         public virtual float StatusScale { get; set; } = 0.025f;
 
+        // --- プレビュー ビジュアルプロパティ ---
+
+        /// <summary>プレビューのミニチュア表示スケール（uniform）</summary>
+        public virtual float PreviewMiniatureScale { get; set; } = 0.15f;
+        /// <summary>プレビューの表示位置 X</summary>
+        public virtual float PreviewVisiblePositionX { get; set; } = 0f;
+        /// <summary>プレビューの表示位置 Y</summary>
+        public virtual float PreviewVisiblePositionY { get; set; } = 1f;
+        /// <summary>プレビューの表示位置 Z</summary>
+        public virtual float PreviewVisiblePositionZ { get; set; } = 0.7f;
+        /// <summary>プレビューのステージ枠線幅</summary>
+        public virtual float PreviewStageLineWidth { get; set; } = 0.012f;
+        /// <summary>プレビューの移動経路線幅</summary>
+        public virtual float PreviewPathLineWidth { get; set; } = 0.004f;
+
         // --- 汎用スクリプト（CommonScripts）設定 ---
 
         /// <summary>
@@ -340,6 +355,12 @@ namespace CameraSongScript.Configuration
             this.StatusCanvasWidth = other.StatusCanvasWidth;
             this.StatusCanvasHeight = other.StatusCanvasHeight;
             this.StatusScale = other.StatusScale;
+            this.PreviewMiniatureScale = other.PreviewMiniatureScale;
+            this.PreviewVisiblePositionX = other.PreviewVisiblePositionX;
+            this.PreviewVisiblePositionY = other.PreviewVisiblePositionY;
+            this.PreviewVisiblePositionZ = other.PreviewVisiblePositionZ;
+            this.PreviewStageLineWidth = other.PreviewStageLineWidth;
+            this.PreviewPathLineWidth = other.PreviewPathLineWidth;
 
             this.UseCommonScriptAsFallback = other.UseCommonScriptAsFallback;
             this.ForceCommonScript = other.ForceCommonScript;

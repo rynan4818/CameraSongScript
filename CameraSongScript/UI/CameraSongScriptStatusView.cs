@@ -16,6 +16,7 @@ namespace CameraSongScript.UI
     public class CameraSongScriptStatusView : MonoBehaviour, IInitializable, IDisposable
     {
         private CameraSongScriptDetector _scriptDetector;
+        private bool _isLevelDetailVisible;
 
         private GameObject _rootObject;
         private Canvas _canvas;
@@ -180,7 +181,7 @@ namespace CameraSongScript.UI
         {
             if (_rootObject == null) return;
 
-            bool show = CameraSongScriptConfig.Instance.ShowStatusPanel;
+            bool show = CameraSongScriptConfig.Instance.ShowStatusPanel && _isLevelDetailVisible;
             bool enabled = CameraSongScriptConfig.Instance.Enabled;
             bool hasScript = _scriptDetector.HasSongScript;
             bool isCommon = _scriptDetector.IsUsingCommonScript;
@@ -308,6 +309,12 @@ namespace CameraSongScript.UI
                 return;
             }
 
+            UpdateContent();
+        }
+
+        public void SetLevelDetailVisible(bool visible)
+        {
+            _isLevelDetailVisible = visible;
             UpdateContent();
         }
     }

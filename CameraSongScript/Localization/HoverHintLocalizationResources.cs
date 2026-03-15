@@ -12,7 +12,7 @@ namespace CameraSongScript.Localization
             ["hint-enabled"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Enable/Disable SongScript",
-                [HoverHintLocalization.Lang_JA] = "SongScript機能の有効/無効"
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプト機能の有効/無効"
             },
             ["hint-script-file"] = new Dictionary<string, string>
             {
@@ -42,17 +42,17 @@ namespace CameraSongScript.Localization
             ["hint-custom-scene"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Custom Scene to Switch to When SongScript is Detected",
-                [HoverHintLocalization.Lang_JA] = "SongScript検出時に切り替えるカスタムシーン"
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプト検出時に切り替えるカスタムシーン"
             },
             ["hint-add-custom-scene"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Register and update the single camera selected as the 'Target Camera' as the 'CameraSongScript' custom scene name for Camera2",
-                [HoverHintLocalization.Lang_JA] = "上記の「Target Camera」に選ばれた単独のカメラを「CameraSongScript」カスタムシーン名としてCamera2に登録・更新"
+                [HoverHintLocalization.Lang_JA] = "上記の「対象カメラ」に選ばれた単独のカメラを、カスタムシーンの「CameraSongScript」としてCamera2に登録・更新"
             },
             ["hint-script-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "CameraPlus profile to use when SongScript is detected",
-                [HoverHintLocalization.Lang_JA] = "SongScript検出時に切り替えるCameraPlusプロファイル"
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプト検出時に切り替えるCameraPlusプロファイル"
             },
             ["hint-show-status-panel"] = new Dictionary<string, string>
             {
@@ -84,32 +84,32 @@ namespace CameraSongScript.Localization
             ["hint-common-fallback"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Use a common script when no SongScript is found",
-                [HoverHintLocalization.Lang_JA] = "SongScriptが無い曲で汎用スクリプトを使用"
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプトが無い曲で汎用スクリプトを使用"
             },
             ["hint-force-common"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Force common script regardless of SongScript or Enable setting",
-                [HoverHintLocalization.Lang_JA] = "SongScriptの有無やEnabled設定に関係なく汎用スクリプトを強制使用"
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプトに関係なく汎用スクリプトを強制使用"
             },
             ["hint-common-script-file"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Select common script file (Random = random each play)",
-                [HoverHintLocalization.Lang_JA] = "汎用スクリプトファイルを選択（Random = プレイごとにランダム）"
+                [HoverHintLocalization.Lang_JA] = "汎用スクリプトファイルを選択（ランダム = プレイごとにランダム）"
             },
             ["hint-common-target-camera"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Camera for common script (Same = use SongScript setting)",
-                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用カメラ（Sameは通常設定と同じ）"
+                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用カメラ"
             },
             ["hint-common-custom-scene"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Custom scene for common script (Same = use SongScript setting)",
-                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用カスタムシーン（Sameは通常設定と同じ）"
+                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用カスタムシーン"
             },
             ["hint-common-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Profile for common script (Same = use SongScript setting)",
-                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用プロファイル（Sameは通常設定と同じ）"
+                [HoverHintLocalization.Lang_JA] = "汎用スクリプト用プロファイル"
             },
         };
         }

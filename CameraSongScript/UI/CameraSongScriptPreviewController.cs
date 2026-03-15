@@ -20,7 +20,9 @@ namespace CameraSongScript.UI
     internal class CameraSongScriptPreviewController : IInitializable, IDisposable, ITickable
     {
         private const float DefaultFov = 90f;
-        private const float MiniatureScale = 0.15f;
+        private const float DefaultMiniatureScale = 0.15f;
+        private const float DefaultStageLineWidth = 0.012f;
+        private const float DefaultPathLineWidth = 0.004f;
         private const float ScreenScale = 0.0025f;
         private const float EndPoseEpsilon = 0.0001f;
         private const float StageHalfWidth = 1.5f;
@@ -34,7 +36,7 @@ namespace CameraSongScript.UI
         private const float PathRevealDuration = 2.5f;
         private const float CameraPlusPreviewYawOffset = 180f;
 
-        private static readonly Vector3 VisiblePreviewPosition = new Vector3(0f, 1f, 0.6f);
+        private static readonly Vector3 DefaultVisiblePreviewPosition = new Vector3(0f, 1f, 0.7f);
         private static readonly Vector3 AvatarHeadTarget = new Vector3(0f, 1.52f, 0f);
         private static readonly Vector2 PreviewPanelSize = new Vector2(360f, 360f * PreviewTextureHeight / (float)PreviewTextureWidth);
         private static readonly Color StageFrameColor = new Color(0.55f, 0.42f, 0.14f, 0.45f);
@@ -357,15 +359,20 @@ namespace CameraSongScript.UI
 
         private void CreatePreviewObjects()
         {
+            Vector3 visiblePreviewPosition = GetVisiblePreviewPosition();
+            float miniatureScale = GetMiniatureScale();
+            float stageLineWidth = GetStageLineWidth();
+            float pathLineWidth = GetPathLineWidth();
+
             _visibleRoot = new GameObject("CameraSongScript Preview Root");
-            _visibleRoot.transform.position = VisiblePreviewPosition;
+            _visibleRoot.transform.position = visiblePreviewPosition;
 
             _miniatureRoot = new GameObject("MiniatureRoot").transform;
             _miniatureRoot.SetParent(_visibleRoot.transform, false);
-            _miniatureRoot.localScale = Vector3.one * MiniatureScale;
+            _miniatureRoot.localScale = Vector3.one * miniatureScale;
             _miniatureRoot.localRotation = Quaternion.Euler(0f, 90f, 0f);
 
-            _miniCameraMarker = CreatePreviewSceneContents(_miniatureRoot, 0.012f, 0.006f, true);
+            _miniCameraMarker = CreatePreviewSceneContents(_miniatureRoot, stageLineWidth, pathLineWidth, true);
 
             _screenRoot = CreatePreviewScreen(_visibleRoot.transform);
 
@@ -374,6 +381,36 @@ namespace CameraSongScript.UI
             _previewCamera = CreatePreviewCamera();
             EnsurePreviewRenderTarget();
             StartPathRevealAnimation();
+        }
+
+        private static float GetMiniatureScale()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewMiniatureScale : DefaultMiniatureScale;
+        }
+
+        private static Vector3 GetVisiblePreviewPosition()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return DefaultVisiblePreviewPosition;
+
+            return new Vector3(
+                config.PreviewVisiblePositionX,
+                config.PreviewVisiblePositionY,
+                config.PreviewVisiblePositionZ);
+        }
+
+        private static float GetStageLineWidth()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewStageLineWidth : DefaultStageLineWidth;
+        }
+
+        private static float GetPathLineWidth()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewPathLineWidth : DefaultPathLineWidth;
         }
 
         private Transform CreatePreviewSceneContents(Transform parent, float stageLineWidth, float pathLineWidth, bool includeCameraMarker)

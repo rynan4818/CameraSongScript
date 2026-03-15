@@ -15,13 +15,13 @@ namespace CameraSongScript.Localization
             },
             ["toggle-enabled"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Enabled",
-                [HoverHintLocalization.Lang_JA] = "有効"
+                [HoverHintLocalization.Lang_EN] = "Song Script Enabled",
+                [HoverHintLocalization.Lang_JA] = "曲専用スクリプト"
             },
             ["label-script-file"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Script File",
-                [HoverHintLocalization.Lang_JA] = "スクリプトファイル"
+                [HoverHintLocalization.Lang_JA] = "スクリプト"
             },
             ["label-meta-camera"] = new Dictionary<string, string>
             {
@@ -36,7 +36,7 @@ namespace CameraSongScript.Localization
             ["label-meta-mapper"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Mapper:",
-                [HoverHintLocalization.Lang_JA] = "譜面作者:"
+                [HoverHintLocalization.Lang_JA] = "譜面:"
             },
             ["label-meta-height"] = new Dictionary<string, string>
             {
@@ -58,10 +58,20 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "--- Preview ---",
                 [HoverHintLocalization.Lang_JA] = "--- プレビュー ---"
             },
+            ["section-camera2-settings"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "--- Camera2 Settings ---",
+                [HoverHintLocalization.Lang_JA] = "--- Camera2 設定 ---"
+            },
+            ["section-cameraplus-settings"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "--- CameraPlus Settings ---",
+                [HoverHintLocalization.Lang_JA] = "--- CameraPlus 設定 ---"
+            },
             ["button-preview-show-start"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Show / Start",
-                [HoverHintLocalization.Lang_JA] = "表示・開始"
+                [HoverHintLocalization.Lang_EN] = "Show / Play(x1)",
+                [HoverHintLocalization.Lang_JA] = "表示・再生(x1)"
             },
             ["button-preview-stop"] = new Dictionary<string, string>
             {
@@ -81,7 +91,7 @@ namespace CameraSongScript.Localization
             ["toggle-use-audio-sync"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Use Audio Sync",
-                [HoverHintLocalization.Lang_JA] = "音声同期を使用"
+                [HoverHintLocalization.Lang_JA] = "曲時間同期"
             },
             ["label-target-camera"] = new Dictionary<string, string>
             {
@@ -101,7 +111,7 @@ namespace CameraSongScript.Localization
             ["label-songscript-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "SongScript Profile",
-                [HoverHintLocalization.Lang_JA] = "SongScriptプロファイル"
+                [HoverHintLocalization.Lang_JA] = "曲専用プロファイル"
             },
             ["section-common-script"] = new Dictionary<string, string>
             {
@@ -111,7 +121,7 @@ namespace CameraSongScript.Localization
             ["toggle-fallback-to-common"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Fallback to Common",
-                [HoverHintLocalization.Lang_JA] = "汎用スクリプトにフォールバック"
+                [HoverHintLocalization.Lang_JA] = "曲専用非対応時 汎用スクリプト使用"
             },
             ["toggle-force-common-script"] = new Dictionary<string, string>
             {
@@ -156,7 +166,7 @@ namespace CameraSongScript.Localization
             ["setting-per-script-height"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Per-Script Height Offset",
-                [HoverHintLocalization.Lang_JA] = "スクリプト別高さオフセット"
+                [HoverHintLocalization.Lang_JA] = "スクリプト毎の高さオフセット"
             },
             ["setting-ui-language"] = new Dictionary<string, string>
             {
@@ -265,63 +275,63 @@ namespace CameraSongScript.Localization
             },
             ["status-panel-left-upper-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Left / Upper / Right",
-                [HoverHintLocalization.Lang_JA] = "左 / 上 / 右"
+                [HoverHintLocalization.Lang_EN] = "LeftPanel UpperRight",
+                [HoverHintLocalization.Lang_JA] = "左パネル上部右"
             },
             ["status-panel-left-upper-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Left / Upper / Left",
-                [HoverHintLocalization.Lang_JA] = "左 / 上 / 左"
+                [HoverHintLocalization.Lang_EN] = "LeftPanel UpperLeft",
+                [HoverHintLocalization.Lang_JA] = "左パネル上部左"
             },
             ["status-panel-left-lower-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Left / Lower / Right",
-                [HoverHintLocalization.Lang_JA] = "左 / 下 / 右"
+                [HoverHintLocalization.Lang_EN] = "LeftPanel LowerRight",
+                [HoverHintLocalization.Lang_JA] = "左パネル下部右"
             },
             ["status-panel-left-lower-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Left / Lower / Left",
-                [HoverHintLocalization.Lang_JA] = "左 / 下 / 左"
+                [HoverHintLocalization.Lang_EN] = "LeftPanel LowerLeft",
+                [HoverHintLocalization.Lang_JA] = "左パネル下部左"
             },
             ["status-panel-center-upper-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Center / Upper / Right",
-                [HoverHintLocalization.Lang_JA] = "中央 / 上 / 右"
+                [HoverHintLocalization.Lang_EN] = "CenterPanel UpperRight",
+                [HoverHintLocalization.Lang_JA] = "中央パネル上部右"
             },
             ["status-panel-center-upper-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Center / Upper / Left",
-                [HoverHintLocalization.Lang_JA] = "中央 / 上 / 左"
+                [HoverHintLocalization.Lang_EN] = "CenterPanel UpperLeft",
+                [HoverHintLocalization.Lang_JA] = "中央パネル上部左"
             },
             ["status-panel-center-lower-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Center / Lower / Right",
-                [HoverHintLocalization.Lang_JA] = "中央 / 下 / 右"
+                [HoverHintLocalization.Lang_EN] = "CenterPanel LowerRight",
+                [HoverHintLocalization.Lang_JA] = "中央パネル下部右"
             },
             ["status-panel-center-lower-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Center / Lower / Left",
-                [HoverHintLocalization.Lang_JA] = "中央 / 下 / 左"
+                [HoverHintLocalization.Lang_EN] = "CenterPanel LowerLeft",
+                [HoverHintLocalization.Lang_JA] = "中央パネル下部左"
             },
             ["status-panel-right-upper-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Right / Upper / Right",
-                [HoverHintLocalization.Lang_JA] = "右 / 上 / 右"
+                [HoverHintLocalization.Lang_EN] = "RightPanel UpperRight",
+                [HoverHintLocalization.Lang_JA] = "右パネル上部右"
             },
             ["status-panel-right-upper-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Right / Upper / Left",
-                [HoverHintLocalization.Lang_JA] = "右 / 上 / 左"
+                [HoverHintLocalization.Lang_EN] = "RightPanel UpperLeft",
+                [HoverHintLocalization.Lang_JA] = "右パネル上部左"
             },
             ["status-panel-right-lower-right"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Right / Lower / Right",
-                [HoverHintLocalization.Lang_JA] = "右 / 下 / 右"
+                [HoverHintLocalization.Lang_EN] = "RightPanel LowerRight",
+                [HoverHintLocalization.Lang_JA] = "右パネル下部右"
             },
             ["status-panel-right-lower-left"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Right / Lower / Left",
-                [HoverHintLocalization.Lang_JA] = "右 / 下 / 左"
+                [HoverHintLocalization.Lang_EN] = "RightPanel LowerLeft",
+                [HoverHintLocalization.Lang_JA] = "右パネル下部左"
             }
         };
         }
@@ -368,7 +378,7 @@ namespace CameraSongScript.Localization
             [UiLocalization.OptionSameAsSongScript] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "(Same as SongScript)",
-                [HoverHintLocalization.Lang_JA] = "(SongScriptと同じ)"
+                [HoverHintLocalization.Lang_JA] = "(曲専用スクリプトと同じ)"
             },
             [UiLocalization.OptionNoChange] = new Dictionary<string, string>
             {

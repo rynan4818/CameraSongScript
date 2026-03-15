@@ -25,7 +25,7 @@ namespace CameraSongScript.UI
     [HotReload]
     public partial class CameraSongScriptSettingsView : BSMLAutomaticViewController, IInitializable, IDisposable
     {
-        public const string TabName = "CameraSongScript";
+        public const string TabName = "Camera Song Script";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
 
         private CameraSongScriptStatusView _statusView;
@@ -143,6 +143,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelHeightOffset));
             NotifyPropertyChanged(nameof(ButtonResetOffset));
             NotifyPropertyChanged(nameof(SectionPreview));
+            NotifyPropertyChanged(nameof(SectionCameraModSettings));
             NotifyPropertyChanged(nameof(ButtonPreviewShowStart));
             NotifyPropertyChanged(nameof(ButtonPreviewStop));
             NotifyPropertyChanged(nameof(ButtonPreviewClear));
@@ -316,6 +317,21 @@ namespace CameraSongScript.UI
         [UIValue("section-preview")]
         public string SectionPreview => UiLocalization.Get("section-preview");
 
+        [UIValue("section-camera-mod-settings")]
+        public string SectionCameraModSettings
+        {
+            get
+            {
+                if (CameraModDetector.IsCamera2)
+                    return UiLocalization.Get("section-camera2-settings");
+
+                if (CameraModDetector.IsCameraPlus)
+                    return UiLocalization.Get("section-cameraplus-settings");
+
+                return string.Empty;
+            }
+        }
+
         [UIValue("button-preview-show-start")]
         public string ButtonPreviewShowStart => UiLocalization.Get("button-preview-show-start");
 
@@ -396,6 +412,9 @@ namespace CameraSongScript.UI
                 }
             }
         }
+
+        [UIValue("show-camera-mod-settings-section")]
+        public bool ShowCameraModSettingsSection => CameraModDetector.IsCamera2 || CameraModDetector.IsCameraPlus;
 
         #endregion
 
@@ -805,7 +824,7 @@ namespace CameraSongScript.UI
             set
             {
                 CameraSongScriptConfig.Instance.ShowStatusPanel = value;
-                _statusView?.SetVisible(value);
+                _statusView?.UpdateContent();
             }
         }
 
