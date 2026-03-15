@@ -19,11 +19,9 @@ namespace CameraSongScript
     /// </summary>
     public class CameraSongScriptController : IInitializable, IDisposable, ITickable
     {
-#pragma warning disable 0649
-        [Inject] private AudioTimeSyncController _audioTimeSyncController;
-        [Inject(Optional = true)] private PauseController _pauseController;
-        [Inject] private CameraSongScriptDetector _scriptDetector;
-#pragma warning restore 0649
+        private readonly AudioTimeSyncController _audioTimeSyncController;
+        private readonly PauseController _pauseController;
+        private readonly CameraSongScriptDetector _scriptDetector;
 
         private bool _dataLoaded = false;
         private CameraSongScriptData _data;
@@ -61,6 +59,16 @@ namespace CameraSongScript
         // 汎用スクリプト使用時フラグ
         private bool _isUsingCommonScript = false;
         private string _resolvedCustomSceneToSwitch = string.Empty;
+
+        internal CameraSongScriptController(
+            AudioTimeSyncController audioTimeSyncController,
+            [InjectOptional] PauseController pauseController,
+            CameraSongScriptDetector scriptDetector)
+        {
+            _audioTimeSyncController = audioTimeSyncController;
+            _pauseController = pauseController;
+            _scriptDetector = scriptDetector;
+        }
 
         public void Initialize()
         {

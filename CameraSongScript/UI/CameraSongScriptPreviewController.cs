@@ -45,8 +45,7 @@ namespace CameraSongScript.UI
         private static Material _lineMaterial;
         private static Material _solidMaterialTemplate;
 
-        [Inject]
-        private CameraSongScriptDetector _scriptDetector = null;
+        private readonly CameraSongScriptDetector _scriptDetector;
 
         private readonly List<TimelineSegment> _segments = new List<TimelineSegment>();
         private readonly List<LineRenderer> _pathLineRenderers = new List<LineRenderer>();
@@ -74,6 +73,11 @@ namespace CameraSongScript.UI
         public int SpeedMultiplier => _speedMultiplier;
         public string LoadedScriptDisplayName => _loadedScriptDisplayName;
         public event Action StateChanged;
+
+        public CameraSongScriptPreviewController(CameraSongScriptDetector scriptDetector)
+        {
+            _scriptDetector = scriptDetector;
+        }
 
         public bool CanPreviewSelection
         {

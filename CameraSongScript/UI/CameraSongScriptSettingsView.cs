@@ -28,14 +28,11 @@ namespace CameraSongScript.UI
         public const string TabName = "CameraSongScript";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
 
-        [Inject]
-        private CameraSongScriptStatusView _statusView = null;
+        private CameraSongScriptStatusView _statusView;
 
-        [Inject]
-        private CameraSongScriptPreviewController _previewController = null;
+        private CameraSongScriptPreviewController _previewController;
 
-        [Inject]
-        private CameraSongScriptDetector _scriptDetector = null;
+        private CameraSongScriptDetector _scriptDetector;
 
         private const float PreviewSliderStep = 0.05f;
         private bool _needsRefresh = false;
@@ -44,6 +41,17 @@ namespace CameraSongScript.UI
         private bool _lastPreviewVisible = false;
         private bool _lastPreviewPlaying = false;
         private int _lastPreviewSpeed = 1;
+
+        [Inject]
+        internal void Constractor(
+            CameraSongScriptStatusView statusView,
+            CameraSongScriptPreviewController previewController,
+            CameraSongScriptDetector scriptDetector)
+        {
+            _statusView = statusView;
+            _previewController = previewController;
+            _scriptDetector = scriptDetector;
+        }
 
         public void Initialize()
         {

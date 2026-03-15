@@ -15,14 +15,19 @@ namespace CameraSongScript.UI
     /// </summary>
     public class CameraSongScriptStatusView : MonoBehaviour, IInitializable, IDisposable
     {
-        [Inject]
-        private CameraSongScriptDetector _scriptDetector = null;
+        private CameraSongScriptDetector _scriptDetector;
 
         private GameObject _rootObject;
         private Canvas _canvas;
         private CurvedTextMeshPro _statusText;
 
         public static string[] GetPresetNames() => StatusPanelPresetCatalog.GetLegacyNames();
+
+        [Inject]
+        internal void Constractor(CameraSongScriptDetector scriptDetector)
+        {
+            _scriptDetector = scriptDetector;
+        }
 
         public void Initialize()
         {
