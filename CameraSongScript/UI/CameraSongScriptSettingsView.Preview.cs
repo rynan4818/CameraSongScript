@@ -7,6 +7,7 @@ using BeatSaberMarkupLanguage.Components.Settings;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
+using CameraSongScript.Utilities;
 using UnityEngine;
 
 namespace CameraSongScript.UI
@@ -56,7 +57,7 @@ namespace CameraSongScript.UI
                         : UiLocalization.Get("preview-state-stopped");
                     string displayName = string.IsNullOrEmpty(_previewController.LoadedScriptDisplayName)
                         ? "--"
-                        : _previewController.LoadedScriptDisplayName;
+                        : SongScriptDisplayLabelFormatter.Format(_previewController.LoadedScriptDisplayName);
                     return UiLocalization.Format(
                         "preview-active",
                         displayName,

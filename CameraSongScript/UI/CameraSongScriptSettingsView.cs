@@ -13,6 +13,7 @@ using CameraSongScript.Detectors;
 using CameraSongScript.Models;
 using CameraSongScript.Localization;
 using CameraSongScript.Services;
+using CameraSongScript.Utilities;
 using UnityEngine;
 using Zenject;
 using UnityEngine.UI;
@@ -584,6 +585,43 @@ namespace CameraSongScript.UI
         [UIComponent("status-panel-position-dropdown")]
         public DropDownListSetting statusPanelPositionDropdown;
 
+        private sealed class ScriptFileDropdownOption
+        {
+            public ScriptFileDropdownOption(string canonicalName)
+            {
+                CanonicalName = canonicalName ?? string.Empty;
+                DisplayLabel = SongScriptDisplayLabelFormatter.Format(CanonicalName);
+            }
+
+            public string CanonicalName { get; }
+
+            public string DisplayLabel { get; }
+
+            public override string ToString()
+            {
+                return DisplayLabel;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(this, obj))
+                    return true;
+
+                if (obj is ScriptFileDropdownOption option)
+                    return string.Equals(CanonicalName, option.CanonicalName, StringComparison.Ordinal);
+
+                if (obj is string value)
+                    return string.Equals(CanonicalName, value, StringComparison.Ordinal);
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return StringComparer.Ordinal.GetHashCode(CanonicalName);
+            }
+        }
+
         [UIValue("script-file-options")]
         public List<object> ScriptFileOptions
         {
@@ -592,7 +630,7 @@ namespace CameraSongScript.UI
                 var list = new List<object>();
                 foreach (var fileName in _scriptDetector.AvailableScriptFiles)
                 {
-                    list.Add(fileName);
+                    list.Add(CreateScriptFileDropdownOption(fileName));
                 }
                 if (list.Count == 0)
                     list.Add(UiLocalization.GetOptionDisplay(UiLocalization.OptionNone, UiLocalization.OptionNone));
@@ -617,13 +655,13 @@ namespace CameraSongScript.UI
                             _scriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
                         }
                     }
-                    return _scriptDetector.SelectedScriptDisplayName;
+                    return GetSelectedScriptFileValue(_scriptDetector.SelectedScriptDisplayName);
                 }
                 return UiLocalization.GetOptionDisplay(UiLocalization.OptionNone, UiLocalization.OptionNone);
             }
             set
             {
-                string fileName = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNone);
+                string fileName = GetCanonicalScriptFileName(value);
                 if (!string.IsNullOrEmpty(fileName) && fileName != UiLocalization.OptionNone)
                 {
                     _scriptDetector.UpdateSelectedScript(fileName);
@@ -634,6 +672,33 @@ namespace CameraSongScript.UI
                         refreshOffsetInteractable: false);
                 }
             }
+        }
+
+        private static ScriptFileDropdownOption CreateScriptFileDropdownOption(string fileName)
+        {
+            return new ScriptFileDropdownOption(fileName);
+        }
+
+        private object GetSelectedScriptFileValue(string fileName)
+        {
+            if (scriptFileDropdown?.values != null)
+            {
+                foreach (object value in scriptFileDropdown.values)
+                {
+                    if (string.Equals(GetCanonicalScriptFileName(value), fileName, StringComparison.Ordinal))
+                        return value;
+                }
+            }
+
+            return CreateScriptFileDropdownOption(fileName);
+        }
+
+        private static string GetCanonicalScriptFileName(object value)
+        {
+            if (value is ScriptFileDropdownOption option)
+                return option.CanonicalName;
+
+            return UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNone);
         }
 
         private void RefreshLayout()
@@ -916,6 +981,7 @@ namespace CameraSongScript.UI
                     string commonName = UiLocalization.GetOptionDisplay(
                         CameraSongScriptConfig.Instance.SelectedCommonScript,
                         UiLocalization.OptionRandom);
+                    commonName = SongScriptDisplayLabelFormatter.Format(commonName);
                     if (count > 0)
                         return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-common-with-count", commonName, count));
                     else
@@ -925,7 +991,7 @@ namespace CameraSongScript.UI
                 if (count > 0)
                 {
                     string selected = _scriptDetector.HasSongScript
-                        ? _scriptDetector.SelectedScriptDisplayName
+                        ? SongScriptDisplayLabelFormatter.Format(_scriptDetector.SelectedScriptDisplayName)
                         : "?";
                     return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-found", count, selected));
                 }
