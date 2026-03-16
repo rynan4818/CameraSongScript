@@ -8,12 +8,15 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
+using HMUI;
+using IPA.Utilities;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Models;
 using CameraSongScript.Localization;
 using CameraSongScript.Services;
 using CameraSongScript.Utilities;
+using TMPro;
 using UnityEngine;
 using Zenject;
 using UnityEngine.UI;
@@ -48,6 +51,10 @@ namespace CameraSongScript.UI
         private int _lastPreviewSpeed = 1;
         private bool _cacheScanStatusRefreshQueued = false;
         private Coroutine _refreshLayoutCoroutine;
+        private Coroutine _scriptFileDropdownTextRefreshCoroutine;
+        private Coroutine _commonScriptDropdownTextRefreshCoroutine;
+        private Button _scriptFileDropdownButton;
+        private Button _commonScriptDropdownButton;
 
         [Inject]
         internal void Constractor(
@@ -83,6 +90,8 @@ namespace CameraSongScript.UI
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
+            DetachScriptFileDropdownButtonHandler();
+            DetachCommonScriptDropdownButtonHandler();
             GameplaySetup.instance?.RemoveTab(TabName);
         }
 
@@ -102,6 +111,8 @@ namespace CameraSongScript.UI
         protected void OnDisable()
         {
             CancelPendingLayoutRefresh();
+            CancelPendingScriptFileDropdownTextRefresh();
+            CancelPendingCommonScriptDropdownTextRefresh();
         }
 
         protected void Update()
@@ -232,6 +243,7 @@ namespace CameraSongScript.UI
                 cameraHeightOffsetSlider.ReceiveValue();
             }
 
+            EnsureScriptFileDropdownTextPresentation();
             _statusView?.UpdateContent();
             HandlePreviewSelectionChanged();
         }
@@ -311,6 +323,8 @@ namespace CameraSongScript.UI
             RefreshDropdown(commonProfileDropdown, CommonProfileOptions);
             RefreshDropdown(statusPanelPositionDropdown, StatusPanelPositionOptions);
 
+            EnsureScriptFileDropdownTextPresentation();
+            EnsureCommonScriptDropdownTextPresentation();
             RefreshHoverHintBindings();
             RefreshLayout();
             _statusView?.UpdateContent();
@@ -324,6 +338,117 @@ namespace CameraSongScript.UI
             dropdown.values = options;
             dropdown.UpdateChoices();
             dropdown.ReceiveValue();
+        }
+
+        private void EnsureScriptFileDropdownTextPresentation()
+        {
+            if (scriptFileDropdown?.dropdown == null)
+                return;
+
+            ApplyDropdownTextPresentation(scriptFileDropdown);
+
+            Button button = scriptFileDropdown.dropdown.GetField<Button, DropdownWithTableView>("_button");
+            if (button == null || ReferenceEquals(button, _scriptFileDropdownButton))
+                return;
+
+            DetachScriptFileDropdownButtonHandler();
+            _scriptFileDropdownButton = button;
+            _scriptFileDropdownButton.onClick.AddListener(HandleScriptFileDropdownButtonClicked);
+        }
+
+        private void DetachScriptFileDropdownButtonHandler()
+        {
+            if (_scriptFileDropdownButton != null)
+            {
+                _scriptFileDropdownButton.onClick.RemoveListener(HandleScriptFileDropdownButtonClicked);
+                _scriptFileDropdownButton = null;
+            }
+        }
+
+        private void HandleScriptFileDropdownButtonClicked()
+        {
+            CancelPendingScriptFileDropdownTextRefresh();
+            _scriptFileDropdownTextRefreshCoroutine = StartCoroutine(RefreshScriptFileDropdownTextPresentationCoroutine());
+        }
+
+        private System.Collections.IEnumerator RefreshScriptFileDropdownTextPresentationCoroutine()
+        {
+            yield return null;
+            yield return null;
+            ApplyDropdownTextPresentation(scriptFileDropdown);
+            _scriptFileDropdownTextRefreshCoroutine = null;
+        }
+
+        private void CancelPendingScriptFileDropdownTextRefresh()
+        {
+            if (_scriptFileDropdownTextRefreshCoroutine == null)
+                return;
+
+            StopCoroutine(_scriptFileDropdownTextRefreshCoroutine);
+            _scriptFileDropdownTextRefreshCoroutine = null;
+        }
+
+        private void EnsureCommonScriptDropdownTextPresentation()
+        {
+            if (commonScriptDropdown?.dropdown == null)
+                return;
+
+            ApplyDropdownTextPresentation(commonScriptDropdown);
+
+            Button button = commonScriptDropdown.dropdown.GetField<Button, DropdownWithTableView>("_button");
+            if (button == null || ReferenceEquals(button, _commonScriptDropdownButton))
+                return;
+
+            DetachCommonScriptDropdownButtonHandler();
+            _commonScriptDropdownButton = button;
+            _commonScriptDropdownButton.onClick.AddListener(HandleCommonScriptDropdownButtonClicked);
+        }
+
+        private void DetachCommonScriptDropdownButtonHandler()
+        {
+            if (_commonScriptDropdownButton != null)
+            {
+                _commonScriptDropdownButton.onClick.RemoveListener(HandleCommonScriptDropdownButtonClicked);
+                _commonScriptDropdownButton = null;
+            }
+        }
+
+        private void HandleCommonScriptDropdownButtonClicked()
+        {
+            CancelPendingCommonScriptDropdownTextRefresh();
+            _commonScriptDropdownTextRefreshCoroutine = StartCoroutine(RefreshCommonScriptDropdownTextPresentationCoroutine());
+        }
+
+        private System.Collections.IEnumerator RefreshCommonScriptDropdownTextPresentationCoroutine()
+        {
+            yield return null;
+            yield return null;
+            ApplyDropdownTextPresentation(commonScriptDropdown);
+            _commonScriptDropdownTextRefreshCoroutine = null;
+        }
+
+        private void CancelPendingCommonScriptDropdownTextRefresh()
+        {
+            if (_commonScriptDropdownTextRefreshCoroutine == null)
+                return;
+
+            StopCoroutine(_commonScriptDropdownTextRefreshCoroutine);
+            _commonScriptDropdownTextRefreshCoroutine = null;
+        }
+
+        private static void ApplyDropdownTextPresentation(DropDownListSetting dropdown)
+        {
+            if (dropdown?.dropdown == null)
+                return;
+
+            foreach (TextMeshProUGUI text in dropdown.dropdown.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if (text == null)
+                    continue;
+
+                text.enableWordWrapping = false;
+                text.overflowMode = TextOverflowModes.Ellipsis;
+            }
         }
 
         private void RefreshHoverHintBindings()
@@ -371,6 +496,7 @@ namespace CameraSongScript.UI
                         scriptFileDropdown.values = ScriptFileOptions;
                         scriptFileDropdown.UpdateChoices();
                         scriptFileDropdown.ReceiveValue();
+                        EnsureScriptFileDropdownTextPresentation();
                     }
                     if (cameraHeightOffsetSlider != null)
                     {

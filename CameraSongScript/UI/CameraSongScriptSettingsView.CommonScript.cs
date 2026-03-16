@@ -8,6 +8,7 @@ using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
+using CameraSongScript.Utilities;
 using UnityEngine;
 
 namespace CameraSongScript.UI
@@ -55,22 +56,63 @@ namespace CameraSongScript.UI
         [UIComponent("common-script-dropdown")]
         public DropDownListSetting commonScriptDropdown;
 
+        private sealed class CommonScriptDropdownOption
+        {
+            public CommonScriptDropdownOption(string canonicalName)
+            {
+                CanonicalName = canonicalName ?? string.Empty;
+                DisplayLabel =
+                    CanonicalName == UiLocalization.OptionRandom ||
+                    CanonicalName == UiLocalization.OptionNone
+                        ? UiLocalization.GetOptionDisplay(CanonicalName, UiLocalization.OptionRandom, UiLocalization.OptionNone)
+                        : SongScriptDisplayLabelFormatter.Format(CanonicalName);
+            }
+
+            public string CanonicalName { get; }
+
+            public string DisplayLabel { get; }
+
+            public override string ToString()
+            {
+                return DisplayLabel;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(this, obj))
+                    return true;
+
+                if (obj is CommonScriptDropdownOption option)
+                    return string.Equals(CanonicalName, option.CanonicalName, StringComparison.Ordinal);
+
+                if (obj is string value)
+                    return string.Equals(CanonicalName, value, StringComparison.Ordinal);
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return StringComparer.Ordinal.GetHashCode(CanonicalName);
+            }
+        }
+
         [UIValue("common-script-options")]
         public List<object> CommonScriptOptions
         {
             get
             {
-                var list = new List<string>();
+                var list = new List<object>();
                 if (CommonScriptCache.IsReady)
                 {
                     foreach (var name in CommonScriptCache.GetDisplayNames())
                     {
-                        list.Add(name);
+                        list.Add(CreateCommonScriptDropdownOption(name));
                     }
                 }
                 if (list.Count == 0)
-                    list.Add(UiLocalization.OptionNone);
-                return UiLocalization.LocalizeOptions(list, UiLocalization.OptionRandom, UiLocalization.OptionNone);
+                    list.Add(CreateCommonScriptDropdownOption(UiLocalization.OptionNone));
+                return list;
             }
         }
 
@@ -84,13 +126,15 @@ namespace CameraSongScript.UI
                 {
                     var names = CommonScriptCache.GetDisplayNames();
                     if (names.Contains(selected))
-                        return UiLocalization.GetOptionDisplay(selected, UiLocalization.OptionRandom);
+                        return GetSelectedCommonScriptValue(selected);
                 }
-                return UiLocalization.GetOptionDisplay(UiLocalization.OptionRandom, UiLocalization.OptionRandom);
+                return GetSelectedCommonScriptValue(CommonScriptCache.IsReady
+                    ? UiLocalization.OptionRandom
+                    : UiLocalization.OptionNone);
             }
             set
             {
-                string name = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionRandom, UiLocalization.OptionNone);
+                string name = GetCanonicalCommonScriptName(value);
                 if (!string.IsNullOrEmpty(name) && name != UiLocalization.OptionNone)
                 {
                     CameraSongScriptConfig.Instance.SelectedCommonScript = name;
@@ -106,10 +150,38 @@ namespace CameraSongScript.UI
                     }
 
                     RefreshLayout();
+                    EnsureCommonScriptDropdownTextPresentation();
                     _statusView?.UpdateContent();
                     HandlePreviewSelectionChanged();
                 }
             }
+        }
+
+        private static CommonScriptDropdownOption CreateCommonScriptDropdownOption(string fileName)
+        {
+            return new CommonScriptDropdownOption(fileName);
+        }
+
+        private object GetSelectedCommonScriptValue(string fileName)
+        {
+            if (commonScriptDropdown?.values != null)
+            {
+                foreach (object value in commonScriptDropdown.values)
+                {
+                    if (string.Equals(GetCanonicalCommonScriptName(value), fileName, StringComparison.Ordinal))
+                        return value;
+                }
+            }
+
+            return CreateCommonScriptDropdownOption(fileName);
+        }
+
+        private static string GetCanonicalCommonScriptName(object value)
+        {
+            if (value is CommonScriptDropdownOption option)
+                return option.CanonicalName;
+
+            return UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionRandom, UiLocalization.OptionNone);
         }
 
         // --- Camera2用: 汎用スクリプト専用設定 ---
