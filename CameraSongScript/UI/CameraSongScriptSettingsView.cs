@@ -46,6 +46,7 @@ namespace CameraSongScript.UI
         private bool _lastPreviewPlaying = false;
         private int _lastPreviewSpeed = 1;
         private bool _cacheScanStatusRefreshQueued = false;
+        private Coroutine _refreshLayoutCoroutine;
 
         [Inject]
         internal void Constractor(
@@ -95,6 +96,11 @@ namespace CameraSongScript.UI
             RefreshPreviewBindings();
             RefreshLocalizedUi();
             EnqueueCacheScanStatusRefresh();
+        }
+
+        protected void OnDisable()
+        {
+            CancelPendingLayoutRefresh();
         }
 
         protected void Update()
@@ -187,6 +193,46 @@ namespace CameraSongScript.UI
             {
                 Refresh();
             }
+        }
+
+        private void RefreshMetadataBindings()
+        {
+            NotifyPropertyChanged(nameof(HasMetadata));
+            NotifyPropertyChanged(nameof(MetaAuthor));
+            NotifyPropertyChanged(nameof(MetaSong));
+            NotifyPropertyChanged(nameof(MetaMapper));
+            NotifyPropertyChanged(nameof(HasMetaHeight));
+            NotifyPropertyChanged(nameof(MetaHeight));
+            NotifyPropertyChanged(nameof(HasMetaDescription));
+            NotifyPropertyChanged(nameof(MetaDescription));
+        }
+
+        private void RefreshSelectedScriptUi(bool refreshScriptOptions, bool refreshOffsetInteractable)
+        {
+            if (refreshScriptOptions)
+            {
+                NotifyPropertyChanged(nameof(ScriptFileOptions));
+                NotifyPropertyChanged(nameof(SelectedScriptFile));
+            }
+
+            NotifyPropertyChanged(nameof(SongScriptStatus));
+            RefreshMetadataBindings();
+            NotifyPropertyChanged(nameof(CameraHeightOffset));
+
+            if (refreshOffsetInteractable)
+            {
+                NotifyPropertyChanged(nameof(IsOffsetInteractable));
+            }
+
+            RefreshLayout();
+
+            if (cameraHeightOffsetSlider != null)
+            {
+                cameraHeightOffsetSlider.ReceiveValue();
+            }
+
+            _statusView?.UpdateContent();
+            HandlePreviewSelectionChanged();
         }
 
         private void RefreshLocalizedUi()
@@ -330,23 +376,9 @@ namespace CameraSongScript.UI
                         cameraHeightOffsetSlider.ReceiveValue();
                     }
 
-                    NotifyPropertyChanged(nameof(ScriptFileOptions));
-                    NotifyPropertyChanged(nameof(SelectedScriptFile));
-                    NotifyPropertyChanged(nameof(SongScriptStatus));
-
-                    NotifyPropertyChanged(nameof(HasMetadata));
-                    NotifyPropertyChanged(nameof(MetaAuthor));
-                    NotifyPropertyChanged(nameof(MetaSong));
-                    NotifyPropertyChanged(nameof(MetaMapper));
-                    NotifyPropertyChanged(nameof(HasMetaHeight));
-                    NotifyPropertyChanged(nameof(MetaHeight));
-                    NotifyPropertyChanged(nameof(HasMetaDescription));
-                    NotifyPropertyChanged(nameof(MetaDescription));
-                    NotifyPropertyChanged(nameof(CameraHeightOffset));
-                    NotifyPropertyChanged(nameof(IsOffsetInteractable));
-                    HandlePreviewSelectionChanged();
-
-                    RefreshLayout();
+                    RefreshSelectedScriptUi(
+                        refreshScriptOptions: true,
+                        refreshOffsetInteractable: true);
                 }
                 catch (Exception ex)
                 {
@@ -529,7 +561,10 @@ namespace CameraSongScript.UI
         public SliderSetting cameraHeightOffsetSlider;
 
         [UIComponent("settings-container")]
-        public RectTransform settingsContainer;
+        public HMUI.ScrollView settingsContainerScrollView;
+
+        [UIObject("settings-container")]
+        public GameObject settingsContainerObject;
 
         [UIComponent("preview-position-slider")]
         public SliderSetting previewPositionSlider;
@@ -594,43 +629,23 @@ namespace CameraSongScript.UI
                     _scriptDetector.UpdateSelectedScript(fileName);
                     SongSettingsManager.UpdateCurrentScriptFileName(fileName);
 
-                    NotifyPropertyChanged(nameof(SongScriptStatus));
-                    NotifyPropertyChanged(nameof(HasMetadata));
-                    NotifyPropertyChanged(nameof(MetaAuthor));
-                    NotifyPropertyChanged(nameof(MetaSong));
-                    NotifyPropertyChanged(nameof(MetaMapper));
-                    NotifyPropertyChanged(nameof(HasMetaHeight));
-                    NotifyPropertyChanged(nameof(MetaHeight));
-                    NotifyPropertyChanged(nameof(HasMetaDescription));
-                    NotifyPropertyChanged(nameof(MetaDescription));
-                    NotifyPropertyChanged(nameof(CameraHeightOffset));
-
-                    RefreshLayout();
-                    
-                    if (cameraHeightOffsetSlider != null)
-                    {
-                        cameraHeightOffsetSlider.ReceiveValue();
-                    }
-
-                    _statusView?.UpdateContent();
-                    HandlePreviewSelectionChanged();
+                    RefreshSelectedScriptUi(
+                        refreshScriptOptions: false,
+                        refreshOffsetInteractable: false);
                 }
             }
         }
 
         private void RefreshLayout()
         {
-            if (gameObject.activeInHierarchy)
-            {
-                if (isActiveAndEnabled)
-                {
-                    StartCoroutine(RefreshLayoutCoroutine());
-                }
-            }
-            else
+            if (!gameObject.activeInHierarchy || !isActiveAndEnabled)
             {
                 _needsRefresh = true;
+                return;
             }
+
+            CancelPendingLayoutRefresh();
+            _refreshLayoutCoroutine = StartCoroutine(RefreshLayoutCoroutine());
         }
 
         private System.Collections.IEnumerator RefreshLayoutCoroutine()
@@ -641,27 +656,60 @@ namespace CameraSongScript.UI
             yield return null;
             yield return null;
 
-            if (settingsContainer != null)
+            try
             {
-                // UI全体の更新状態を同期
-                Canvas.ForceUpdateCanvases();
+                RectTransform contentContainer = settingsContainerObject?.transform as RectTransform;
+                if (contentContainer != null)
+                {
+                    Canvas.ForceUpdateCanvases();
+                    RebuildLayoutHierarchy(contentContainer);
+                    Canvas.ForceUpdateCanvases();
 
-                // 自己のレイアウトを更新
-                LayoutRebuilder.ForceRebuildLayoutImmediate(settingsContainer);
-                
-                // 親（ContentSizeFitterを持っている可能性がある要素）のレイアウトも更新
-                if (settingsContainer.parent is RectTransform parentTransform)
-                {
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(parentTransform);
+                    var scrollView = settingsContainerScrollView ?? contentContainer.GetComponentInParent<HMUI.ScrollView>();
+                    if (scrollView != null)
+                    {
+                        float contentHeight = LayoutUtility.GetPreferredHeight(contentContainer);
+                        contentHeight = Mathf.Max(contentHeight, contentContainer.rect.height);
+
+                        if (contentContainer.parent is RectTransform parentTransform)
+                        {
+                            float parentPreferredHeight = LayoutUtility.GetPreferredHeight(parentTransform);
+                            contentHeight = Mathf.Max(contentHeight, parentPreferredHeight, parentTransform.rect.height);
+                        }
+
+                        scrollView.SetContentSize(contentHeight);
+                        scrollView.RefreshButtons();
+                    }
                 }
-                
-                // スクロールビュー全体の更新
-                var scrollView = settingsContainer.GetComponentInParent<HMUI.ScrollView>();
-                if (scrollView != null)
-                {
-                    scrollView.SetContentSize(settingsContainer.rect.height);
-                    scrollView.RefreshButtons();
-                }
+            }
+            finally
+            {
+                _refreshLayoutCoroutine = null;
+            }
+        }
+
+        private void CancelPendingLayoutRefresh()
+        {
+            if (_refreshLayoutCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_refreshLayoutCoroutine);
+            _refreshLayoutCoroutine = null;
+        }
+
+        private static void RebuildLayoutHierarchy(RectTransform rectTransform)
+        {
+            var rebuildTargets = new List<RectTransform>();
+            for (RectTransform current = rectTransform; current != null; current = current.parent as RectTransform)
+            {
+                rebuildTargets.Add(current);
+            }
+
+            for (int i = rebuildTargets.Count - 1; i >= 0; i--)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rebuildTargets[i]);
             }
         }
 

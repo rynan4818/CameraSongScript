@@ -1,5 +1,5 @@
 <bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
-  <settings-container id="settings-container" child-control-width="true" child-expand-width="true" size-delta-y="0">
+  <settings-container id="settings-container" child-control-width="true" child-control-height="true" child-expand-width="true" child-expand-height="false" size-delta-y="0">
     <horizontal pad-bottom="2">
       <text text="~label-camera-mod" font-size="3.5" color="#AAAAAA" align="Right"/>
       <text text="~detected-camera-mod" font-size="3.5" rich-text="true" align="Center"/>
@@ -14,7 +14,7 @@
       <dropdown-list-setting id="script-file-dropdown" text="~label-script-file" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
     </horizontal>
     <horizontal active="~has-metadata">
-      <vertical bg="round-rect-panel" pad="1">
+      <vertical bg="round-rect-panel" pad="1" vertical-fit="PreferredSize" child-expand-height="false">
         <horizontal>
           <text text="~label-meta-camera" font-size="3.5" color="#00FF00" align="Right" />
           <text text="~meta-author" font-size="3.5" align="Left" />
