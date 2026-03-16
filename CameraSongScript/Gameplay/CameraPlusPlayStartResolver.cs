@@ -4,7 +4,7 @@ using CameraSongScript.Localization;
 using System;
 using Zenject;
 
-namespace CameraSongScript
+namespace CameraSongScript.Gameplay
 {
     /// <summary>
     /// CameraPlusモード用のプレイ終了時ランダム再抽選処理

@@ -3,13 +3,15 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using CameraSongScript.Detectors;
 using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Configuration;
+using CameraSongScript.Utilities;
 using Zenject;
 
-namespace CameraSongScript
+namespace CameraSongScript.Gameplay
 {
     /// <summary>
     /// SongScript制御のメインコントローラー（Camera2モード専用）

@@ -1,5 +1,7 @@
-using Zenject;
+using CameraSongScript.Detectors;
+using CameraSongScript.Gameplay;
 using CameraSongScript.Services;
+using Zenject;
 
 namespace CameraSongScript.Installers
 {

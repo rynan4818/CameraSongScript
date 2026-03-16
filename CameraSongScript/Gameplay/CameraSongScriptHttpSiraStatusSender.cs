@@ -1,7 +1,7 @@
 using System;
 using Zenject;
 
-namespace CameraSongScript
+namespace CameraSongScript.Gameplay
 {
     /// <summary>
     /// プレイシーン開始時にHttpSiraStatusへCameraSongScript情報を送信する

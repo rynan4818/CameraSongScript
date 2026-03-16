@@ -4,7 +4,7 @@ using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 
-namespace CameraSongScript
+namespace CameraSongScript.Gameplay
 {
     /// <summary>
     /// プレイシーン内で一度だけ実効スクリプト情報を確定させ、同じ結果を共有する

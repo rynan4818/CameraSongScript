@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace CameraSongScript
+namespace CameraSongScript.Detectors
 {
     public enum CameraModType
     {

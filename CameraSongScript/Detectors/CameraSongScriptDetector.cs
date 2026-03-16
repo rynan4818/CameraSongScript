@@ -11,6 +11,7 @@ using CameraSongScript.Configuration;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Services;
+using CameraSongScript.Utilities;
 using HMUI;
 using IPA.Utilities;
 using Newtonsoft.Json;

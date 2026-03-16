@@ -1,7 +1,7 @@
 using CameraSongScript.Services;
 using Zenject;
 
-namespace CameraSongScript.Installers
+namespace CameraSongScript.Gameplay
 {
     /// <summary>
     /// プレイシーン滞在中は BetterSongList 用の譜面スキャンを停止する。

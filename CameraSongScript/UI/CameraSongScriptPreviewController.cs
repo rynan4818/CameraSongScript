@@ -2,6 +2,7 @@ using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
+using CameraSongScript.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;

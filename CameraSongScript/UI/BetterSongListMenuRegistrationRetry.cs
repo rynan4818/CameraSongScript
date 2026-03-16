@@ -1,6 +1,6 @@
 using Zenject;
 
-namespace CameraSongScript.Installers
+namespace CameraSongScript.UI
 {
     internal sealed class BetterSongListMenuRegistrationRetry : IInitializable
     {

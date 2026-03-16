@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace CameraSongScript.Models
+namespace CameraSongScript.Utilities
 {
     internal static class NumericStringParser
     {
