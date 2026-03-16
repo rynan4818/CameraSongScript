@@ -40,6 +40,14 @@ namespace CameraSongScript.Models
     /// metadata.mapId をキーとしたインデックスをキャッシュするクラス。
     /// 起動時に一度だけスキャンし、以降は高速にmapIdで検索できる。
     /// </summary>
+    internal enum SongScriptFolderCacheScanState
+    {
+        Idle,
+        Scanning,
+        Completed,
+        Failed
+    }
+
     internal static class SongScriptFolderCache
     {
         private sealed class SourceFileInfo
@@ -82,6 +90,9 @@ namespace CameraSongScript.Models
         private static readonly string CacheFilePath =
             Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScriptsFolderCache.json");
 
+        private static readonly object _scanLock = new object();
+        private static Task _scanTask = Task.CompletedTask;
+
         /// <summary>mapId（小文字） → エントリ一覧</summary>
         private static Dictionary<string, List<SongScriptEntry>> _mapIdIndex =
             new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
@@ -91,26 +102,66 @@ namespace CameraSongScript.Models
             new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
 
         private static bool _isReady = false;
+        private static volatile bool _isScanning = false;
+        private static SongScriptFolderCacheScanState _scanState = SongScriptFolderCacheScanState.Idle;
+        private static int _processedSourceCount = 0;
+        private static int _totalSourceCount = 0;
+        private static string _lastScanErrorMessage = string.Empty;
 
         /// <summary>キャッシュの準備が完了しているか</summary>
         public static bool IsReady => _isReady;
+
+        /// <summary>現在スキャン中かどうか</summary>
+        public static bool IsScanning => _isScanning;
+
+        /// <summary>現在のスキャン状態</summary>
+        public static SongScriptFolderCacheScanState ScanState => _scanState;
+
+        /// <summary>現在のスキャンで処理済みのソース数</summary>
+        public static int ProcessedSourceCount => _processedSourceCount;
+
+        /// <summary>現在のスキャン対象ソース総数</summary>
+        public static int TotalSourceCount => _totalSourceCount;
+
+        /// <summary>直近のスキャン失敗メッセージ</summary>
+        public static string LastScanErrorMessage => _lastScanErrorMessage ?? string.Empty;
+
+        /// <summary>スキャン状態更新通知</summary>
+        public static event Action ScanStatusChanged;
 
         /// <summary>
         /// 非同期でスキャンを開始する（Plugin.OnApplicationStartから呼ばれる）
         /// </summary>
         public static Task ScanAsync()
         {
-            return Task.Run(() =>
+            lock (_scanLock)
             {
-                try
+                if (_scanTask != null && !_scanTask.IsCompleted)
                 {
-                    Scan();
+                    return _scanTask;
                 }
-                catch (Exception ex)
-                {
-                    Plugin.Log.Error($"SongScriptFolderCache: Scan failed: {ex.Message}");
-                }
-            });
+
+                UpdateScanStatus(SongScriptFolderCacheScanState.Scanning, 0, 0, string.Empty);
+                _scanTask = Task.Run(() => RunScanCore());
+                return _scanTask;
+            }
+        }
+
+        private static void RunScanCore()
+        {
+            try
+            {
+                Scan();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error($"SongScriptFolderCache: Scan failed: {ex.Message}");
+                UpdateScanStatus(
+                    SongScriptFolderCacheScanState.Failed,
+                    _processedSourceCount,
+                    _totalSourceCount,
+                    ex.Message);
+            }
         }
 
         /// <summary>
@@ -118,7 +169,12 @@ namespace CameraSongScript.Models
         /// </summary>
         private static void Scan()
         {
-            _isReady = false;
+            bool hadReadyIndex = _isReady;
+            if (!hadReadyIndex)
+            {
+                _isReady = false;
+            }
+
             EnsureSongScriptFolderExists();
 
             Dictionary<string, CacheSourceEntry> persistentCache = LoadPersistentCache();
@@ -126,9 +182,13 @@ namespace CameraSongScript.Models
             var nextPersistentCache = new Dictionary<string, CacheSourceEntry>(StringComparer.OrdinalIgnoreCase);
             var mapIdIndex = new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
             var hashIndex = new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
+            int totalSourceCount = currentSourceFiles.Count;
 
             int reusedSourceCount = 0;
             int scannedSourceCount = 0;
+            int processedSourceCount = 0;
+
+            UpdateScanStatus(SongScriptFolderCacheScanState.Scanning, 0, totalSourceCount, string.Empty);
 
             foreach (SourceFileInfo sourceFile in currentSourceFiles)
             {
@@ -145,6 +205,13 @@ namespace CameraSongScript.Models
 
                 nextPersistentCache[sourceFile.RelativePath] = cacheEntry;
                 AddCacheEntryToIndex(cacheEntry, sourceFile.FullPath, mapIdIndex, hashIndex);
+
+                processedSourceCount++;
+                UpdateScanStatus(
+                    SongScriptFolderCacheScanState.Scanning,
+                    processedSourceCount,
+                    totalSourceCount,
+                    string.Empty);
             }
 
             if (!PersistentCachesMatch(persistentCache, nextPersistentCache))
@@ -176,6 +243,12 @@ namespace CameraSongScript.Models
                 Plugin.Log.Debug($"SongScriptFolderCache: Indexed Hashes: {string.Join(", ", hashIndex.Keys)}");
             }
 #endif
+
+            UpdateScanStatus(
+                SongScriptFolderCacheScanState.Completed,
+                totalSourceCount,
+                totalSourceCount,
+                string.Empty);
         }
 
         /// <summary>
@@ -796,6 +869,38 @@ namespace CameraSongScript.Models
                 {
                     return reader.ReadToEnd();
                 }
+            }
+        }
+
+        private static void UpdateScanStatus(
+            SongScriptFolderCacheScanState state,
+            int processedSourceCount,
+            int totalSourceCount,
+            string errorMessage)
+        {
+            _scanState = state;
+            _isScanning = state == SongScriptFolderCacheScanState.Scanning;
+            _processedSourceCount = processedSourceCount < 0 ? 0 : processedSourceCount;
+            _totalSourceCount = totalSourceCount < 0 ? 0 : totalSourceCount;
+            _lastScanErrorMessage = errorMessage ?? string.Empty;
+            NotifyScanStatusChanged();
+        }
+
+        private static void NotifyScanStatusChanged()
+        {
+            var handler = ScanStatusChanged;
+            if (handler == null)
+            {
+                return;
+            }
+
+            try
+            {
+                handler();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"SongScriptFolderCache: Scan status listener failed: {ex.Message}");
             }
         }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components.Settings;
 using BeatSaberMarkupLanguage.GameplaySetup;
@@ -11,6 +12,7 @@ using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Models;
 using CameraSongScript.Localization;
+using CameraSongScript.Services;
 using UnityEngine;
 using Zenject;
 using UnityEngine.UI;
@@ -34,6 +36,8 @@ namespace CameraSongScript.UI
 
         private CameraSongScriptDetector _scriptDetector;
 
+        private SongScriptBeatmapIndexService _beatmapIndexService;
+
         private const float PreviewSliderStep = 0.05f;
         private bool _needsRefresh = false;
         private bool _suppressPreviewSeek = false;
@@ -41,22 +45,28 @@ namespace CameraSongScript.UI
         private bool _lastPreviewVisible = false;
         private bool _lastPreviewPlaying = false;
         private int _lastPreviewSpeed = 1;
+        private bool _cacheScanStatusRefreshQueued = false;
 
         [Inject]
         internal void Constractor(
             CameraSongScriptStatusView statusView,
             CameraSongScriptPreviewController previewController,
-            CameraSongScriptDetector scriptDetector)
+            CameraSongScriptDetector scriptDetector,
+            SongScriptBeatmapIndexService beatmapIndexService)
         {
             _statusView = statusView;
             _previewController = previewController;
             _scriptDetector = scriptDetector;
+            _beatmapIndexService = beatmapIndexService;
         }
 
         public void Initialize()
         {
             GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
             _scriptDetector.ScanCompleted += OnScanCompleted;
+            SongScriptFolderCache.ScanStatusChanged += OnSongScriptFolderCacheStatusChanged;
+            if (_beatmapIndexService != null)
+                _beatmapIndexService.ScanStatusChanged += OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
@@ -65,6 +75,9 @@ namespace CameraSongScript.UI
         public void Dispose()
         {
             _scriptDetector.ScanCompleted -= OnScanCompleted;
+            SongScriptFolderCache.ScanStatusChanged -= OnSongScriptFolderCacheStatusChanged;
+            if (_beatmapIndexService != null)
+                _beatmapIndexService.ScanStatusChanged -= OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
@@ -81,6 +94,7 @@ namespace CameraSongScript.UI
 
             RefreshPreviewBindings();
             RefreshLocalizedUi();
+            EnqueueCacheScanStatusRefresh();
         }
 
         protected void Update()
@@ -131,6 +145,50 @@ namespace CameraSongScript.UI
             });
         }
 
+        private void OnSongScriptFolderCacheStatusChanged()
+        {
+            EnqueueCacheScanStatusRefresh();
+        }
+
+        private void OnBeatmapSongScriptCacheStatusChanged()
+        {
+            EnqueueCacheScanStatusRefresh();
+        }
+
+        private void EnqueueCacheScanStatusRefresh()
+        {
+            if (_cacheScanStatusRefreshQueued)
+            {
+                return;
+            }
+
+            _cacheScanStatusRefreshQueued = true;
+
+            void Refresh()
+            {
+                _cacheScanStatusRefreshQueued = false;
+
+                try
+                {
+                    NotifyPropertyChanged(nameof(SongScriptCacheRefreshStatus));
+                    NotifyPropertyChanged(nameof(IsSongScriptCacheRefreshAvailable));
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SettingsView: Failed to refresh cache scan UI: {ex.Message}");
+                }
+            }
+
+            if (HMMainThreadDispatcher.instance != null)
+            {
+                HMMainThreadDispatcher.instance.Enqueue(Refresh);
+            }
+            else
+            {
+                Refresh();
+            }
+        }
+
         private void RefreshLocalizedUi()
         {
             NotifyPropertyChanged(nameof(LabelCameraMod));
@@ -168,8 +226,10 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelCommonCustomScene));
             NotifyPropertyChanged(nameof(LabelCommonProfile));
             NotifyPropertyChanged(nameof(SectionStatusPanel));
+            NotifyPropertyChanged(nameof(SectionOther));
             NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
             NotifyPropertyChanged(nameof(LabelPanelPosition));
+            NotifyPropertyChanged(nameof(ButtonRerunSongScriptCaches));
             NotifyPropertyChanged(nameof(DetectedCameraMod));
             NotifyPropertyChanged(nameof(ScriptFileOptions));
             NotifyPropertyChanged(nameof(SelectedScriptFile));
@@ -191,6 +251,8 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(StatusPanelPosition));
             NotifyPropertyChanged(nameof(SongScriptStatus));
             NotifyPropertyChanged(nameof(PreviewStatus));
+            NotifyPropertyChanged(nameof(SongScriptCacheRefreshStatus));
+            NotifyPropertyChanged(nameof(IsSongScriptCacheRefreshAvailable));
 
             RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
             RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
@@ -236,6 +298,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(HintCommonTargetCamera));
             NotifyPropertyChanged(nameof(HintCommonCustomScene));
             NotifyPropertyChanged(nameof(HintCommonProfile));
+            NotifyPropertyChanged(nameof(HintRerunSongScriptCaches));
         }
 
         /// <summary>
@@ -390,11 +453,17 @@ namespace CameraSongScript.UI
         [UIValue("section-status-panel")]
         public string SectionStatusPanel => UiLocalization.Get("section-status-panel");
 
+        [UIValue("section-other")]
+        public string SectionOther => UiLocalization.Get("section-other");
+
         [UIValue("toggle-show-status-panel")]
         public string ToggleShowStatusPanel => UiLocalization.Get("toggle-show-status-panel");
 
         [UIValue("label-panel-position")]
         public string LabelPanelPosition => UiLocalization.Get("label-panel-position");
+
+        [UIValue("button-rerun-songscript-caches")]
+        public string ButtonRerunSongScriptCaches => UiLocalization.Get("button-rerun-songscript-caches");
 
         #endregion
 
@@ -857,6 +926,120 @@ namespace CameraSongScript.UI
             }
         }
 
+        [UIValue("songscript-cache-refresh-status")]
+        public string SongScriptCacheRefreshStatus
+        {
+            get
+            {
+                string beatmapStatus = UiLocalization.Format(
+                    "cache-refresh-status-beatmap",
+                    GetBeatmapSongScriptCacheStatusText());
+                string songScriptsStatus = UiLocalization.Format(
+                    "cache-refresh-status-songscripts",
+                    GetSongScriptFolderCacheStatusText());
+                return string.Format(CultureInfo.InvariantCulture, "{0} | {1}", beatmapStatus, songScriptsStatus);
+            }
+        }
+
+        [UIValue("is-songscript-cache-refresh-available")]
+        public bool IsSongScriptCacheRefreshAvailable =>
+            !SongScriptFolderCache.IsScanning &&
+            (_beatmapIndexService == null || !_beatmapIndexService.IsScanning);
+
+        [UIAction("rerun-songscript-caches")]
+        private void RerunSongScriptCaches()
+        {
+            if (!IsSongScriptCacheRefreshAvailable)
+            {
+                return;
+            }
+
+            Task songScriptFolderScanTask = SongScriptFolderCache.ScanAsync();
+            if (_beatmapIndexService != null)
+            {
+                _ = _beatmapIndexService.RefreshIndexAsync();
+            }
+            EnqueueCacheScanStatusRefresh();
+            _ = ReevaluateCurrentLevelWhenSongScriptFolderCacheReadyAsync(songScriptFolderScanTask);
+        }
+
+        private async Task ReevaluateCurrentLevelWhenSongScriptFolderCacheReadyAsync(Task scanTask)
+        {
+            try
+            {
+                await scanTask.ConfigureAwait(false);
+                _scriptDetector.ReevaluateCurrentLevel();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"SettingsView: Failed to re-evaluate current level after SongScripts cache refresh: {ex.Message}");
+            }
+        }
+
+        private string GetBeatmapSongScriptCacheStatusText()
+        {
+            if (_beatmapIndexService == null)
+            {
+                return UiLocalization.Get("cache-refresh-state-idle");
+            }
+
+            return GetCacheScanStateText(
+                GetCacheScanStateKey(_beatmapIndexService.ScanState),
+                _beatmapIndexService.ProcessedBeatmapFolderCount,
+                _beatmapIndexService.TotalBeatmapFolderCount);
+        }
+
+        private string GetSongScriptFolderCacheStatusText()
+        {
+            return GetCacheScanStateText(
+                GetCacheScanStateKey(SongScriptFolderCache.ScanState),
+                SongScriptFolderCache.ProcessedSourceCount,
+                SongScriptFolderCache.TotalSourceCount);
+        }
+
+        private string GetCacheScanStateText(string stateKey, int processedCount, int totalCount)
+        {
+            if (string.Equals(stateKey, "cache-refresh-state-scanning", StringComparison.Ordinal) && totalCount > 0)
+            {
+                return UiLocalization.Format(
+                    "cache-refresh-state-scanning-progress",
+                    processedCount < 0 ? 0 : processedCount,
+                    totalCount < 0 ? 0 : totalCount);
+            }
+
+            return UiLocalization.Get(stateKey);
+        }
+
+        private static string GetCacheScanStateKey(BeatmapSongScriptCacheScanState state)
+        {
+            switch (state)
+            {
+                case BeatmapSongScriptCacheScanState.Scanning:
+                    return "cache-refresh-state-scanning";
+                case BeatmapSongScriptCacheScanState.Completed:
+                    return "cache-refresh-state-completed";
+                case BeatmapSongScriptCacheScanState.Failed:
+                    return "cache-refresh-state-failed";
+                default:
+                    return "cache-refresh-state-idle";
+            }
+        }
+
+        private static string GetCacheScanStateKey(SongScriptFolderCacheScanState state)
+        {
+            switch (state)
+            {
+                case SongScriptFolderCacheScanState.Scanning:
+                    return "cache-refresh-state-scanning";
+                case SongScriptFolderCacheScanState.Completed:
+                    return "cache-refresh-state-completed";
+                case SongScriptFolderCacheScanState.Failed:
+                    return "cache-refresh-state-failed";
+                default:
+                    return "cache-refresh-state-idle";
+            }
+        }
+
         #endregion
 
         #region hover-hintローカライズ
@@ -912,6 +1095,9 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-common-profile")]
         public string HintCommonProfile => HoverHintLocalization.Get("hint-common-profile");
+
+        [UIValue("hint-rerun-songscript-caches")]
+        public string HintRerunSongScriptCaches => HoverHintLocalization.Get("hint-rerun-songscript-caches");
 
         #endregion
     }

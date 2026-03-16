@@ -15,6 +15,14 @@ namespace CameraSongScript.Services
     /// BetterSongList 用に譜面フォルダ内 SongScript の有無を索引化する。
     /// UserData/CameraSongScript/SongScripts は既存の SongScriptFolderCache を参照する。
     /// </summary>
+    internal enum BeatmapSongScriptCacheScanState
+    {
+        Idle,
+        Scanning,
+        Completed,
+        Failed
+    }
+
     public class SongScriptBeatmapIndexService : IInitializable, IDisposable
     {
         private sealed class BeatmapWorkItem
@@ -77,10 +85,23 @@ namespace CameraSongScript.Services
         private volatile bool _pausedForGameplay;
         private volatile bool _disposed;
         private volatile bool _canFilter;
+        private volatile bool _isScanning;
+        private BeatmapSongScriptCacheScanState _scanState = BeatmapSongScriptCacheScanState.Idle;
+        private int _processedBeatmapFolderCount;
+        private int _totalBeatmapFolderCount;
+        private string _lastScanErrorMessage = string.Empty;
+        private long _scanGeneration;
 
         public static SongScriptBeatmapIndexService Instance { get; private set; }
 
         public bool CanFilter => _canFilter && !_disposed;
+        public bool IsScanning => _isScanning;
+        internal BeatmapSongScriptCacheScanState ScanState => _scanState;
+        public int ProcessedBeatmapFolderCount => _processedBeatmapFolderCount;
+        public int TotalBeatmapFolderCount => _totalBeatmapFolderCount;
+        public string LastScanErrorMessage => _lastScanErrorMessage ?? string.Empty;
+
+        public event Action ScanStatusChanged;
 
         public void Initialize()
         {
@@ -111,8 +132,10 @@ namespace CameraSongScript.Services
             SongCore.Loader.LoadingStartedEvent -= HandleLoadingStarted;
             SongCore.Loader.SongsLoadedEvent -= HandleSongsLoaded;
 
+            Interlocked.Increment(ref _scanGeneration);
             CancelCurrentScan();
             SavePersistentCache();
+            UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, _scanGeneration);
 
             if (ReferenceEquals(Instance, this))
             {
@@ -151,17 +174,25 @@ namespace CameraSongScript.Services
 
         private void HandleLoadingStarted(SongCore.Loader _)
         {
+            long generation = Interlocked.Increment(ref _scanGeneration);
             _canFilter = false;
             CancelCurrentScan();
 
             _statesByFolderPath = new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
             _songScriptsFolderResultsByLevelId =
                 new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, generation);
         }
 
         private void HandleSongsLoaded(SongCore.Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
         {
             RefreshIndex();
+        }
+
+        public Task RefreshIndexAsync()
+        {
+            RefreshIndex();
+            return _scanTask ?? Task.CompletedTask;
         }
 
         private void RefreshIndex()
@@ -171,6 +202,7 @@ namespace CameraSongScript.Services
                 return;
             }
 
+            long generation = Interlocked.Increment(ref _scanGeneration);
             List<BeatmapWorkItem> workItems = CaptureLoadedBeatmaps();
             var nextStates = new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
 
@@ -186,15 +218,17 @@ namespace CameraSongScript.Services
             _songScriptsFolderResultsByLevelId =
                 new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             _canFilter = true;
+            UpdateScanStatus(BeatmapSongScriptCacheScanState.Scanning, 0, workItems.Count, string.Empty, generation);
 
             Plugin.Log.Info($"SongScriptBeatmapIndexService: Indexed {workItems.Count} beatmap folder(s) for background scanning.");
 
-            StartScan(workItems, nextStates);
+            StartScan(workItems, nextStates, generation);
         }
 
         private void StartScan(
             IReadOnlyList<BeatmapWorkItem> workItems,
-            ConcurrentDictionary<string, RuntimeState> targetStates)
+            ConcurrentDictionary<string, RuntimeState> targetStates,
+            long generation)
         {
             CancelCurrentScan();
 
@@ -205,12 +239,36 @@ namespace CameraSongScript.Services
                     SavePersistentCache();
                 }
 
+                _scanTask = Task.CompletedTask;
+                UpdateScanStatus(BeatmapSongScriptCacheScanState.Completed, 0, 0, string.Empty, generation);
                 return;
             }
 
             _scanCts = new CancellationTokenSource();
             CancellationToken token = _scanCts.Token;
-            _scanTask = Task.Run(() => ProcessWorkItemsAsync(workItems, targetStates, token), token);
+            _scanTask = Task.Run(
+                async () =>
+                {
+                    try
+                    {
+                        await ProcessWorkItemsAsync(workItems, targetStates, generation, token).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // 新しいスキャンに置き換わった場合のキャンセルは正常系
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.Log.Warn($"SongScriptBeatmapIndexService: Background scan failed: {ex.Message}");
+                        UpdateScanStatus(
+                            BeatmapSongScriptCacheScanState.Failed,
+                            _processedBeatmapFolderCount,
+                            _totalBeatmapFolderCount,
+                            ex.Message,
+                            generation);
+                    }
+                },
+                token);
         }
 
         private void CancelCurrentScan()
@@ -237,14 +295,16 @@ namespace CameraSongScript.Services
         private async Task ProcessWorkItemsAsync(
             IReadOnlyList<BeatmapWorkItem> workItems,
             ConcurrentDictionary<string, RuntimeState> targetStates,
+            long generation,
             CancellationToken token)
         {
             int changedEntriesSinceSave = 0;
+            int processedBeatmapFolderCount = 0;
 
             foreach (BeatmapWorkItem item in workItems)
             {
-                token.ThrowIfCancellationRequested();
-                await WaitWhilePausedAsync(token).ConfigureAwait(false);
+                ThrowIfScanStopped(generation, token);
+                await WaitWhilePausedAsync(generation, token).ConfigureAwait(false);
 
                 IReadOnlyList<CachedJsonFileInfo> currentFiles = CaptureCurrentJsonFiles(item.FolderPath);
 
@@ -254,7 +314,7 @@ namespace CameraSongScript.Services
                     hasChartFolderSongScript = ScanChartFolder(item.FolderPath, currentFiles);
                 }
 
-                token.ThrowIfCancellationRequested();
+                ThrowIfScanStopped(generation, token);
 
                 if (targetStates.TryGetValue(item.FolderPath, out var state))
                 {
@@ -272,9 +332,17 @@ namespace CameraSongScript.Services
                         changedEntriesSinceSave = 0;
                     }
                 }
+
+                processedBeatmapFolderCount++;
+                UpdateScanStatus(
+                    BeatmapSongScriptCacheScanState.Scanning,
+                    processedBeatmapFolderCount,
+                    workItems.Count,
+                    string.Empty,
+                    generation);
             }
 
-            token.ThrowIfCancellationRequested();
+            ThrowIfScanStopped(generation, token);
 
             if (TrimPersistentCache(workItems.Select(item => item.FolderPath)))
             {
@@ -286,13 +354,20 @@ namespace CameraSongScript.Services
                 SavePersistentCache();
             }
 
+            UpdateScanStatus(
+                BeatmapSongScriptCacheScanState.Completed,
+                workItems.Count,
+                workItems.Count,
+                string.Empty,
+                generation);
             Plugin.Log.Info("SongScriptBeatmapIndexService: Chart folder background scan completed.");
         }
 
-        private async Task WaitWhilePausedAsync(CancellationToken token)
+        private async Task WaitWhilePausedAsync(long generation, CancellationToken token)
         {
             while (_pausedForGameplay && !token.IsCancellationRequested)
             {
+                ThrowIfScanStopped(generation, token);
                 await Task.Delay(250, token).ConfigureAwait(false);
             }
         }
@@ -677,6 +752,54 @@ namespace CameraSongScript.Services
             catch
             {
                 return folderPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+        }
+
+        private void ThrowIfScanStopped(long generation, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (generation != Interlocked.Read(ref _scanGeneration))
+            {
+                throw new OperationCanceledException(token);
+            }
+        }
+
+        private void UpdateScanStatus(
+            BeatmapSongScriptCacheScanState state,
+            int processedBeatmapFolderCount,
+            int totalBeatmapFolderCount,
+            string errorMessage,
+            long generation)
+        {
+            if (generation != Interlocked.Read(ref _scanGeneration))
+            {
+                return;
+            }
+
+            _scanState = state;
+            _isScanning = state == BeatmapSongScriptCacheScanState.Scanning;
+            _processedBeatmapFolderCount = processedBeatmapFolderCount < 0 ? 0 : processedBeatmapFolderCount;
+            _totalBeatmapFolderCount = totalBeatmapFolderCount < 0 ? 0 : totalBeatmapFolderCount;
+            _lastScanErrorMessage = errorMessage ?? string.Empty;
+            NotifyScanStatusChanged();
+        }
+
+        private void NotifyScanStatusChanged()
+        {
+            var handler = ScanStatusChanged;
+            if (handler == null)
+            {
+                return;
+            }
+
+            try
+            {
+                handler();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"SongScriptBeatmapIndexService: Scan status listener failed: {ex.Message}");
             }
         }
     }

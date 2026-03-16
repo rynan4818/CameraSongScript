@@ -64,6 +64,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Select status panel position",
                 [HoverHintLocalization.Lang_JA] = "ステータスパネルの表示位置を選択"
             },
+            ["hint-rerun-songscript-caches"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Run the startup beatmap and SongScripts cache scan again",
+                [HoverHintLocalization.Lang_JA] = "起動時に実行している譜面フォルダとSongScriptsの検索・キャッシュ更新を再実行"
+            },
             // ========== CameraSongScriptModSettingView ==========
             ["hint-per-script-height"] = new Dictionary<string, string>
             {

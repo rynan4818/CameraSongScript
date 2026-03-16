@@ -155,6 +155,13 @@
       <button text="+" on-click="preview-path-line-width-increase" min-width="10" />
       <button text="~button-preview-visual-settings-reset" on-click="reset-preview-visual-settings" min-width="28" />
     </horizontal>
+    <horizontal pad-top="2">
+      <text text="~section-other" font-size="3.5" color="#AAAAAA" align="Center"/>
+    </horizontal>
+    <horizontal pad-top="1">
+      <button text="~button-rerun-songscript-caches" on-click="rerun-songscript-caches" min-width="28" interactable="~is-songscript-cache-refresh-available" hover-hint="~hint-rerun-songscript-caches" />
+      <text text="~songscript-cache-refresh-status" font-size="3" color="#CCCCCC" align="Left" />
+    </horizontal>
   </settings-container>
 </bg>
 

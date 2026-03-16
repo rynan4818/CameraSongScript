@@ -188,6 +188,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "--- Status Panel ---",
                 [HoverHintLocalization.Lang_JA] = "--- ステータスパネル ---"
             },
+            ["section-other"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "--- Other ---",
+                [HoverHintLocalization.Lang_JA] = "--- その他 ---"
+            },
             ["toggle-show-status-panel"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Show Status Panel",
@@ -197,6 +202,46 @@ namespace CameraSongScript.Localization
             {
                 [HoverHintLocalization.Lang_EN] = "Panel Position",
                 [HoverHintLocalization.Lang_JA] = "パネル位置"
+            },
+            ["button-rerun-songscript-caches"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Rebuild SongScript Caches",
+                [HoverHintLocalization.Lang_JA] = "譜面/SongScripts キャッシュを再検索"
+            },
+            ["cache-refresh-status-beatmap"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Beatmaps: {0}",
+                [HoverHintLocalization.Lang_JA] = "譜面フォルダ: {0}"
+            },
+            ["cache-refresh-status-songscripts"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "SongScripts: {0}",
+                [HoverHintLocalization.Lang_JA] = "SongScripts: {0}"
+            },
+            ["cache-refresh-state-idle"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Idle",
+                [HoverHintLocalization.Lang_JA] = "待機中"
+            },
+            ["cache-refresh-state-scanning"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Scanning",
+                [HoverHintLocalization.Lang_JA] = "検索中"
+            },
+            ["cache-refresh-state-scanning-progress"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Scanning ({0}/{1})",
+                [HoverHintLocalization.Lang_JA] = "検索中 ({0}/{1})"
+            },
+            ["cache-refresh-state-completed"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Completed",
+                [HoverHintLocalization.Lang_JA] = "完了"
+            },
+            ["cache-refresh-state-failed"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Failed",
+                [HoverHintLocalization.Lang_JA] = "失敗"
             },
             ["setting-per-script-height"] = new Dictionary<string, string>
             {
