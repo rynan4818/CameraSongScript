@@ -1,4 +1,5 @@
 using Zenject;
+using CameraSongScript.Services;
 
 namespace CameraSongScript.Installers
 {
@@ -9,6 +10,7 @@ namespace CameraSongScript.Installers
             Plugin.EnsureHttpSiraStatusHelperLoaded();
 
             this.Container.Bind<CameraSongScriptPlayContextResolver>().AsSingle();
+            this.Container.BindInterfacesAndSelfTo<SongScriptGameplayScanPauseController>().AsSingle().NonLazy();
 
             if (Plugin.IsHttpSiraStatusHelperReady)
             {

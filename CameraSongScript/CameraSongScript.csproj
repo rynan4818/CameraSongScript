@@ -130,6 +130,10 @@
       <HintPath>$(BeatSaberDir)\Libs\SongDetailsCache.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SongCore">
+      <HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
@@ -142,11 +146,14 @@
     <Compile Include="Detectors\CameraSongScriptDetector.ScanPipeline.cs" />
     <Compile Include="Interfaces\ICameraHelper.cs" />
     <Compile Include="Interfaces\ICameraPlusHelper.cs" />
+    <Compile Include="Interfaces\IBetterSongListHelper.cs" />
     <Compile Include="Interfaces\IHttpSiraStatusHelper.cs" />
     <Compile Include="Interfaces\ICameraToken.cs" />
     <Compile Include="Installers\CameraSongScriptAppInstaller.cs" />
     <Compile Include="Installers\CameraSongScriptMenuInstaller.cs" />
     <Compile Include="Installers\CameraSongScriptPlayerInstaller.cs" />
+    <Compile Include="Installers\BetterSongListMenuRegistrationRetry.cs" />
+    <Compile Include="Installers\SongScriptGameplayScanPauseController.cs" />
     <Compile Include="Models\MovementScriptJson.cs" />
     <Compile Include="Models\CameraSongScriptPlayContext.cs" />
     <Compile Include="Models\CameraSongScriptData.cs" />
@@ -157,6 +164,8 @@
     <Compile Include="Models\ScriptCandidate.cs" />
     <Compile Include="Models\CommonScriptCache.cs" />
     <Compile Include="Models\SongScriptFolderCache.cs" />
+    <Compile Include="Services\SongScriptBeatmapIndexService.cs" />
+    <Compile Include="Services\SongScriptMapIdResolver.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
     <Compile Include="Localization\HoverHintLocalizationResources.cs" />
     <Compile Include="Localization\UiLocalization.cs" />

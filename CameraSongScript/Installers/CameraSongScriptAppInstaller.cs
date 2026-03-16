@@ -1,4 +1,5 @@
 using CameraSongScript.Detectors;
+using CameraSongScript.Services;
 using Zenject;
 
 namespace CameraSongScript.Installers
@@ -8,6 +9,7 @@ namespace CameraSongScript.Installers
         public override void InstallBindings()
         {
             this.Container.Bind<CameraSongScriptDetector>().AsSingle().NonLazy();
+            this.Container.BindInterfacesAndSelfTo<SongScriptBeatmapIndexService>().AsSingle().NonLazy();
         }
     }
 }

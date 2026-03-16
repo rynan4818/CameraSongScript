@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
+using CameraSongScript.Services;
 using HMUI;
 using IPA.Utilities;
 using Newtonsoft.Json;
@@ -501,36 +502,14 @@ namespace CameraSongScript.Detectors
         /// </summary>
         private string ResolveMapIdFromLevelId(string levelId)
         {
-            if (string.IsNullOrEmpty(levelId))
-                return null;
-
-            const string prefix = "custom_level_";
-            if (!levelId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            string hash = levelId.Substring(prefix.Length);
-            if (hash.Length != 40)
-                return null;
-
-            if (!Plugin.IsSongDetailsReady)
-                return null;
-
-            try
-            {
-                if (Plugin.SongDetailsInstance.songs.FindByHash(hash, out var song))
-                {
-                    string key = song.key;
+            string key = SongScriptMapIdResolver.ResolveMapIdFromLevelId(levelId);
 #if DEBUG
-                    Plugin.Log.Notice($"CameraSongScriptDetector: Resolved hash '{hash}' to mapId '{key}'");
-#endif
-                    return key;
-                }
-            }
-            catch (Exception ex)
+            if (!string.IsNullOrEmpty(key))
             {
-                Plugin.Log.Debug($"CameraSongScriptDetector: SongDetailsCache lookup failed: {ex.Message}");
+                Plugin.Log.Notice($"CameraSongScriptDetector: Resolved mapId '{key}' from LevelId '{levelId}'");
             }
-            return null;
+#endif
+            return key;
         }
 
         /// <summary>

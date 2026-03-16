@@ -21,9 +21,11 @@ namespace CameraSongScript
         internal static ICameraHelper CamHelper { get; private set; }
         internal static ICameraPlusHelper CamPlusHelper { get; private set; }
         internal static IHttpSiraStatusHelper HttpSiraStatusHelper { get; private set; }
+        internal static IBetterSongListHelper BetterSongListHelper { get; private set; }
         internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
         internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
         internal static bool IsHttpSiraStatusHelperReady => HttpSiraStatusHelper != null && HttpSiraStatusHelper.IsInitialized;
+        internal static bool IsBetterSongListHelperReady => BetterSongListHelper != null && BetterSongListHelper.IsInitialized;
 
         internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
         internal static bool IsSongDetailsReady => SongDetailsInstance != null;
@@ -82,6 +84,7 @@ namespace CameraSongScript
             }
 
             EnsureHttpSiraStatusHelperLoaded();
+            EnsureBetterSongListHelperLoaded();
             Log.Info("CameraSongScript started.");
         }
 
@@ -112,6 +115,36 @@ namespace CameraSongScript
                 Log.Error("HttpSiraStatus adapter initialization failed.");
                 HttpSiraStatusHelper = null;
             }
+        }
+
+        internal static void EnsureBetterSongListHelperLoaded()
+        {
+            if (IsBetterSongListHelperReady)
+            {
+                return;
+            }
+
+            if (!IsAssemblyLoaded("BetterSongList"))
+            {
+                return;
+            }
+
+            BetterSongListHelper = CreateAdapter<IBetterSongListHelper>(
+                "CameraSongScript.BetterSongList",
+                "CameraSongScript.BetterSongList.BetterSongListHelper");
+
+            if (BetterSongListHelper == null)
+            {
+                return;
+            }
+
+            if (!BetterSongListHelper.Initialize())
+            {
+                Log.Warn("BetterSongList helper initialization did not complete successfully.");
+                return;
+            }
+
+            Log.Info("BetterSongList helper initialized.");
         }
 
         /// <summary>
