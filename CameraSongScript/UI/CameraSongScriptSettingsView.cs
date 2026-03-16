@@ -148,6 +148,13 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(ButtonPreviewStop));
             NotifyPropertyChanged(nameof(ButtonPreviewClear));
             NotifyPropertyChanged(nameof(LabelPreviewPosition));
+            NotifyPropertyChanged(nameof(ButtonPreviewVisualSettingsReset));
+            NotifyPropertyChanged(nameof(SectionPreviewVisualSettings));
+            NotifyPropertyChanged(nameof(LabelPreviewMiniatureScale));
+            NotifyPropertyChanged(nameof(LabelPreviewVisiblePositionX));
+            NotifyPropertyChanged(nameof(LabelPreviewVisiblePositionY));
+            NotifyPropertyChanged(nameof(LabelPreviewVisiblePositionZ));
+            NotifyPropertyChanged(nameof(LabelPreviewPathLineWidth));
             NotifyPropertyChanged(nameof(ToggleUseAudioSync));
             NotifyPropertyChanged(nameof(LabelTargetCamera));
             NotifyPropertyChanged(nameof(LabelCustomScene));

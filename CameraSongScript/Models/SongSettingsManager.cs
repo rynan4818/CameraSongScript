@@ -19,7 +19,8 @@ namespace CameraSongScript.Models
     /// </summary>
     public static class SongSettingsManager
     {
-        private static readonly string SettingsFilePath = Path.Combine(UnityGame.UserDataPath, "CameraSongScript_SongSettings.json");
+        private static readonly string SettingsDirectoryPath = Path.Combine(UnityGame.UserDataPath, "CameraSongScript");
+        private static readonly string SettingsFilePath = Path.Combine(SettingsDirectoryPath, "CameraSongScript_SongSettings.json");
         private static readonly object _initializeLock = new object();
         private static readonly SemaphoreSlim _saveLock = new SemaphoreSlim(1, 1);
         private static SettingsData _settingsData = new SettingsData();
@@ -58,6 +59,7 @@ namespace CameraSongScript.Models
 
             try
             {
+                Directory.CreateDirectory(SettingsDirectoryPath);
                 string json = JsonConvert.SerializeObject(_settingsData, Formatting.Indented);
                 using (StreamWriter writer = new StreamWriter(SettingsFilePath, false))
                 {

@@ -15,6 +15,12 @@ namespace CameraSongScript.UI
     {
         #region プレビュー設定
 
+        private const float PreviewMiniatureScaleStep = 0.01f;
+        private const float PreviewVisiblePositionStep = 0.1f;
+        private const float PreviewPathLineWidthStep = 0.001f;
+        private const float MinimumPreviewMiniatureScale = 0.01f;
+        private const float MinimumPreviewPathLineWidth = 0.001f;
+
         [UIValue("can-preview")]
         public bool CanPreview => _previewController != null && _previewController.CanPreviewSelection;
 
@@ -64,11 +70,149 @@ namespace CameraSongScript.UI
             }
         }
 
+        [UIValue("label-preview-miniature-scale")]
+        public string LabelPreviewMiniatureScale => UiLocalization.Get("label-preview-miniature-scale");
+
+        [UIValue("button-preview-visual-settings-reset")]
+        public string ButtonPreviewVisualSettingsReset => UiLocalization.Get("button-preview-visual-settings-reset");
+
+        [UIValue("section-preview-visual-settings")]
+        public string SectionPreviewVisualSettings => UiLocalization.Get("section-preview-visual-settings");
+
+        [UIValue("label-preview-visible-position-x")]
+        public string LabelPreviewVisiblePositionX => UiLocalization.Get("label-preview-visible-position-x");
+
+        [UIValue("label-preview-visible-position-y")]
+        public string LabelPreviewVisiblePositionY => UiLocalization.Get("label-preview-visible-position-y");
+
+        [UIValue("label-preview-visible-position-z")]
+        public string LabelPreviewVisiblePositionZ => UiLocalization.Get("label-preview-visible-position-z");
+
+        [UIValue("label-preview-path-line-width")]
+        public string LabelPreviewPathLineWidth => UiLocalization.Get("label-preview-path-line-width");
+
+        [UIValue("preview-miniature-scale-value")]
+        public string PreviewMiniatureScaleValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewMiniatureScale : 0f,
+            "0.00");
+
+        [UIValue("preview-visible-position-x-value")]
+        public string PreviewVisiblePositionXValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewVisiblePositionX : 0f,
+            "0.0");
+
+        [UIValue("preview-visible-position-y-value")]
+        public string PreviewVisiblePositionYValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewVisiblePositionY : 0f,
+            "0.0");
+
+        [UIValue("preview-visible-position-z-value")]
+        public string PreviewVisiblePositionZValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewVisiblePositionZ : 0f,
+            "0.0");
+
+        [UIValue("preview-path-line-width-value")]
+        public string PreviewPathLineWidthValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewPathLineWidth : 0f,
+            "0.000");
+
         [UIAction("preview-show-start")]
         private void PreviewShowStart()
         {
             _previewController?.ShowAndStart();
             RefreshPreviewBindings();
+        }
+
+        [UIAction("preview-miniature-scale-decrease")]
+        private void PreviewMiniatureScaleDecrease()
+        {
+            AdjustPreviewMiniatureScale(-PreviewMiniatureScaleStep);
+        }
+
+        [UIAction("preview-miniature-scale-increase")]
+        private void PreviewMiniatureScaleIncrease()
+        {
+            AdjustPreviewMiniatureScale(PreviewMiniatureScaleStep);
+        }
+
+        [UIAction("preview-visible-position-x-decrease")]
+        private void PreviewVisiblePositionXDecrease()
+        {
+            AdjustPreviewVisiblePositionX(-PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-visible-position-x-increase")]
+        private void PreviewVisiblePositionXIncrease()
+        {
+            AdjustPreviewVisiblePositionX(PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-visible-position-y-decrease")]
+        private void PreviewVisiblePositionYDecrease()
+        {
+            AdjustPreviewVisiblePositionY(-PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-visible-position-y-increase")]
+        private void PreviewVisiblePositionYIncrease()
+        {
+            AdjustPreviewVisiblePositionY(PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-visible-position-z-decrease")]
+        private void PreviewVisiblePositionZDecrease()
+        {
+            AdjustPreviewVisiblePositionZ(-PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-visible-position-z-increase")]
+        private void PreviewVisiblePositionZIncrease()
+        {
+            AdjustPreviewVisiblePositionZ(PreviewVisiblePositionStep);
+        }
+
+        [UIAction("preview-path-line-width-decrease")]
+        private void PreviewPathLineWidthDecrease()
+        {
+            AdjustPreviewPathLineWidth(-PreviewPathLineWidthStep);
+        }
+
+        [UIAction("preview-path-line-width-increase")]
+        private void PreviewPathLineWidthIncrease()
+        {
+            AdjustPreviewPathLineWidth(PreviewPathLineWidthStep);
+        }
+
+        [UIAction("reset-preview-visual-settings")]
+        private void ResetPreviewVisualSettings()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            var defaults = new CameraSongScriptConfig();
+            bool changed = false;
+
+            changed |= !Mathf.Approximately(config.PreviewMiniatureScale, defaults.PreviewMiniatureScale);
+            changed |= !Mathf.Approximately(config.PreviewVisiblePositionX, defaults.PreviewVisiblePositionX);
+            changed |= !Mathf.Approximately(config.PreviewVisiblePositionY, defaults.PreviewVisiblePositionY);
+            changed |= !Mathf.Approximately(config.PreviewVisiblePositionZ, defaults.PreviewVisiblePositionZ);
+            changed |= !Mathf.Approximately(config.PreviewPathLineWidth, defaults.PreviewPathLineWidth);
+
+            config.PreviewMiniatureScale = defaults.PreviewMiniatureScale;
+            config.PreviewVisiblePositionX = defaults.PreviewVisiblePositionX;
+            config.PreviewVisiblePositionY = defaults.PreviewVisiblePositionY;
+            config.PreviewVisiblePositionZ = defaults.PreviewVisiblePositionZ;
+            config.PreviewPathLineWidth = defaults.PreviewPathLineWidth;
+
+            NotifyPropertyChanged(nameof(PreviewMiniatureScaleValue));
+            NotifyPropertyChanged(nameof(PreviewVisiblePositionXValue));
+            NotifyPropertyChanged(nameof(PreviewVisiblePositionYValue));
+            NotifyPropertyChanged(nameof(PreviewVisiblePositionZValue));
+            NotifyPropertyChanged(nameof(PreviewPathLineWidthValue));
+
+            if (changed)
+                HandlePreviewVisualChanged();
         }
 
         [UIAction("preview-stop")]
@@ -142,6 +286,80 @@ namespace CameraSongScript.UI
             RefreshPreviewBindings();
         }
 
+        private void AdjustPreviewMiniatureScale(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumPreviewMiniatureScale,
+                RoundToDecimals(config.PreviewMiniatureScale + delta, 2));
+            if (Mathf.Approximately(config.PreviewMiniatureScale, newValue))
+                return;
+
+            config.PreviewMiniatureScale = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewMiniatureScaleValue));
+        }
+
+        private void AdjustPreviewVisiblePositionX(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = RoundToDecimals(config.PreviewVisiblePositionX + delta, 1);
+            if (Mathf.Approximately(config.PreviewVisiblePositionX, newValue))
+                return;
+
+            config.PreviewVisiblePositionX = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewVisiblePositionXValue));
+        }
+
+        private void AdjustPreviewVisiblePositionY(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = RoundToDecimals(config.PreviewVisiblePositionY + delta, 1);
+            if (Mathf.Approximately(config.PreviewVisiblePositionY, newValue))
+                return;
+
+            config.PreviewVisiblePositionY = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewVisiblePositionYValue));
+        }
+
+        private void AdjustPreviewVisiblePositionZ(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = RoundToDecimals(config.PreviewVisiblePositionZ + delta, 1);
+            if (Mathf.Approximately(config.PreviewVisiblePositionZ, newValue))
+                return;
+
+            config.PreviewVisiblePositionZ = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewVisiblePositionZValue));
+        }
+
+        private void AdjustPreviewPathLineWidth(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumPreviewPathLineWidth,
+                RoundToDecimals(config.PreviewPathLineWidth + delta, 3));
+            if (Mathf.Approximately(config.PreviewPathLineWidth, newValue))
+                return;
+
+            config.PreviewPathLineWidth = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewPathLineWidthValue));
+        }
+
         private void RefreshPreviewBindings()
         {
             if (_previewController != null)
@@ -157,6 +375,16 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(PreviewPosition));
             NotifyPropertyChanged(nameof(PreviewStatus));
             SyncPreviewSlider();
+        }
+
+        private void RefreshPreviewVisualSettingUi(params string[] propertyNames)
+        {
+            foreach (string propertyName in propertyNames)
+            {
+                NotifyPropertyChanged(propertyName);
+            }
+
+            HandlePreviewVisualChanged();
         }
 
         private void RefreshPreviewRuntimeUi()
@@ -195,6 +423,16 @@ namespace CameraSongScript.UI
                 (int)time.TotalMinutes,
                 time.Seconds,
                 time.Milliseconds / 10);
+        }
+
+        private static float RoundToDecimals(float value, int decimals)
+        {
+            return (float)Math.Round(value, decimals, MidpointRounding.AwayFromZero);
+        }
+
+        private static string FormatPreviewConfigValue(float value, string format)
+        {
+            return value.ToString(format, CultureInfo.InvariantCulture);
         }
 
         #endregion

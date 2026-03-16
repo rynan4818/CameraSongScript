@@ -88,6 +88,41 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Playback Position",
                 [HoverHintLocalization.Lang_JA] = "再生位置"
             },
+            ["label-preview-miniature-scale"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Miniature Scale",
+                [HoverHintLocalization.Lang_JA] = "ミニチュアモデルのスケール"
+            },
+            ["section-preview-visual-settings"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "--- Preview Visual Settings ---",
+                [HoverHintLocalization.Lang_JA] = "--- プレビュー表示調整 ---"
+            },
+            ["button-preview-visual-settings-reset"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Reset Preview Visual Settings",
+                [HoverHintLocalization.Lang_JA] = "プレビュー表示調整をデフォルトに戻す"
+            },
+            ["label-preview-visible-position-x"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Position X",
+                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 X"
+            },
+            ["label-preview-visible-position-y"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Position Y",
+                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Y"
+            },
+            ["label-preview-visible-position-z"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Position Z",
+                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Z"
+            },
+            ["label-preview-path-line-width"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Path Line Width",
+                [HoverHintLocalization.Lang_JA] = "経路線幅"
+            },
             ["toggle-use-audio-sync"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Use Audio Sync",
