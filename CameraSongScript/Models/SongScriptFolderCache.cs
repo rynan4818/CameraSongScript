@@ -23,6 +23,9 @@ namespace CameraSongScript.Models
         /// <summary>metadata.mapId（小文字正規化済み）</summary>
         public string MapId { get; set; }
 
+        /// <summary>metadata.hash（小文字正規化済み）</summary>
+        public string Hash { get; set; }
+
         /// <summary>表示用ファイル名</summary>
         public string FileName { get; set; }
 
@@ -51,6 +54,7 @@ namespace CameraSongScript.Models
         private sealed class CacheDocument
         {
             public int Version { get; set; } = 1;
+            public string FormatVersion { get; set; } = "1.0";
             public List<CacheSourceEntry> Entries { get; set; } = new List<CacheSourceEntry>();
         }
 
@@ -67,6 +71,7 @@ namespace CameraSongScript.Models
         {
             public string ZipEntryName { get; set; }
             public string MapId { get; set; }
+            public string Hash { get; set; }
             public string FileName { get; set; }
             public MetadataElements Metadata { get; set; }
         }
@@ -79,6 +84,10 @@ namespace CameraSongScript.Models
 
         /// <summary>mapId（小文字） → エントリ一覧</summary>
         private static Dictionary<string, List<SongScriptEntry>> _mapIdIndex =
+            new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>hash（小文字） → エントリ一覧</summary>
+        private static Dictionary<string, List<SongScriptEntry>> _hashIndex =
             new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
 
         private static bool _isReady = false;
@@ -115,7 +124,8 @@ namespace CameraSongScript.Models
             Dictionary<string, CacheSourceEntry> persistentCache = LoadPersistentCache();
             List<SourceFileInfo> currentSourceFiles = CaptureCurrentSourceFiles();
             var nextPersistentCache = new Dictionary<string, CacheSourceEntry>(StringComparer.OrdinalIgnoreCase);
-            var index = new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
+            var mapIdIndex = new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
+            var hashIndex = new Dictionary<string, List<SongScriptEntry>>(StringComparer.OrdinalIgnoreCase);
 
             int reusedSourceCount = 0;
             int scannedSourceCount = 0;
@@ -134,7 +144,7 @@ namespace CameraSongScript.Models
                 }
 
                 nextPersistentCache[sourceFile.RelativePath] = cacheEntry;
-                AddCacheEntryToIndex(cacheEntry, sourceFile.FullPath, index);
+                AddCacheEntryToIndex(cacheEntry, sourceFile.FullPath, mapIdIndex, hashIndex);
             }
 
             if (!PersistentCachesMatch(persistentCache, nextPersistentCache))
@@ -142,20 +152,28 @@ namespace CameraSongScript.Models
                 SavePersistentCache(nextPersistentCache);
             }
 
-            _mapIdIndex = index;
+            _mapIdIndex = mapIdIndex;
+            _hashIndex = hashIndex;
             _isReady = true;
 
             int totalEntries = 0;
-            foreach (var list in index.Values)
-                totalEntries += list.Count;
+            foreach (var sourceEntry in nextPersistentCache.Values)
+            {
+                totalEntries += sourceEntry?.Scripts?.Count ?? 0;
+            }
             Plugin.Log.Info(
-                $"SongScriptFolderCache: Scan complete. {totalEntries} script(s) indexed across {index.Count} mapId(s). " +
+                $"SongScriptFolderCache: Scan complete. {totalEntries} script(s) indexed across {mapIdIndex.Count} mapId(s) and {hashIndex.Count} hash(es). " +
                 $"Reused {reusedSourceCount} cached source(s), scanned {scannedSourceCount} source(s).");
 
 #if DEBUG
-            if (index.Count > 0)
+            if (mapIdIndex.Count > 0)
             {
-                Plugin.Log.Debug($"SongScriptFolderCache: Indexed MapIds: {string.Join(", ", index.Keys)}");
+                Plugin.Log.Debug($"SongScriptFolderCache: Indexed MapIds: {string.Join(", ", mapIdIndex.Keys)}");
+            }
+
+            if (hashIndex.Count > 0)
+            {
+                Plugin.Log.Debug($"SongScriptFolderCache: Indexed Hashes: {string.Join(", ", hashIndex.Keys)}");
             }
 #endif
         }
@@ -339,13 +357,19 @@ namespace CameraSongScript.Models
             if (parsed?.JsonMovements == null || parsed.JsonMovements.Length == 0)
                 return false;
 
-            if (parsed.metadata == null || string.IsNullOrEmpty(parsed.metadata.mapId))
+            if (parsed.metadata == null)
+                return false;
+
+            string mapId = NormalizeMapId(parsed.metadata.mapId);
+            string hash = NormalizeHash(parsed.metadata.hash);
+            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash))
                 return false;
 
             script = new CacheSongScriptEntry
             {
                 ZipEntryName = zipEntryName,
-                MapId = NormalizeMapId(parsed.metadata.mapId),
+                MapId = mapId,
+                Hash = hash,
                 FileName = fileName ?? string.Empty,
                 Metadata = parsed.metadata
             };
@@ -356,7 +380,8 @@ namespace CameraSongScript.Models
         private static void AddCacheEntryToIndex(
             CacheSourceEntry cacheEntry,
             string sourceFilePath,
-            Dictionary<string, List<SongScriptEntry>> index)
+            Dictionary<string, List<SongScriptEntry>> mapIdIndex,
+            Dictionary<string, List<SongScriptEntry>> hashIndex)
         {
             if (cacheEntry?.Scripts == null)
             {
@@ -371,13 +396,8 @@ namespace CameraSongScript.Models
                     continue;
                 }
 
-                if (!index.TryGetValue(entry.MapId, out var list))
-                {
-                    list = new List<SongScriptEntry>();
-                    index[entry.MapId] = list;
-                }
-
-                list.Add(entry);
+                AddEntryToIndex(mapIdIndex, entry.MapId, entry);
+                AddEntryToIndex(hashIndex, entry.Hash, entry);
             }
         }
 
@@ -392,7 +412,8 @@ namespace CameraSongScript.Models
             }
 
             string mapId = NormalizeMapId(cachedScript.MapId);
-            if (string.IsNullOrEmpty(mapId))
+            string hash = NormalizeHash(cachedScript.Hash);
+            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash))
             {
                 return null;
             }
@@ -402,9 +423,29 @@ namespace CameraSongScript.Models
                 FilePath = sourceFilePath,
                 ZipEntryName = cacheEntry != null && cacheEntry.IsZip ? cachedScript.ZipEntryName : null,
                 MapId = mapId,
+                Hash = hash,
                 FileName = cachedScript.FileName ?? string.Empty,
                 Metadata = cachedScript.Metadata
             };
+        }
+
+        private static void AddEntryToIndex(
+            Dictionary<string, List<SongScriptEntry>> index,
+            string key,
+            SongScriptEntry entry)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+
+            if (!index.TryGetValue(key, out var list))
+            {
+                list = new List<SongScriptEntry>();
+                index[key] = list;
+            }
+
+            list.Add(entry);
         }
 
         private static Dictionary<string, CacheSourceEntry> LoadPersistentCache()
@@ -510,6 +551,7 @@ namespace CameraSongScript.Models
                 {
                     ZipEntryName = entry?.ZipEntryName,
                     MapId = NormalizeMapId(entry?.MapId),
+                    Hash = NormalizeHash(entry?.Hash),
                     FileName = entry?.FileName ?? string.Empty,
                     Metadata = entry?.Metadata
                 })
@@ -590,6 +632,7 @@ namespace CameraSongScript.Models
 
                 if (!string.Equals(leftEntry?.ZipEntryName, rightEntry?.ZipEntryName, StringComparison.Ordinal) ||
                     !string.Equals(leftEntry?.MapId, rightEntry?.MapId, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(leftEntry?.Hash, rightEntry?.Hash, StringComparison.OrdinalIgnoreCase) ||
                     !string.Equals(leftEntry?.FileName, rightEntry?.FileName, StringComparison.Ordinal) ||
                     !MetadataEquals(leftEntry?.Metadata, rightEntry?.Metadata))
                 {
@@ -613,6 +656,7 @@ namespace CameraSongScript.Models
                 string.Equals(left.songAuthorName, right.songAuthorName, StringComparison.Ordinal) &&
                 string.Equals(left.levelAuthorName, right.levelAuthorName, StringComparison.Ordinal) &&
                 string.Equals(NormalizeMapId(left.mapId), NormalizeMapId(right.mapId), StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(NormalizeHash(left.hash), NormalizeHash(right.hash), StringComparison.OrdinalIgnoreCase) &&
                 left.bpm == right.bpm &&
                 left.duration == right.duration &&
                 left.avatarHeight == right.avatarHeight &&
@@ -654,6 +698,14 @@ namespace CameraSongScript.Models
         }
 
         /// <summary>
+        /// hashを小文字に正規化する
+        /// </summary>
+        private static string NormalizeHash(string hash)
+        {
+            return string.IsNullOrEmpty(hash) ? string.Empty : hash.ToLowerInvariant();
+        }
+
+        /// <summary>
         /// 指定mapIdに一致するエントリ一覧を返す
         /// </summary>
         public static List<SongScriptEntry> GetScriptsByMapId(string mapId)
@@ -661,10 +713,66 @@ namespace CameraSongScript.Models
             if (string.IsNullOrEmpty(mapId))
                 return new List<SongScriptEntry>();
 
+            mapId = NormalizeMapId(mapId);
             if (_mapIdIndex.TryGetValue(mapId, out var list))
                 return list;
 
             return new List<SongScriptEntry>();
+        }
+
+        /// <summary>
+        /// 指定hashに一致するエントリ一覧を返す
+        /// </summary>
+        public static List<SongScriptEntry> GetScriptsByHash(string hash)
+        {
+            if (string.IsNullOrEmpty(hash))
+                return new List<SongScriptEntry>();
+
+            hash = NormalizeHash(hash);
+            if (_hashIndex.TryGetValue(hash, out var list))
+                return list;
+
+            return new List<SongScriptEntry>();
+        }
+
+        /// <summary>
+        /// 指定mapIdまたはhashに一致するエントリ一覧を返す
+        /// 同一スクリプトが両方の条件で一致した場合でも結果は1件にまとめる
+        /// </summary>
+        public static List<SongScriptEntry> GetScriptsByLevelReference(string mapId, string hash)
+        {
+            var results = new List<SongScriptEntry>();
+            var seenEntries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            AddEntries(results, seenEntries, GetScriptsByMapId(mapId));
+            AddEntries(results, seenEntries, GetScriptsByHash(hash));
+
+            return results;
+        }
+
+        private static void AddEntries(
+            ICollection<SongScriptEntry> target,
+            ISet<string> seenEntries,
+            IEnumerable<SongScriptEntry> entries)
+        {
+            if (entries == null)
+            {
+                return;
+            }
+
+            foreach (SongScriptEntry entry in entries)
+            {
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                string identity = $"{entry.FilePath}|{entry.ZipEntryName ?? string.Empty}";
+                if (seenEntries.Add(identity))
+                {
+                    target.Add(entry);
+                }
+            }
         }
 
         /// <summary>

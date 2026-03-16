@@ -51,6 +51,7 @@ namespace CameraSongScript.HttpSiraStatus
                 AddString(metadataObject, "songAuthorName", metadata?.songAuthorName);
                 AddString(metadataObject, "levelAuthorName", metadata?.levelAuthorName);
                 AddString(metadataObject, "mapId", metadata?.mapId);
+                AddString(metadataObject, "hash", metadata?.hash);
                 AddNumber(metadataObject, "bpm", metadata?.bpm);
                 AddNumber(metadataObject, "duration", metadata?.duration);
                 AddNumber(metadataObject, "avatarHeight", metadata?.avatarHeight);

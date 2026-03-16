@@ -33,6 +33,7 @@ namespace CameraSongScript.Services
         private sealed class CacheDocument
         {
             public int Version { get; set; } = 1;
+            public string FormatVersion { get; set; } = "1.0";
             public List<CacheEntry> Entries { get; set; } = new List<CacheEntry>();
         }
 
@@ -504,9 +505,14 @@ namespace CameraSongScript.Services
 
         private bool HasSongScriptsFolderScript(string levelId)
         {
-            if (string.IsNullOrEmpty(levelId) || !Models.SongScriptFolderCache.IsReady || !Plugin.IsSongDetailsReady)
+            if (string.IsNullOrEmpty(levelId) || !Models.SongScriptFolderCache.IsReady)
             {
                 return false;
+            }
+
+            if (!Plugin.IsSongDetailsReady)
+            {
+                return ResolveSongScriptsFolderScriptCore(levelId);
             }
 
             return _songScriptsFolderResultsByLevelId.GetOrAdd(levelId, ResolveSongScriptsFolderScriptCore);
@@ -514,13 +520,13 @@ namespace CameraSongScript.Services
 
         private bool ResolveSongScriptsFolderScriptCore(string levelId)
         {
-            string mapId = SongScriptMapIdResolver.ResolveMapIdFromLevelId(levelId);
-            if (string.IsNullOrEmpty(mapId))
+            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId);
+            if (!levelReference.HasAnyValue)
             {
                 return false;
             }
 
-            return Models.SongScriptFolderCache.GetScriptsByMapId(mapId).Count > 0;
+            return Models.SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash).Count > 0;
         }
 
         private void LoadPersistentCache()

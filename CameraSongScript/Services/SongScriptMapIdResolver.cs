@@ -2,13 +2,22 @@ using System;
 
 namespace CameraSongScript.Services
 {
+    internal sealed class SongScriptLevelReference
+    {
+        public string MapId { get; set; } = string.Empty;
+        public string Hash { get; set; } = string.Empty;
+
+        public bool HasAnyValue => !string.IsNullOrEmpty(MapId) || !string.IsNullOrEmpty(Hash);
+    }
+
     internal static class SongScriptMapIdResolver
     {
-        public static string ResolveMapIdFromLevelId(string levelId)
+        public static SongScriptLevelReference ResolveLevelReferenceFromLevelId(string levelId)
         {
-            if (string.IsNullOrEmpty(levelId) || !Plugin.IsSongDetailsReady)
+            var levelReference = new SongScriptLevelReference();
+            if (string.IsNullOrEmpty(levelId))
             {
-                return null;
+                return levelReference;
             }
 
             string hash = SongCore.Collections.hashForLevelID(levelId);
@@ -17,16 +26,18 @@ namespace CameraSongScript.Services
                 hash = ExtractHashFromLevelId(levelId);
             }
 
-            if (string.IsNullOrEmpty(hash))
+            levelReference.Hash = NormalizeLookupKey(hash);
+
+            if (string.IsNullOrEmpty(hash) || !Plugin.IsSongDetailsReady)
             {
-                return null;
+                return levelReference;
             }
 
             try
             {
                 if (Plugin.SongDetailsInstance.songs.FindByHash(hash, out var song))
                 {
-                    return song.key;
+                    levelReference.MapId = NormalizeLookupKey(song.key);
                 }
             }
             catch (Exception ex)
@@ -34,7 +45,12 @@ namespace CameraSongScript.Services
                 Plugin.Log.Debug($"SongScriptMapIdResolver: SongDetailsCache lookup failed: {ex.Message}");
             }
 
-            return null;
+            return levelReference;
+        }
+
+        public static string ResolveMapIdFromLevelId(string levelId)
+        {
+            return ResolveLevelReferenceFromLevelId(levelId).MapId;
         }
 
         private static string ExtractHashFromLevelId(string levelId)
@@ -52,6 +68,11 @@ namespace CameraSongScript.Services
             }
 
             return levelId.Substring(hashStartIndex, 40);
+        }
+
+        private static string NormalizeLookupKey(string value)
+        {
+            return string.IsNullOrEmpty(value) ? string.Empty : value.ToLowerInvariant();
         }
     }
 }

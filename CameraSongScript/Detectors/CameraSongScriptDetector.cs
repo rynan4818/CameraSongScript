@@ -21,7 +21,7 @@ namespace CameraSongScript.Detectors
     /// <summary>
     /// 曲選択時にカメラスクリプト(.json)の存在を検出するクラス
     /// 譜面フォルダ内の.jsonファイルに加え、SongScriptsフォルダ内のスクリプトも
-    /// metadata.mapIdによるマッチングで検出・統合する
+    /// metadata.mapId / metadata.hash によるマッチングで検出・統合する
     /// ファイルI/Oは非同期で実行し、メインスレッドをブロックしない
     /// </summary>
     internal partial class CameraSongScriptDetector
@@ -293,16 +293,18 @@ namespace CameraSongScript.Detectors
 
             ct.ThrowIfCancellationRequested();
 
-            // --- Phase 2: SongScriptsフォルダからmapIdマッチング ---
+            // --- Phase 2: SongScriptsフォルダからmapId/hashマッチング ---
             var ssCandidates = new List<ScriptCandidate>();
-            string resolvedMapId = ResolveMapIdFromLevelId(levelId);
+            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId);
 #if DEBUG
-            Plugin.Log.Debug($"CameraSongScriptDetector: Level selected. Resolved MapId from LevelId '{levelId}': {resolvedMapId ?? "(null)"}");
+            Plugin.Log.Debug(
+                $"CameraSongScriptDetector: Level selected. Resolved mapId/hash from LevelId '{levelId}': " +
+                $"{levelReference.MapId ?? "(null)"}/{levelReference.Hash ?? "(null)"}");
 #endif
 
-            if (!string.IsNullOrEmpty(resolvedMapId) && SongScriptFolderCache.IsReady)
+            if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
-                var entries = SongScriptFolderCache.GetScriptsByMapId(resolvedMapId);
+                var entries = SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash);
                 foreach (var entry in entries)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -499,18 +501,19 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
-        /// levelIDからhashを抽出し、SongDetailsCacheでmapId（hex key）を取得する
+        /// levelIDからSongScripts照合用のmapId/hashを解決する
         /// </summary>
-        private string ResolveMapIdFromLevelId(string levelId)
+        private SongScriptLevelReference ResolveSongScriptLevelReference(string levelId)
         {
-            string key = SongScriptMapIdResolver.ResolveMapIdFromLevelId(levelId);
+            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId);
 #if DEBUG
-            if (!string.IsNullOrEmpty(key))
+            if (levelReference.HasAnyValue)
             {
-                Plugin.Log.Notice($"CameraSongScriptDetector: Resolved mapId '{key}' from LevelId '{levelId}'");
+                Plugin.Log.Notice(
+                    $"CameraSongScriptDetector: Resolved mapId/hash '{levelReference.MapId}'/'{levelReference.Hash}' from LevelId '{levelId}'");
             }
 #endif
-            return key;
+            return levelReference;
         }
 
         /// <summary>

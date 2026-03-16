@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using CameraSongScript.Configuration;
 using CameraSongScript.Models;
+using CameraSongScript.Services;
 using HMUI;
 
 namespace CameraSongScript.Detectors
@@ -94,10 +95,10 @@ namespace CameraSongScript.Detectors
             ct.ThrowIfCancellationRequested();
 
             var ssCandidates = new List<ScriptCandidate>();
-            string resolvedMapId = ResolveMapIdFromLevelId(levelId);
-            if (!string.IsNullOrEmpty(resolvedMapId) && SongScriptFolderCache.IsReady)
+            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId);
+            if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
-                foreach (var entry in SongScriptFolderCache.GetScriptsByMapId(resolvedMapId))
+                foreach (var entry in SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash))
                 {
                     ct.ThrowIfCancellationRequested();
                     string displayName = FormatSongScriptDisplayName(entry);

@@ -193,6 +193,7 @@ namespace CameraSongScript
             {
                 SongDetailsInstance = await SongDetailsCache.SongDetails.Init();
                 Log.Info("SongDetailsCache initialized successfully.");
+                CameraSongScriptDetector.Instance?.ReevaluateCurrentLevel();
             }
             catch (Exception ex)
             {
