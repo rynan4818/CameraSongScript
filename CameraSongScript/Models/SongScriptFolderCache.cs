@@ -50,6 +50,9 @@ namespace CameraSongScript.Models
 
     internal static class SongScriptFolderCache
     {
+        private const int CacheVersion = 1;
+        private const string CacheFormatVersion = "1.0";
+
         private sealed class SourceFileInfo
         {
             public string FullPath { get; set; }
@@ -61,8 +64,8 @@ namespace CameraSongScript.Models
 
         private sealed class CacheDocument
         {
-            public int Version { get; set; } = 1;
-            public string FormatVersion { get; set; } = "1.0";
+            public int Version { get; set; } = CacheVersion;
+            public string FormatVersion { get; set; } = CacheFormatVersion;
             public List<CacheSourceEntry> Entries { get; set; } = new List<CacheSourceEntry>();
         }
 
@@ -345,7 +348,7 @@ namespace CameraSongScript.Models
                 Size = sourceFile.Size,
                 IsZip = sourceFile.IsZip,
                 Scripts = sourceFile.IsZip
-                    ? ScanZipFile(sourceFile.FullPath)
+                    ? ScanZipFile(sourceFile.FullPath, sourceFile.RelativePath)
                     : ScanJsonFile(sourceFile.FullPath, sourceFile.RelativePath)
             };
         }
@@ -358,7 +361,7 @@ namespace CameraSongScript.Models
             {
                 string json = File.ReadAllText(filePath);
                 var parsed = JsonConvert.DeserializeObject<MovementScriptJson>(json);
-                if (!TryCreateCacheScriptEntry(parsed, relativePath, null, out var script))
+                if (!TryCreateCacheScriptEntry(parsed, relativePath, relativePath, null, out var script))
                 {
                     return scripts;
                 }
@@ -373,7 +376,7 @@ namespace CameraSongScript.Models
             return scripts;
         }
 
-        private static List<CacheSongScriptEntry> ScanZipFile(string zipPath)
+        private static List<CacheSongScriptEntry> ScanZipFile(string zipPath, string relativePath)
         {
             var scripts = new List<CacheSongScriptEntry>();
 
@@ -399,7 +402,12 @@ namespace CameraSongScript.Models
                             }
 
                             var parsed = JsonConvert.DeserializeObject<MovementScriptJson>(json);
-                            if (!TryCreateCacheScriptEntry(parsed, Path.GetFileName(zipEntry.FullName), zipEntry.FullName, out var script))
+                            if (!TryCreateCacheScriptEntry(
+                                parsed,
+                                Path.GetFileName(zipEntry.FullName),
+                                relativePath,
+                                zipEntry.FullName,
+                                out var script))
                                 continue;
 
                             scripts.Add(script);
@@ -422,6 +430,7 @@ namespace CameraSongScript.Models
         private static bool TryCreateCacheScriptEntry(
             MovementScriptJson parsed,
             string fileName,
+            string sourceRelativePath,
             string zipEntryName,
             out CacheSongScriptEntry script)
         {
@@ -430,12 +439,10 @@ namespace CameraSongScript.Models
             if (parsed?.JsonMovements == null || parsed.JsonMovements.Length == 0)
                 return false;
 
-            if (parsed.metadata == null)
-                return false;
-
-            string mapId = NormalizeMapId(parsed.metadata.mapId);
-            string hash = NormalizeHash(parsed.metadata.hash);
-            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash))
+            string mapId = NormalizeMapId(parsed.metadata?.mapId);
+            string hash = NormalizeHash(parsed.metadata?.hash);
+            string pathMapId = ResolvePathMapId(fileName, sourceRelativePath, zipEntryName);
+            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash) && string.IsNullOrEmpty(pathMapId))
                 return false;
 
             script = new CacheSongScriptEntry
@@ -469,7 +476,11 @@ namespace CameraSongScript.Models
                     continue;
                 }
 
-                AddEntryToIndex(mapIdIndex, entry.MapId, entry);
+                foreach (string mapId in GetMapIdLookupKeys(cacheEntry, cachedScript, entry))
+                {
+                    AddEntryToIndex(mapIdIndex, mapId, entry);
+                }
+
                 AddEntryToIndex(hashIndex, entry.Hash, entry);
             }
         }
@@ -486,7 +497,8 @@ namespace CameraSongScript.Models
 
             string mapId = NormalizeMapId(cachedScript.MapId);
             string hash = NormalizeHash(cachedScript.Hash);
-            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash))
+            string pathMapId = ResolvePathMapId(cachedScript.FileName, cacheEntry?.RelativePath, cachedScript.ZipEntryName);
+            if (string.IsNullOrEmpty(mapId) && string.IsNullOrEmpty(hash) && string.IsNullOrEmpty(pathMapId))
             {
                 return null;
             }
@@ -500,6 +512,29 @@ namespace CameraSongScript.Models
                 FileName = cachedScript.FileName ?? string.Empty,
                 Metadata = cachedScript.Metadata
             };
+        }
+
+        private static IEnumerable<string> GetMapIdLookupKeys(
+            CacheSourceEntry cacheEntry,
+            CacheSongScriptEntry cachedScript,
+            SongScriptEntry entry)
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            AddLookupKey(keys, entry?.MapId);
+            AddLookupKey(keys, ResolvePathMapId(cachedScript?.FileName, cacheEntry?.RelativePath, cachedScript?.ZipEntryName));
+
+            return keys;
+        }
+
+        private static void AddLookupKey(ICollection<string> keys, string key)
+        {
+            if (keys == null || string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+
+            keys.Add(key);
         }
 
         private static void AddEntryToIndex(
@@ -534,7 +569,19 @@ namespace CameraSongScript.Models
 
                 string json = File.ReadAllText(CacheFilePath);
                 var document = JsonConvert.DeserializeObject<CacheDocument>(json);
-                if (document?.Entries == null)
+                if (document == null)
+                {
+                    return cache;
+                }
+
+                if (document.Version != CacheVersion)
+                {
+                    Plugin.Log.Info(
+                        $"SongScriptFolderCache: Ignoring cache file with unsupported version {document.Version}. Expected {CacheVersion}.");
+                    return cache;
+                }
+
+                if (document.Entries == null)
                 {
                     return cache;
                 }
@@ -763,6 +810,89 @@ namespace CameraSongScript.Models
             return relativePath
                 .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
                 .TrimStart(Path.DirectorySeparatorChar);
+        }
+
+        private static string ResolvePathMapId(string fileName, string sourceRelativePath, string zipEntryName)
+        {
+            string fileMapId = ExtractFileMapId(fileName);
+            if (!string.IsNullOrEmpty(fileMapId))
+            {
+                return fileMapId;
+            }
+
+            string zipEntryFolderMapId = ExtractFolderMapId(zipEntryName);
+            if (!string.IsNullOrEmpty(zipEntryFolderMapId))
+            {
+                return zipEntryFolderMapId;
+            }
+
+            return ExtractFolderMapId(sourceRelativePath);
+        }
+
+        private static string ExtractFileMapId(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return string.Empty;
+            }
+
+            return ExtractLeadingMapIdCandidate(Path.GetFileNameWithoutExtension(fileName));
+        }
+
+        private static string ExtractFolderMapId(string path)
+        {
+            string folderName = GetContainingFolderName(path);
+            if (string.IsNullOrEmpty(folderName))
+            {
+                return string.Empty;
+            }
+
+            return ExtractLeadingMapIdCandidate(folderName);
+        }
+
+        private static string GetContainingFolderName(string path)
+        {
+            string normalizedPath = NormalizeRelativePath(path);
+            if (string.IsNullOrEmpty(normalizedPath))
+            {
+                return string.Empty;
+            }
+
+            string directoryPath = Path.GetDirectoryName(normalizedPath);
+            if (string.IsNullOrEmpty(directoryPath))
+            {
+                return string.Empty;
+            }
+
+            return Path.GetFileName(directoryPath) ?? string.Empty;
+        }
+
+        private static bool IsHexCharacter(char value)
+        {
+            return (value >= '0' && value <= '9') ||
+                (value >= 'a' && value <= 'f') ||
+                (value >= 'A' && value <= 'F');
+        }
+
+        private static string ExtractLeadingMapIdCandidate(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            int length = 0;
+            while (length < value.Length && IsHexCharacter(value[length]))
+            {
+                length++;
+            }
+
+            if (length == 0 || length > 6)
+            {
+                return string.Empty;
+            }
+
+            return value.Substring(0, length).ToLowerInvariant();
         }
 
         private static string NormalizeMapId(string mapId)

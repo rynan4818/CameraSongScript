@@ -25,6 +25,9 @@ namespace CameraSongScript.Services
 
     public class SongScriptBeatmapIndexService : IInitializable, IDisposable
     {
+        private const int CacheVersion = 1;
+        private const string CacheFormatVersion = "1.0";
+
         private sealed class BeatmapWorkItem
         {
             public string FolderPath { get; set; }
@@ -40,8 +43,8 @@ namespace CameraSongScript.Services
 
         private sealed class CacheDocument
         {
-            public int Version { get; set; } = 1;
-            public string FormatVersion { get; set; } = "1.0";
+            public int Version { get; set; } = CacheVersion;
+            public string FormatVersion { get; set; } = CacheFormatVersion;
             public List<CacheEntry> Entries { get; set; } = new List<CacheEntry>();
         }
 
@@ -615,7 +618,19 @@ namespace CameraSongScript.Services
 
                 string json = File.ReadAllText(CacheFilePath);
                 var document = JsonConvert.DeserializeObject<CacheDocument>(json);
-                if (document?.Entries == null)
+                if (document == null)
+                {
+                    return;
+                }
+
+                if (document.Version != CacheVersion)
+                {
+                    Plugin.Log.Info(
+                        $"SongScriptBeatmapIndexService: Ignoring cache file with unsupported version {document.Version}. Expected {CacheVersion}.");
+                    return;
+                }
+
+                if (document.Entries == null)
                 {
                     return;
                 }
