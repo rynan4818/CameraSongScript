@@ -78,6 +78,7 @@ namespace CameraSongScript.UI
                 _beatmapIndexService.ScanStatusChanged += OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
+            Plugin.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
         }
 
@@ -89,6 +90,7 @@ namespace CameraSongScript.UI
                 _beatmapIndexService.ScanStatusChanged -= OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
+            Plugin.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             DetachScriptFileDropdownButtonHandler();
             DetachCommonScriptDropdownButtonHandler();
@@ -161,6 +163,31 @@ namespace CameraSongScript.UI
                     Plugin.Log.Warn($"SettingsView: Failed to refresh localized UI: {ex.Message}");
                 }
             });
+        }
+
+        private void OnAdapterVersionWarningsChanged()
+        {
+            void Refresh()
+            {
+                try
+                {
+                    NotifyPropertyChanged(nameof(SongScriptStatus));
+                    RefreshLayout();
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SettingsView: Failed to apply adapter warning change: {ex.Message}");
+                }
+            }
+
+            if (HMMainThreadDispatcher.instance != null)
+            {
+                HMMainThreadDispatcher.instance.Enqueue(Refresh);
+            }
+            else
+            {
+                Refresh();
+            }
         }
 
         private void OnSongScriptFolderCacheStatusChanged()
@@ -1083,14 +1110,28 @@ namespace CameraSongScript.UI
 
         #region SongScript検出状態
 
-        private string AppendCamera2UnsupportedWarning(string statusText)
+        private string AppendStatusWarnings(string statusText)
+        {
+            statusText = AppendWarningLine(statusText, GetCamera2UnsupportedWarningText());
+            statusText = AppendWarningLine(statusText, Plugin.GetUnsupportedAdapterVersionWarningText());
+            return statusText;
+        }
+
+        private string GetCamera2UnsupportedWarningText()
         {
             if (!CameraModDetector.IsCamera2 || !_scriptDetector.HasCurrentUnsupportedFeatures)
-                return statusText;
+                return string.Empty;
 
-            string warningText = UiLocalization.Format(
+            return UiLocalization.Format(
                 "warning-camera2-unsupported",
                 _scriptDetector.CurrentUnsupportedFeatureSummary);
+        }
+
+        private static string AppendWarningLine(string statusText, string warningText)
+        {
+            if (string.IsNullOrEmpty(warningText))
+                return statusText;
+
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 
@@ -1109,9 +1150,9 @@ namespace CameraSongScript.UI
                         UiLocalization.OptionRandom);
                     commonName = SongScriptDisplayLabelFormatter.Format(commonName);
                     if (count > 0)
-                        return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-common-with-count", commonName, count));
+                        return AppendStatusWarnings(UiLocalization.Format("song-status-common-with-count", commonName, count));
                     else
-                        return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-common", commonName));
+                        return AppendStatusWarnings(UiLocalization.Format("song-status-common", commonName));
                 }
 
                 if (count > 0)
@@ -1119,11 +1160,11 @@ namespace CameraSongScript.UI
                     string selected = _scriptDetector.HasSongScript
                         ? SongScriptDisplayLabelFormatter.Format(_scriptDetector.SelectedScriptDisplayName)
                         : "?";
-                    return AppendCamera2UnsupportedWarning(UiLocalization.Format("song-status-found", count, selected));
+                    return AppendStatusWarnings(UiLocalization.Format("song-status-found", count, selected));
                 }
                 else
                 {
-                    return AppendCamera2UnsupportedWarning(UiLocalization.Get("song-status-none"));
+                    return AppendStatusWarnings(UiLocalization.Get("song-status-none"));
                 }
             }
         }

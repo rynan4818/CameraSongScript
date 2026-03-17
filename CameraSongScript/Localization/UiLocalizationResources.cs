@@ -288,6 +288,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: Unsupported in Camera2 - {0}</color>",
                 [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: Camera2未対応 - {0}</color>"
             },
+            ["warning-adapter-version-unsupported"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} version {1} is unsupported and will not be loaded. Allowed: {2}</color>",
+                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のバージョン {1} は対象外のため読み込めません。対応: {2}</color>"
+            },
             ["preview-initializing"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview: Initializing",

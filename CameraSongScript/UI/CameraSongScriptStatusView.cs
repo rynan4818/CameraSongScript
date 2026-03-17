@@ -35,6 +35,7 @@ namespace CameraSongScript.UI
             CreateCanvas();
             _scriptDetector.ScanCompleted += OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded += OnConfigReloaded;
+            Plugin.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
             UpdateContent();
         }
@@ -43,6 +44,7 @@ namespace CameraSongScript.UI
         {
             _scriptDetector.ScanCompleted -= OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded -= OnConfigReloaded;
+            Plugin.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             if (_rootObject != null)
                 Destroy(_rootObject);
@@ -122,6 +124,21 @@ namespace CameraSongScript.UI
                 catch (Exception ex)
                 {
                     Plugin.Log.Warn($"StatusView: Failed to apply language change: {ex.Message}");
+                }
+            });
+        }
+
+        private void OnAdapterVersionWarningsChanged()
+        {
+            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            {
+                try
+                {
+                    UpdateContent();
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"StatusView: Failed to apply adapter warning change: {ex.Message}");
                 }
             });
         }
@@ -220,21 +237,21 @@ namespace CameraSongScript.UI
                     }
                 }
 
-                _statusText.text = AppendCamera2UnsupportedWarning(commonText);
+                _statusText.text = AppendStatusWarnings(commonText);
                 return;
             }
 
             // スクリプトなしの場合
             if (!hasScript)
             {
-                _statusText.text = UiLocalization.Get("panel-none");
+                _statusText.text = AppendStatusWarnings(UiLocalization.Get("panel-none"));
                 return;
             }
 
             // 機能が無効の場合
             if (!enabled)
             {
-                _statusText.text = AppendCamera2UnsupportedWarning(UiLocalization.Get("panel-off"));
+                _statusText.text = AppendStatusWarnings(UiLocalization.Get("panel-off"));
                 return;
             }
 
@@ -269,17 +286,31 @@ namespace CameraSongScript.UI
             if (!string.IsNullOrEmpty(offsetLine))
                 fullText += "\n" + offsetLine;
 
-            _statusText.text = AppendCamera2UnsupportedWarning(fullText);
+            _statusText.text = AppendStatusWarnings(fullText);
         }
 
-        private string AppendCamera2UnsupportedWarning(string statusText)
+        private string AppendStatusWarnings(string statusText)
+        {
+            statusText = AppendWarningLine(statusText, GetCamera2UnsupportedWarningText());
+            statusText = AppendWarningLine(statusText, Plugin.GetUnsupportedAdapterVersionWarningText());
+            return statusText;
+        }
+
+        private string GetCamera2UnsupportedWarningText()
         {
             if (!CameraModDetector.IsCamera2 || !_scriptDetector.HasCurrentUnsupportedFeatures)
-                return statusText;
+                return string.Empty;
 
-            string warningText = UiLocalization.Format(
+            return UiLocalization.Format(
                 "warning-camera2-unsupported",
                 _scriptDetector.CurrentUnsupportedFeatureSummary);
+        }
+
+        private static string AppendWarningLine(string statusText, string warningText)
+        {
+            if (string.IsNullOrEmpty(warningText))
+                return statusText;
+
             return string.IsNullOrEmpty(statusText) ? warningText : $"{statusText}\n{warningText}";
         }
 
