@@ -460,7 +460,7 @@ namespace CameraSongScript.Detectors
         /// </summary>
         private string ExtractZipEntryToTemp(string zipPath, string entryName)
         {
-            string tempPath = GetTempScriptPath("Temp_ZipScript", zipPath, entryName);
+            string tempPath = GetTempScriptPath("Temp", "Temp_ZipScript", zipPath, entryName);
 
             using (var zip = ZipFile.OpenRead(zipPath))
             {
@@ -482,7 +482,14 @@ namespace CameraSongScript.Detectors
 
         private string GetTempScriptPath(string prefix, params string[] identityParts)
         {
-            string tempDir = Path.Combine(UnityGame.UserDataPath, "CameraSongScript");
+            return GetTempScriptPath("Temp", prefix, identityParts);
+        }
+
+        private string GetTempScriptPath(string subDirectoryName, string prefix, params string[] identityParts)
+        {
+            string tempDir = string.IsNullOrEmpty(subDirectoryName)
+                ? Path.Combine(UnityGame.UserDataPath, "CameraSongScript")
+                : Path.Combine(UnityGame.UserDataPath, "CameraSongScript", subDirectoryName);
             if (!Directory.Exists(tempDir))
                 Directory.CreateDirectory(tempDir);
 
