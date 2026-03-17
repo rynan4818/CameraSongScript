@@ -3,8 +3,8 @@ using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
 using HMUI;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using Zenject;
 
 namespace CameraSongScript.UI
@@ -15,6 +15,8 @@ namespace CameraSongScript.UI
     /// </summary>
     public class CameraSongScriptStatusView : MonoBehaviour, IInitializable, IDisposable
     {
+        private const string ZeroWidthBreak = "\u200B";
+
         private CameraSongScriptDetector _scriptDetector;
         private bool _isLevelDetailVisible;
 
@@ -54,10 +56,7 @@ namespace CameraSongScript.UI
         {
             var cfg = CameraSongScriptConfig.Instance;
 
-            _rootObject = new GameObject("CameraSongScript Status Canvas", typeof(Canvas), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-            var sizeFitter = _rootObject.GetComponent<ContentSizeFitter>();
-            sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            sizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            _rootObject = new GameObject("CameraSongScript Status Canvas", typeof(Canvas));
             _canvas = _rootObject.GetComponent<Canvas>();
             _canvas.sortingOrder = 3;
             _canvas.renderMode = RenderMode.WorldSpace;
@@ -78,6 +77,10 @@ namespace CameraSongScript.UI
             _statusText.overrideColorTags = false;
             _statusText.richText = true;
             _statusText.color = Color.white;
+            _statusText.enableWordWrapping = true;
+            _statusText.overflowMode = TextOverflowModes.Overflow;
+            _statusText.alignment = TextAlignmentOptions.TopLeft;
+            ApplyTextLayout(cfg);
         }
 
         private static CurvedTextMeshPro CreateText(RectTransform parent, string text, Vector2 anchoredPosition, float fontSize)
@@ -90,8 +93,9 @@ namespace CameraSongScript.UI
             textMesh.fontSize = fontSize;
             textMesh.overrideColorTags = false;
             textMesh.color = Color.white;
-            textMesh.rectTransform.anchorMin = new Vector2(0f, 0f);
-            textMesh.rectTransform.anchorMax = new Vector2(0f, 0f);
+            textMesh.rectTransform.anchorMin = new Vector2(0f, 1f);
+            textMesh.rectTransform.anchorMax = new Vector2(0f, 1f);
+            textMesh.rectTransform.pivot = new Vector2(0f, 1f);
             textMesh.rectTransform.sizeDelta = Vector2.zero;
             textMesh.rectTransform.anchoredPosition = anchoredPosition;
             gameObj.SetActive(true);
@@ -186,6 +190,7 @@ namespace CameraSongScript.UI
 
             // フォントサイズ
             _statusText.fontSize = cfg.StatusFontSize;
+            ApplyTextLayout(cfg);
 
             // 表示内容
             UpdateContent();
@@ -222,6 +227,7 @@ namespace CameraSongScript.UI
                     commonName = UiLocalization.GetOptionDisplay(
                         CameraSongScriptConfig.Instance.SelectedCommonScript,
                         UiLocalization.OptionRandom);
+                commonName = MakeWrapFriendly(commonName);
 
                 string commonText = UiLocalization.Get("panel-common");
                 commonText += "\n" + UiLocalization.Format("panel-script-line", commonName);
@@ -237,26 +243,26 @@ namespace CameraSongScript.UI
                     }
                 }
 
-                _statusText.text = AppendStatusWarnings(commonText);
+                SetStatusText(AppendStatusWarnings(commonText));
                 return;
             }
 
             // スクリプトなしの場合
             if (!hasScript)
             {
-                _statusText.text = AppendStatusWarnings(UiLocalization.Get("panel-none"));
+                SetStatusText(AppendStatusWarnings(UiLocalization.Get("panel-none")));
                 return;
             }
 
             // 機能が無効の場合
             if (!enabled)
             {
-                _statusText.text = AppendStatusWarnings(UiLocalization.Get("panel-off"));
+                SetStatusText(AppendStatusWarnings(UiLocalization.Get("panel-off")));
                 return;
             }
 
             // 以下、有効かつスクリプトありの場合
-            string scriptName = _scriptDetector.SelectedScriptDisplayName;
+            string scriptName = MakeWrapFriendly(_scriptDetector.SelectedScriptDisplayName);
 
             string statusLine = UiLocalization.Get("panel-on");
             string scriptLine = UiLocalization.Format("panel-script-line", scriptName);
@@ -286,7 +292,16 @@ namespace CameraSongScript.UI
             if (!string.IsNullOrEmpty(offsetLine))
                 fullText += "\n" + offsetLine;
 
-            _statusText.text = AppendStatusWarnings(fullText);
+            SetStatusText(AppendStatusWarnings(fullText));
+        }
+
+        private void SetStatusText(string statusText)
+        {
+            if (_statusText == null)
+                return;
+
+            _statusText.text = statusText ?? string.Empty;
+            RefreshTextLayout();
         }
 
         private string AppendStatusWarnings(string statusText)
@@ -294,6 +309,48 @@ namespace CameraSongScript.UI
             statusText = AppendWarningLine(statusText, GetCamera2UnsupportedWarningText());
             statusText = AppendWarningLine(statusText, Plugin.GetUnsupportedAdapterVersionWarningText());
             return statusText;
+        }
+
+        private void ApplyTextLayout(CameraSongScriptConfig cfg)
+        {
+            if (_statusText == null)
+                return;
+
+            var textRect = _statusText.rectTransform;
+            textRect.anchorMin = new Vector2(0f, 1f);
+            textRect.anchorMax = new Vector2(0f, 1f);
+            textRect.pivot = new Vector2(0f, 1f);
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.sizeDelta = new Vector2(Mathf.Max(1f, cfg.StatusCanvasWidth), 0f);
+        }
+
+        private void RefreshTextLayout()
+        {
+            if (_canvas == null || _statusText == null)
+                return;
+
+            var cfg = CameraSongScriptConfig.Instance;
+            float textWidth = Mathf.Max(1f, cfg.StatusCanvasWidth);
+            _statusText.ForceMeshUpdate();
+            Vector2 preferredSize = _statusText.GetPreferredValues(_statusText.text, textWidth, 0f);
+            float textHeight = Mathf.Max(cfg.StatusCanvasHeight, preferredSize.y);
+
+            var canvasRect = _canvas.transform as RectTransform;
+            canvasRect.sizeDelta = new Vector2(textWidth, textHeight);
+            _statusText.rectTransform.sizeDelta = new Vector2(textWidth, textHeight);
+        }
+
+        private static string MakeWrapFriendly(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            return value
+                .Replace("\\", "\\" + ZeroWidthBreak)
+                .Replace("/", "/" + ZeroWidthBreak)
+                .Replace("_", "_" + ZeroWidthBreak)
+                .Replace("-", "-" + ZeroWidthBreak)
+                .Replace(".", "." + ZeroWidthBreak);
         }
 
         private string GetCamera2UnsupportedWarningText()
