@@ -203,6 +203,21 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Panel Position",
                 [HoverHintLocalization.Lang_JA] = "パネル位置"
             },
+            ["label-panel-adjust-position"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Position",
+                [HoverHintLocalization.Lang_JA] = "Position"
+            },
+            ["label-panel-adjust-rotation"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Rotation",
+                [HoverHintLocalization.Lang_JA] = "Rotation"
+            },
+            ["button-status-panel-transform-reset"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Reset Position/Rotation",
+                [HoverHintLocalization.Lang_JA] = "位置/回転をリセット"
+            },
             ["button-rerun-songscript-caches"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Rebuild SongScript Caches",

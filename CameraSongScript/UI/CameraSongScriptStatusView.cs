@@ -379,8 +379,32 @@ namespace CameraSongScript.UI
             if (_rootObject == null) return;
             int idx = StatusPanelPresetCatalog.ClampIndex(presetIndex);
             var cfg = CameraSongScriptConfig.Instance;
-            _rootObject.transform.position = StatusPanelPresetCatalog.GetPosition(cfg, idx);
-            _rootObject.transform.eulerAngles = StatusPanelPresetCatalog.GetRotation(cfg, idx);
+            SetTransform(
+                StatusPanelPresetCatalog.GetPosition(cfg, idx),
+                StatusPanelPresetCatalog.GetRotation(cfg, idx));
+        }
+
+        public void SetTransform(Vector3 position, Vector3 rotation)
+        {
+            if (_rootObject == null)
+                return;
+
+            _rootObject.transform.position = position;
+            _rootObject.transform.eulerAngles = rotation;
+        }
+
+        public bool TryGetTransform(out Vector3 position, out Vector3 rotation)
+        {
+            if (_rootObject == null)
+            {
+                position = Vector3.zero;
+                rotation = Vector3.zero;
+                return false;
+            }
+
+            position = _rootObject.transform.position;
+            rotation = _rootObject.transform.eulerAngles;
+            return true;
         }
 
         /// <summary>

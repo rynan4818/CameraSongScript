@@ -43,6 +43,8 @@ namespace CameraSongScript.UI
         private SongScriptBeatmapIndexService _beatmapIndexService;
 
         private const float PreviewSliderStep = 0.05f;
+        private const float StatusPanelPositionStep = 0.05f;
+        private const float StatusPanelRotationStep = 1f;
         private bool _needsRefresh = false;
         private bool _suppressPreviewSeek = false;
         private float _lastPreviewUiTime = float.NegativeInfinity;
@@ -316,6 +318,10 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(SectionOther));
             NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
             NotifyPropertyChanged(nameof(LabelPanelPosition));
+            NotifyPropertyChanged(nameof(LabelPanelAdjustPosition));
+            NotifyPropertyChanged(nameof(LabelPanelAdjustRotation));
+            NotifyPropertyChanged(nameof(ButtonStatusPanelTransformReset));
+            NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
             NotifyPropertyChanged(nameof(ButtonRerunSongScriptCaches));
             NotifyPropertyChanged(nameof(DetectedCameraMod));
             NotifyPropertyChanged(nameof(ScriptFileOptions));
@@ -701,6 +707,35 @@ namespace CameraSongScript.UI
 
         [UIValue("label-panel-position")]
         public string LabelPanelPosition => UiLocalization.Get("label-panel-position");
+
+        [UIValue("label-panel-adjust-position")]
+        public string LabelPanelAdjustPosition => UiLocalization.Get("label-panel-adjust-position");
+
+        [UIValue("label-panel-adjust-rotation")]
+        public string LabelPanelAdjustRotation => UiLocalization.Get("label-panel-adjust-rotation");
+
+        [UIValue("button-status-panel-transform-reset")]
+        public string ButtonStatusPanelTransformReset => UiLocalization.Get("button-status-panel-transform-reset");
+
+        [UIValue("status-panel-transform-summary")]
+        public string StatusPanelTransformSummary
+        {
+            get
+            {
+                if (!TryGetSelectedStatusPanelTransform(out _, out Vector3 position, out Vector3 rotation))
+                    return "Pos: -, -, - | Rot: -, -, -";
+
+                return string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Pos: {0:0.00}, {1:0.00}, {2:0.00} | Rot: {3:0}, {4:0}, {5:0}",
+                    position.x,
+                    position.y,
+                    position.z,
+                    rotation.x,
+                    rotation.y,
+                    rotation.z);
+            }
+        }
 
         [UIValue("button-rerun-songscript-caches")]
         public string ButtonRerunSongScriptCaches => UiLocalization.Get("button-rerun-songscript-caches");
@@ -1258,7 +1293,205 @@ namespace CameraSongScript.UI
                 int index = UiLocalization.GetStatusPanelPositionIndex(value as string);
                 CameraSongScriptConfig.Instance.StatusPanelPosition = index;
                 _statusView?.SetPosition(index);
+                NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
             }
+        }
+
+        [UIAction("status-panel-position-x-increase")]
+        private void StatusPanelPositionXIncrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(StatusPanelPositionStep, 0f, 0f));
+        }
+
+        [UIAction("status-panel-position-x-decrease")]
+        private void StatusPanelPositionXDecrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(-StatusPanelPositionStep, 0f, 0f));
+        }
+
+        [UIAction("status-panel-position-y-increase")]
+        private void StatusPanelPositionYIncrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(0f, StatusPanelPositionStep, 0f));
+        }
+
+        [UIAction("status-panel-position-y-decrease")]
+        private void StatusPanelPositionYDecrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(0f, -StatusPanelPositionStep, 0f));
+        }
+
+        [UIAction("status-panel-position-z-increase")]
+        private void StatusPanelPositionZIncrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(0f, 0f, StatusPanelPositionStep));
+        }
+
+        [UIAction("status-panel-position-z-decrease")]
+        private void StatusPanelPositionZDecrease()
+        {
+            AdjustSelectedStatusPanelPosition(new Vector3(0f, 0f, -StatusPanelPositionStep));
+        }
+
+        [UIAction("status-panel-rotation-x-increase")]
+        private void StatusPanelRotationXIncrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(StatusPanelRotationStep, 0f, 0f));
+        }
+
+        [UIAction("status-panel-rotation-x-decrease")]
+        private void StatusPanelRotationXDecrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(-StatusPanelRotationStep, 0f, 0f));
+        }
+
+        [UIAction("status-panel-rotation-y-increase")]
+        private void StatusPanelRotationYIncrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(0f, StatusPanelRotationStep, 0f));
+        }
+
+        [UIAction("status-panel-rotation-y-decrease")]
+        private void StatusPanelRotationYDecrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(0f, -StatusPanelRotationStep, 0f));
+        }
+
+        [UIAction("status-panel-rotation-z-increase")]
+        private void StatusPanelRotationZIncrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(0f, 0f, StatusPanelRotationStep));
+        }
+
+        [UIAction("status-panel-rotation-z-decrease")]
+        private void StatusPanelRotationZDecrease()
+        {
+            AdjustSelectedStatusPanelRotation(new Vector3(0f, 0f, -StatusPanelRotationStep));
+        }
+
+        [UIAction("reset-status-panel-transform")]
+        private void ResetStatusPanelTransform()
+        {
+            if (!TryGetSelectedStatusPanelTransform(
+                out int index,
+                out Vector3 currentPosition,
+                out Vector3 currentRotation))
+            {
+                return;
+            }
+
+            var defaults = new CameraSongScriptConfig();
+            Vector3 defaultPosition = StatusPanelPresetCatalog.GetPosition(defaults, index);
+            Vector3 defaultRotation = StatusPanelPresetCatalog.GetRotation(defaults, index);
+
+            if (AreApproximatelyEqual(currentPosition, defaultPosition) &&
+                AreApproximatelyEqual(currentRotation, defaultRotation))
+            {
+                return;
+            }
+
+            SaveAndApplySelectedStatusPanelTransform(index, defaultPosition, defaultRotation);
+        }
+
+        private void AdjustSelectedStatusPanelPosition(Vector3 delta)
+        {
+            if (!TryGetSelectedStatusPanelTransform(
+                out int index,
+                out Vector3 currentPosition,
+                out Vector3 currentRotation))
+            {
+                return;
+            }
+
+            Vector3 updatedPosition = new Vector3(
+                RoundToStep(currentPosition.x + delta.x, StatusPanelPositionStep),
+                RoundToStep(currentPosition.y + delta.y, StatusPanelPositionStep),
+                RoundToStep(currentPosition.z + delta.z, StatusPanelPositionStep));
+
+            if (AreApproximatelyEqual(currentPosition, updatedPosition))
+                return;
+
+            SaveAndApplySelectedStatusPanelTransform(index, updatedPosition, currentRotation);
+        }
+
+        private void AdjustSelectedStatusPanelRotation(Vector3 delta)
+        {
+            if (!TryGetSelectedStatusPanelTransform(
+                out int index,
+                out Vector3 currentPosition,
+                out Vector3 currentRotation))
+            {
+                return;
+            }
+
+            Vector3 updatedRotation = new Vector3(
+                RoundToDecimals(currentRotation.x + delta.x, 0),
+                RoundToDecimals(currentRotation.y + delta.y, 0),
+                RoundToDecimals(currentRotation.z + delta.z, 0));
+
+            if (AreApproximatelyEqual(currentRotation, updatedRotation))
+                return;
+
+            SaveAndApplySelectedStatusPanelTransform(index, currentPosition, updatedRotation);
+        }
+
+        private bool TryGetSelectedStatusPanelTransform(
+            out int index,
+            out Vector3 position,
+            out Vector3 rotation)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+            {
+                index = 0;
+                position = Vector3.zero;
+                rotation = Vector3.zero;
+                return false;
+            }
+
+            index = StatusPanelPresetCatalog.ClampIndex(config.StatusPanelPosition);
+            if (_statusView != null && _statusView.TryGetTransform(out position, out rotation))
+                return true;
+
+            position = StatusPanelPresetCatalog.GetPosition(config, index);
+            rotation = StatusPanelPresetCatalog.GetRotation(config, index);
+            return true;
+        }
+
+        private void SaveAndApplySelectedStatusPanelTransform(int index, Vector3 position, Vector3 rotation)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            StatusPanelPresetCatalog.SetPosition(config, index, position);
+            StatusPanelPresetCatalog.SetRotation(config, index, rotation);
+
+            if (_statusView != null)
+            {
+                _statusView.SetTransform(position, rotation);
+                NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
+                return;
+            }
+
+            _statusView?.SetPosition(index);
+            NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
+        }
+
+        private static bool AreApproximatelyEqual(Vector3 left, Vector3 right)
+        {
+            return Mathf.Approximately(left.x, right.x) &&
+                Mathf.Approximately(left.y, right.y) &&
+                Mathf.Approximately(left.z, right.z);
+        }
+
+        private static float RoundToStep(float value, float step)
+        {
+            if (step <= 0f)
+                return value;
+
+            float snapped = (float)Math.Round(value / step, MidpointRounding.AwayFromZero) * step;
+            return RoundToDecimals(snapped, 2);
         }
 
         [UIValue("songscript-cache-refresh-status")]

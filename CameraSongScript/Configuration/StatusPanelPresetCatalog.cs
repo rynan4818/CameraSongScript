@@ -127,5 +127,139 @@ namespace CameraSongScript.Configuration
         {
             return _definitions[ClampIndex(index)].RotationAccessor(config);
         }
+
+        public static void SetPosition(CameraSongScriptConfig config, int index, Vector3 position)
+        {
+            switch (ClampIndex(index))
+            {
+                case 0:
+                    config.PresetLeftUpperRightPosX = position.x;
+                    config.PresetLeftUpperRightPosY = position.y;
+                    config.PresetLeftUpperRightPosZ = position.z;
+                    break;
+                case 1:
+                    config.PresetLeftUpperLeftPosX = position.x;
+                    config.PresetLeftUpperLeftPosY = position.y;
+                    config.PresetLeftUpperLeftPosZ = position.z;
+                    break;
+                case 2:
+                    config.PresetLeftLowerRightPosX = position.x;
+                    config.PresetLeftLowerRightPosY = position.y;
+                    config.PresetLeftLowerRightPosZ = position.z;
+                    break;
+                case 3:
+                    config.PresetLeftLowerLeftPosX = position.x;
+                    config.PresetLeftLowerLeftPosY = position.y;
+                    config.PresetLeftLowerLeftPosZ = position.z;
+                    break;
+                case 4:
+                    config.PresetCenterUpperRightPosX = position.x;
+                    config.PresetCenterUpperRightPosY = position.y;
+                    config.PresetCenterUpperRightPosZ = position.z;
+                    break;
+                case 5:
+                    config.PresetCenterUpperLeftPosX = position.x;
+                    config.PresetCenterUpperLeftPosY = position.y;
+                    config.PresetCenterUpperLeftPosZ = position.z;
+                    break;
+                case 6:
+                    config.PresetCenterLowerRightPosX = position.x;
+                    config.PresetCenterLowerRightPosY = position.y;
+                    config.PresetCenterLowerRightPosZ = position.z;
+                    break;
+                case 7:
+                    config.PresetCenterLowerLeftPosX = position.x;
+                    config.PresetCenterLowerLeftPosY = position.y;
+                    config.PresetCenterLowerLeftPosZ = position.z;
+                    break;
+                case 8:
+                    config.PresetRightUpperRightPosX = position.x;
+                    config.PresetRightUpperRightPosY = position.y;
+                    config.PresetRightUpperRightPosZ = position.z;
+                    break;
+                case 9:
+                    config.PresetRightUpperLeftPosX = position.x;
+                    config.PresetRightUpperLeftPosY = position.y;
+                    config.PresetRightUpperLeftPosZ = position.z;
+                    break;
+                case 10:
+                    config.PresetRightLowerRightPosX = position.x;
+                    config.PresetRightLowerRightPosY = position.y;
+                    config.PresetRightLowerRightPosZ = position.z;
+                    break;
+                default:
+                    config.PresetRightLowerLeftPosX = position.x;
+                    config.PresetRightLowerLeftPosY = position.y;
+                    config.PresetRightLowerLeftPosZ = position.z;
+                    break;
+            }
+        }
+
+        public static void SetRotation(CameraSongScriptConfig config, int index, Vector3 rotation)
+        {
+            switch (ClampIndex(index))
+            {
+                case 0:
+                    config.PresetLeftUpperRightRotX = rotation.x;
+                    config.PresetLeftUpperRightRotY = rotation.y;
+                    config.PresetLeftUpperRightRotZ = rotation.z;
+                    break;
+                case 1:
+                    config.PresetLeftUpperLeftRotX = rotation.x;
+                    config.PresetLeftUpperLeftRotY = rotation.y;
+                    config.PresetLeftUpperLeftRotZ = rotation.z;
+                    break;
+                case 2:
+                    config.PresetLeftLowerRightRotX = rotation.x;
+                    config.PresetLeftLowerRightRotY = rotation.y;
+                    config.PresetLeftLowerRightRotZ = rotation.z;
+                    break;
+                case 3:
+                    config.PresetLeftLowerLeftRotX = rotation.x;
+                    config.PresetLeftLowerLeftRotY = rotation.y;
+                    config.PresetLeftLowerLeftRotZ = rotation.z;
+                    break;
+                case 4:
+                    config.PresetCenterUpperRightRotX = rotation.x;
+                    config.PresetCenterUpperRightRotY = rotation.y;
+                    config.PresetCenterUpperRightRotZ = rotation.z;
+                    break;
+                case 5:
+                    config.PresetCenterUpperLeftRotX = rotation.x;
+                    config.PresetCenterUpperLeftRotY = rotation.y;
+                    config.PresetCenterUpperLeftRotZ = rotation.z;
+                    break;
+                case 6:
+                    config.PresetCenterLowerRightRotX = rotation.x;
+                    config.PresetCenterLowerRightRotY = rotation.y;
+                    config.PresetCenterLowerRightRotZ = rotation.z;
+                    break;
+                case 7:
+                    config.PresetCenterLowerLeftRotX = rotation.x;
+                    config.PresetCenterLowerLeftRotY = rotation.y;
+                    config.PresetCenterLowerLeftRotZ = rotation.z;
+                    break;
+                case 8:
+                    config.PresetRightUpperRightRotX = rotation.x;
+                    config.PresetRightUpperRightRotY = rotation.y;
+                    config.PresetRightUpperRightRotZ = rotation.z;
+                    break;
+                case 9:
+                    config.PresetRightUpperLeftRotX = rotation.x;
+                    config.PresetRightUpperLeftRotY = rotation.y;
+                    config.PresetRightUpperLeftRotZ = rotation.z;
+                    break;
+                case 10:
+                    config.PresetRightLowerRightRotX = rotation.x;
+                    config.PresetRightLowerRightRotY = rotation.y;
+                    config.PresetRightLowerRightRotZ = rotation.z;
+                    break;
+                default:
+                    config.PresetRightLowerLeftRotX = rotation.x;
+                    config.PresetRightLowerLeftRotY = rotation.y;
+                    config.PresetRightLowerLeftRotZ = rotation.z;
+                    break;
+            }
+        }
     }
 }

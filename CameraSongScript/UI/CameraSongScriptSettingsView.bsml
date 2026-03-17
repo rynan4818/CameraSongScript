@@ -120,6 +120,28 @@
       <dropdown-list-setting id="status-panel-position-dropdown" text="~label-panel-position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="~hint-panel-position"/>
     </horizontal>
     <horizontal pad-top="2">
+      <text text="~label-panel-adjust-position" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <button text="x+" on-click="status-panel-position-x-increase" min-width="10" />
+      <button text="x-" on-click="status-panel-position-x-decrease" min-width="10" />
+      <button text="y+" on-click="status-panel-position-y-increase" min-width="10" />
+      <button text="y-" on-click="status-panel-position-y-decrease" min-width="10" />
+      <button text="z+" on-click="status-panel-position-z-increase" min-width="10" />
+      <button text="z-" on-click="status-panel-position-z-decrease" min-width="10" />
+    </horizontal>
+    <horizontal pad-top="1">
+      <text text="~label-panel-adjust-rotation" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <button text="x+" on-click="status-panel-rotation-x-increase" min-width="10" />
+      <button text="x-" on-click="status-panel-rotation-x-decrease" min-width="10" />
+      <button text="y+" on-click="status-panel-rotation-y-increase" min-width="10" />
+      <button text="y-" on-click="status-panel-rotation-y-decrease" min-width="10" />
+      <button text="z+" on-click="status-panel-rotation-z-increase" min-width="10" />
+      <button text="z-" on-click="status-panel-rotation-z-decrease" min-width="10" />
+    </horizontal>
+    <horizontal>
+      <text text="~status-panel-transform-summary" font-size="2.8" color="#AAAAAA" align="Left" word-wrapping="true" />
+      <button text="~button-status-panel-transform-reset" on-click="reset-status-panel-transform" min-width="28" />
+    </horizontal>
+    <horizontal pad-top="2">
       <text text="~section-preview-visual-settings" font-size="3.5" color="#AAAAAA" align="Center"/>
     </horizontal>
     <horizontal pad-top="1">
