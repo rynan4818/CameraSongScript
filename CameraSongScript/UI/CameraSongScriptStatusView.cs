@@ -35,7 +35,7 @@ namespace CameraSongScript.UI
             CreateCanvas();
             _scriptDetector.ScanCompleted += OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded += OnConfigReloaded;
-            Plugin.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
+            PluginAdapterManager.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
             UpdateContent();
         }
@@ -44,7 +44,7 @@ namespace CameraSongScript.UI
         {
             _scriptDetector.ScanCompleted -= OnScanCompleted;
             CameraSongScriptConfig.ConfigReloaded -= OnConfigReloaded;
-            Plugin.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
+            PluginAdapterManager.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             if (_rootObject != null)
                 Destroy(_rootObject);

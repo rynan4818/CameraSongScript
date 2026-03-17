@@ -78,7 +78,7 @@ namespace CameraSongScript.UI
                 _beatmapIndexService.ScanStatusChanged += OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
-            Plugin.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
+            PluginAdapterManager.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged += OnLanguageChanged;
         }
 
@@ -90,7 +90,7 @@ namespace CameraSongScript.UI
                 _beatmapIndexService.ScanStatusChanged -= OnBeatmapSongScriptCacheStatusChanged;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
-            Plugin.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
+            PluginAdapterManager.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             DetachScriptFileDropdownButtonHandler();
             DetachCommonScriptDropdownButtonHandler();
