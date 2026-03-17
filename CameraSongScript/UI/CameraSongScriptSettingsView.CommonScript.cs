@@ -140,6 +140,7 @@ namespace CameraSongScript.UI
                     CameraSongScriptConfig.Instance.SelectedCommonScript = name;
                     _scriptDetector.ReevaluateCommonScriptUsage();
                     NotifyPropertyChanged(nameof(SongScriptStatus));
+                    NotifyPropertyChanged(nameof(HintCommonScriptFile));
 
                     // 汎用スクリプト選択変更後のオフセット関連UI更新
                     NotifyPropertyChanged(nameof(IsOffsetInteractable));

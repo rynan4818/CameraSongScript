@@ -11,19 +11,29 @@ namespace CameraSongScript.Utilities
 
         public const string Ellipsis = "...";
 
+        public static bool NeedsShortening(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName))
+                return false;
+
+            if (displayName.Length <= SongScriptDisplayMaxLength)
+                return false;
+
+            int headLength = Math.Max(0, SongScriptDisplayHeadLength);
+            int tailLength = Math.Max(0, SongScriptDisplayTailLength);
+            return headLength + tailLength + Ellipsis.Length < displayName.Length;
+        }
+
         public static string Format(string displayName)
         {
             if (string.IsNullOrEmpty(displayName))
                 return string.Empty;
 
-            if (displayName.Length <= SongScriptDisplayMaxLength)
+            if (!NeedsShortening(displayName))
                 return displayName;
 
             int headLength = Math.Max(0, SongScriptDisplayHeadLength);
             int tailLength = Math.Max(0, SongScriptDisplayTailLength);
-            if (headLength + tailLength + Ellipsis.Length >= displayName.Length)
-                return displayName;
-
             if (headLength == 0)
                 return Ellipsis + displayName.Substring(displayName.Length - tailLength, tailLength);
 

@@ -255,6 +255,7 @@ namespace CameraSongScript.UI
             }
 
             NotifyPropertyChanged(nameof(SongScriptStatus));
+            NotifyPropertyChanged(nameof(HintScriptFile));
             RefreshMetadataBindings();
             NotifyPropertyChanged(nameof(CameraHeightOffset));
 
@@ -476,6 +477,59 @@ namespace CameraSongScript.UI
                 text.enableWordWrapping = false;
                 text.overflowMode = TextOverflowModes.Ellipsis;
             }
+        }
+
+        private string GetDefaultOrFullScriptNameHoverHint(string canonicalName, string defaultHintKey, params string[] fallbackValues)
+        {
+            if (!CameraSongScriptConfig.Instance.ShowHoverHints)
+                return string.Empty;
+
+            if (string.IsNullOrEmpty(canonicalName))
+                return HoverHintLocalization.Get(defaultHintKey);
+
+            if (fallbackValues != null)
+            {
+                for (int i = 0; i < fallbackValues.Length; i++)
+                {
+                    if (string.Equals(canonicalName, fallbackValues[i], StringComparison.Ordinal))
+                        return HoverHintLocalization.Get(defaultHintKey);
+                }
+            }
+
+            return SongScriptDisplayLabelFormatter.NeedsShortening(canonicalName)
+                ? canonicalName
+                : HoverHintLocalization.Get(defaultHintKey);
+        }
+
+        private string GetSelectedScriptFileNameForHoverHint()
+        {
+            if (_scriptDetector == null || !_scriptDetector.HasSongScript)
+                return UiLocalization.OptionNone;
+
+            var specificSettings = SongSettingsManager.GetCurrentSettings();
+            if (specificSettings != null &&
+                !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName) &&
+                _scriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName))
+            {
+                return specificSettings.SelectedScriptFileName;
+            }
+
+            return _scriptDetector.SelectedScriptDisplayName;
+        }
+
+        private string GetSelectedCommonScriptNameForHoverHint()
+        {
+            string selected = CameraSongScriptConfig.Instance.SelectedCommonScript;
+            if (!string.IsNullOrEmpty(selected) && CommonScriptCache.IsReady)
+            {
+                var names = CommonScriptCache.GetDisplayNames();
+                if (names.Contains(selected))
+                    return selected;
+            }
+
+            return CommonScriptCache.IsReady
+                ? UiLocalization.OptionRandom
+                : UiLocalization.OptionNone;
         }
 
         private void RefreshHoverHintBindings()
@@ -1329,7 +1383,10 @@ namespace CameraSongScript.UI
         public string HintEnabled => HoverHintLocalization.Get("hint-enabled");
 
         [UIValue("hint-script-file")]
-        public string HintScriptFile => HoverHintLocalization.Get("hint-script-file");
+        public string HintScriptFile => GetDefaultOrFullScriptNameHoverHint(
+            GetSelectedScriptFileNameForHoverHint(),
+            "hint-script-file",
+            UiLocalization.OptionNone);
 
         [UIValue("hint-height-offset")]
         public string HintHeightOffset => HoverHintLocalization.Get("hint-height-offset");
@@ -1366,7 +1423,11 @@ namespace CameraSongScript.UI
         public string HintForceCommon => HoverHintLocalization.Get("hint-force-common");
 
         [UIValue("hint-common-script-file")]
-        public string HintCommonScriptFile => HoverHintLocalization.Get("hint-common-script-file");
+        public string HintCommonScriptFile => GetDefaultOrFullScriptNameHoverHint(
+            GetSelectedCommonScriptNameForHoverHint(),
+            "hint-common-script-file",
+            UiLocalization.OptionRandom,
+            UiLocalization.OptionNone);
 
         [UIValue("hint-common-target-camera")]
         public string HintCommonTargetCamera => HoverHintLocalization.Get("hint-common-target-camera");
