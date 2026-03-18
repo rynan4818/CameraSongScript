@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="BetterSongListHelper.cs" />
     <Compile Include="SongScriptFilter.cs" />
+    <Compile Include="SongScriptSorter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

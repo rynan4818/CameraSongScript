@@ -23,6 +23,15 @@ namespace CameraSongScript.Services
         Failed
     }
 
+    public sealed class SongScriptLevelSortInfo
+    {
+        public bool HasSongScriptsFolderScript { get; set; }
+        public string SongScriptsSortFileName { get; set; } = string.Empty;
+        public bool HasChartFolderSongScript { get; set; }
+
+        public bool HasAnySongScript => HasSongScriptsFolderScript || HasChartFolderSongScript;
+    }
+
     public class SongScriptBeatmapIndexService : IInitializable, IDisposable
     {
         private const int CacheVersion = 1;
@@ -66,6 +75,9 @@ namespace CameraSongScript.Services
         private static readonly string CacheFilePath =
             Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "BeatmapSongScriptCache.json");
 
+        private static readonly string SongScriptsFolderPath =
+            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScripts");
+
         private readonly object _cacheLock = new object();
         private readonly HashSet<string> _skipFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -80,8 +92,8 @@ namespace CameraSongScript.Services
         private ConcurrentDictionary<string, RuntimeState> _statesByFolderPath =
             new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
 
-        private ConcurrentDictionary<string, bool> _songScriptsFolderResultsByLookupKey =
-            new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        private ConcurrentDictionary<string, SongScriptLevelSortInfo> _songScriptsFolderSortInfoByLookupKey =
+            new ConcurrentDictionary<string, SongScriptLevelSortInfo>(StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource _scanCts;
         private Task _scanTask = Task.CompletedTask;
@@ -163,16 +175,17 @@ namespace CameraSongScript.Services
                 return false;
             }
 
-            string folderPath = NormalizeFolderPath(customLevel.customLevelPath);
-            if (!string.IsNullOrEmpty(folderPath) &&
-                _statesByFolderPath.TryGetValue(folderPath, out var state) &&
-                state.ChartFolderScanComplete &&
-                state.HasChartFolderSongScript)
+            return GetLevelSortInfo(level, customLevel).HasAnySongScript;
+        }
+
+        public SongScriptLevelSortInfo GetLevelSortInfo(IPreviewBeatmapLevel level)
+        {
+            if (!CanFilter || !(level is CustomPreviewBeatmapLevel customLevel))
             {
-                return true;
+                return new SongScriptLevelSortInfo();
             }
 
-            return HasSongScriptsFolderScript(level.levelID, customLevel.customLevelPath);
+            return GetLevelSortInfo(level, customLevel);
         }
 
         private void HandleLoadingStarted(SongCore.Loader _)
@@ -182,8 +195,8 @@ namespace CameraSongScript.Services
             CancelCurrentScan();
 
             _statesByFolderPath = new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
-            _songScriptsFolderResultsByLookupKey =
-                new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            _songScriptsFolderSortInfoByLookupKey =
+                new ConcurrentDictionary<string, SongScriptLevelSortInfo>(StringComparer.OrdinalIgnoreCase);
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, generation);
         }
 
@@ -218,8 +231,8 @@ namespace CameraSongScript.Services
             }
 
             _statesByFolderPath = nextStates;
-            _songScriptsFolderResultsByLookupKey =
-                new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            _songScriptsFolderSortInfoByLookupKey =
+                new ConcurrentDictionary<string, SongScriptLevelSortInfo>(StringComparer.OrdinalIgnoreCase);
             _canFilter = true;
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Scanning, 0, workItems.Count, string.Empty, generation);
 
@@ -581,38 +594,171 @@ namespace CameraSongScript.Services
             return removedAny;
         }
 
-        private bool HasSongScriptsFolderScript(string levelId, string levelPath)
+        private SongScriptLevelSortInfo GetLevelSortInfo(IPreviewBeatmapLevel level, CustomPreviewBeatmapLevel customLevel)
+        {
+            SongScriptLevelSortInfo songScriptsFolderSortInfo = GetSongScriptsFolderSortInfo(level.levelID, customLevel.customLevelPath);
+
+            return new SongScriptLevelSortInfo
+            {
+                HasSongScriptsFolderScript = songScriptsFolderSortInfo.HasSongScriptsFolderScript,
+                SongScriptsSortFileName = songScriptsFolderSortInfo.SongScriptsSortFileName ?? string.Empty,
+                HasChartFolderSongScript = HasChartFolderSongScript(customLevel)
+            };
+        }
+
+        private bool HasChartFolderSongScript(CustomPreviewBeatmapLevel customLevel)
+        {
+            if (customLevel == null)
+            {
+                return false;
+            }
+
+            string folderPath = NormalizeFolderPath(customLevel.customLevelPath);
+            return !string.IsNullOrEmpty(folderPath) &&
+                _statesByFolderPath.TryGetValue(folderPath, out var state) &&
+                state.ChartFolderScanComplete &&
+                state.HasChartFolderSongScript;
+        }
+
+        private SongScriptLevelSortInfo GetSongScriptsFolderSortInfo(string levelId, string levelPath)
         {
             if ((string.IsNullOrEmpty(levelId) && string.IsNullOrEmpty(levelPath)) || !Models.SongScriptFolderCache.IsReady)
             {
-                return false;
+                return new SongScriptLevelSortInfo();
             }
 
             if (!Plugin.IsSongDetailsReady)
             {
-                return ResolveSongScriptsFolderScriptCore(levelId, levelPath);
+                return ResolveSongScriptsFolderSortInfoCore(levelId, levelPath);
             }
 
             string lookupCacheKey = CreateSongScriptsFolderLookupCacheKey(levelId, levelPath);
-            return _songScriptsFolderResultsByLookupKey.GetOrAdd(
+            return _songScriptsFolderSortInfoByLookupKey.GetOrAdd(
                 lookupCacheKey,
-                _ => ResolveSongScriptsFolderScriptCore(levelId, levelPath));
+                _ => ResolveSongScriptsFolderSortInfoCore(levelId, levelPath));
         }
 
-        private bool ResolveSongScriptsFolderScriptCore(string levelId, string levelPath)
+        private SongScriptLevelSortInfo ResolveSongScriptsFolderSortInfoCore(string levelId, string levelPath)
         {
             SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId, levelPath);
             if (!levelReference.HasAnyValue)
             {
-                return false;
+                return new SongScriptLevelSortInfo();
             }
 
-            return Models.SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash).Count > 0;
+            List<Models.SongScriptEntry> entries =
+                Models.SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash);
+            if (entries.Count == 0)
+            {
+                return new SongScriptLevelSortInfo();
+            }
+
+            return new SongScriptLevelSortInfo
+            {
+                HasSongScriptsFolderScript = true,
+                SongScriptsSortFileName = ResolveSongScriptsSortKey(entries)
+            };
         }
 
         private static string CreateSongScriptsFolderLookupCacheKey(string levelId, string levelPath)
         {
             return $"{levelId ?? string.Empty}|{NormalizeFolderPath(levelPath)}";
+        }
+
+        private static string ResolveSongScriptsSortKey(IEnumerable<Models.SongScriptEntry> entries)
+        {
+            if (entries == null)
+            {
+                return string.Empty;
+            }
+
+            return entries
+                .Select(CreateSongScriptsSortKey)
+                .Where(sortKey => !string.IsNullOrEmpty(sortKey))
+                .OrderBy(sortKey => sortKey, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault() ?? string.Empty;
+        }
+
+        private static string CreateSongScriptsSortKey(Models.SongScriptEntry entry)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            string relativeSourcePath = NormalizeSongScriptsSortPath(GetSongScriptsRelativeFilePath(entry.FilePath));
+            string zipEntryPath = NormalizeSongScriptsSortPath(entry.ZipEntryName);
+
+            if (string.IsNullOrEmpty(relativeSourcePath))
+            {
+                return zipEntryPath;
+            }
+
+            if (string.IsNullOrEmpty(zipEntryPath))
+            {
+                return relativeSourcePath;
+            }
+
+            return relativeSourcePath + Path.DirectorySeparatorChar + zipEntryPath;
+        }
+
+        private static string GetSongScriptsRelativeFilePath(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return string.Empty;
+            }
+
+            string normalizedRootPath = NormalizeFullPath(SongScriptsFolderPath);
+            string normalizedFilePath = NormalizeFullPath(filePath);
+            if (string.IsNullOrEmpty(normalizedRootPath) || string.IsNullOrEmpty(normalizedFilePath))
+            {
+                return Path.GetFileName(filePath) ?? string.Empty;
+            }
+
+            if (string.Equals(normalizedFilePath, normalizedRootPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            string rootWithSeparator = normalizedRootPath + Path.DirectorySeparatorChar;
+            if (!normalizedFilePath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.GetFileName(filePath) ?? string.Empty;
+            }
+
+            return normalizedFilePath.Substring(rootWithSeparator.Length);
+        }
+
+        private static string NormalizeFullPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+            catch
+            {
+                return path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+        }
+
+        private static string NormalizeSongScriptsSortPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            return path
+                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar)
+                .TrimEnd(Path.DirectorySeparatorChar);
         }
 
         private void LoadPersistentCache()
