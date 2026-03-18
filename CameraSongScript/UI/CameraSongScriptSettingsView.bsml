@@ -60,6 +60,17 @@
     <horizontal>
       <slider-setting id="preview-position-slider" text="~label-preview-position" value="preview-position" min="0" max="1" increment="0.05" apply-on-change="true" show-buttons="true" formatter="format-preview-time" interactable="~can-preview" />
     </horizontal>
+    <horizontal pad-top="2">
+      <text text="~section-beatmap-script-management" font-size="3.5" color="#AAAAAA" align="Center"/>
+    </horizontal>
+    <horizontal pad-top="1">
+      <button text="~button-download-missing-beatmaps" on-click="download-missing-beatmaps" min-width="28" interactable="~is-missing-beatmap-download-available" hover-hint="~hint-download-missing-beatmaps" />
+      <text text="~missing-beatmap-download-status" font-size="3" color="#CCCCCC" align="Left" />
+    </horizontal>
+    <horizontal pad-top="1">
+      <button text="~button-rerun-songscript-caches" on-click="rerun-songscript-caches" min-width="28" interactable="~is-songscript-cache-refresh-available" hover-hint="~hint-rerun-songscript-caches" />
+      <text text="~songscript-cache-refresh-status" font-size="3" color="#CCCCCC" align="Left" />
+    </horizontal>
     <horizontal pad-top="2" active="~show-camera-mod-settings-section">
       <text text="~section-camera-mod-settings" font-size="3.5" color="#66CC88" align="Center"/>
     </horizontal>
@@ -176,13 +187,6 @@
       <text text="~preview-path-line-width-value" font-size="3.2" align="Center" />
       <button text="+" on-click="preview-path-line-width-increase" min-width="10" />
       <button text="~button-preview-visual-settings-reset" on-click="reset-preview-visual-settings" min-width="28" />
-    </horizontal>
-    <horizontal pad-top="2">
-      <text text="~section-other" font-size="3.5" color="#AAAAAA" align="Center"/>
-    </horizontal>
-    <horizontal pad-top="1">
-      <button text="~button-rerun-songscript-caches" on-click="rerun-songscript-caches" min-width="28" interactable="~is-songscript-cache-refresh-available" hover-hint="~hint-rerun-songscript-caches" />
-      <text text="~songscript-cache-refresh-status" font-size="3" color="#CCCCCC" align="Left" />
     </horizontal>
   </settings-container>
 </bg>

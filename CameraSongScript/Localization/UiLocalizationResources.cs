@@ -188,10 +188,10 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "--- Status Panel ---",
                 [HoverHintLocalization.Lang_JA] = "--- ステータスパネル ---"
             },
-            ["section-other"] = new Dictionary<string, string>
+            ["section-beatmap-script-management"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "--- Other ---",
-                [HoverHintLocalization.Lang_JA] = "--- その他 ---"
+                [HoverHintLocalization.Lang_EN] = "--- Beatmap / Script Management ---",
+                [HoverHintLocalization.Lang_JA] = "--- 譜面・スクリプト管理 ---"
             },
             ["toggle-show-status-panel"] = new Dictionary<string, string>
             {
@@ -222,6 +222,11 @@ namespace CameraSongScript.Localization
             {
                 [HoverHintLocalization.Lang_EN] = "Rescan SongScripts",
                 [HoverHintLocalization.Lang_JA] = "スクリプトを再検索"
+            },
+            ["button-download-missing-beatmaps"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Download Missing Beatmaps",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面を取得"
             },
             ["cache-refresh-status-beatmap"] = new Dictionary<string, string>
             {
@@ -257,6 +262,41 @@ namespace CameraSongScript.Localization
             {
                 [HoverHintLocalization.Lang_EN] = "Failed",
                 [HoverHintLocalization.Lang_JA] = "失敗"
+            },
+            ["missing-beatmaps-status-waiting-songdetails"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing beatmaps: waiting for SongDetailsCache",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面: SongDetailsCacheの初期化待ち"
+            },
+            ["missing-beatmaps-status-scanning"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing beatmaps: scanning SongScripts",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面: SongScriptsを確認中"
+            },
+            ["missing-beatmaps-status-loading-songs"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing beatmaps: loading songs",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面: 譜面ロード待ち"
+            },
+            ["missing-beatmaps-status-downloading"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Downloading missing beatmaps ({0}/{1})",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面を取得中 ({0}/{1})"
+            },
+            ["missing-beatmaps-status-none"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing beatmaps: none",
+                [HoverHintLocalization.Lang_JA] = "未取得譜面: なし"
+            },
+            ["missing-beatmaps-status-ready"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing: {0} | Downloadable: {1} | BeatSaver missing: {2} | Latest hash loaded: {3}",
+                [HoverHintLocalization.Lang_JA] = "未取得: {0} | 取得可能: {1} | BeatSaverなし: {2} | 最新hash所持済み: {3}"
+            },
+            ["missing-beatmaps-status-no-downloadable"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Missing: {0} | Downloadable: 0 | BeatSaver missing: {1} | Latest hash loaded: {2}",
+                [HoverHintLocalization.Lang_JA] = "未取得: {0} | 取得可能: 0 | BeatSaverなし: {1} | 最新hash所持済み: {2}"
             },
             ["setting-per-script-height"] = new Dictionary<string, string>
             {

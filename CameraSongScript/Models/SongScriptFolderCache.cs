@@ -953,6 +953,17 @@ namespace CameraSongScript.Models
             return results;
         }
 
+        /// <summary>
+        /// 現在インデックスされているmapId一覧を返す
+        /// </summary>
+        public static List<string> GetIndexedMapIds()
+        {
+            return _mapIdIndex.Keys
+                .Where(key => !string.IsNullOrEmpty(key))
+                .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         private static void AddEntries(
             ICollection<SongScriptEntry> target,
             ISet<string> seenEntries,

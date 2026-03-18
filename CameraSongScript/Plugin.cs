@@ -45,6 +45,7 @@ namespace CameraSongScript
         internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
         internal static bool IsHttpSiraStatusHelperReady => HttpSiraStatusHelper != null && HttpSiraStatusHelper.IsInitialized;
         internal static bool IsBetterSongListHelperReady => BetterSongListHelper != null && BetterSongListHelper.IsInitialized;
+        internal static event Action SongDetailsCacheInitialized;
 
         internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
         internal static bool IsSongDetailsReady => SongDetailsInstance != null;
@@ -224,6 +225,7 @@ namespace CameraSongScript
             {
                 SongDetailsInstance = await SongDetailsCache.SongDetails.Init();
                 Log.Info("SongDetailsCache initialized successfully.");
+                SongDetailsCacheInitialized?.Invoke();
                 CameraSongScriptDetector.Instance?.ReevaluateCurrentLevel();
             }
             catch (Exception ex)

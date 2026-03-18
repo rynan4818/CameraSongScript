@@ -42,6 +42,8 @@ namespace CameraSongScript.UI
 
         private SongScriptBeatmapIndexService _beatmapIndexService;
 
+        private SongScriptMissingBeatmapDownloadService _missingBeatmapDownloadService;
+
         private const float PreviewSliderStep = 0.05f;
         private const float StatusPanelPositionStep = 0.05f;
         private const float StatusPanelRotationStep = 1f;
@@ -52,6 +54,7 @@ namespace CameraSongScript.UI
         private bool _lastPreviewPlaying = false;
         private int _lastPreviewSpeed = 1;
         private bool _cacheScanStatusRefreshQueued = false;
+        private bool _missingBeatmapStatusRefreshQueued = false;
         private Coroutine _refreshLayoutCoroutine;
         private Coroutine _scriptFileDropdownTextRefreshCoroutine;
         private Coroutine _commonScriptDropdownTextRefreshCoroutine;
@@ -63,12 +66,14 @@ namespace CameraSongScript.UI
             CameraSongScriptStatusView statusView,
             CameraSongScriptPreviewController previewController,
             CameraSongScriptDetector scriptDetector,
-            SongScriptBeatmapIndexService beatmapIndexService)
+            SongScriptBeatmapIndexService beatmapIndexService,
+            SongScriptMissingBeatmapDownloadService missingBeatmapDownloadService)
         {
             _statusView = statusView;
             _previewController = previewController;
             _scriptDetector = scriptDetector;
             _beatmapIndexService = beatmapIndexService;
+            _missingBeatmapDownloadService = missingBeatmapDownloadService;
         }
 
         public void Initialize()
@@ -78,6 +83,8 @@ namespace CameraSongScript.UI
             SongScriptFolderCache.ScanStatusChanged += OnSongScriptFolderCacheStatusChanged;
             if (_beatmapIndexService != null)
                 _beatmapIndexService.ScanStatusChanged += OnBeatmapSongScriptCacheStatusChanged;
+            if (_missingBeatmapDownloadService != null)
+                _missingBeatmapDownloadService.StateChanged += OnMissingBeatmapDownloadServiceStateChanged;
             if (_previewController != null)
                 _previewController.StateChanged += OnPreviewStateChanged;
             PluginAdapterManager.AdapterVersionWarningsChanged += OnAdapterVersionWarningsChanged;
@@ -90,6 +97,8 @@ namespace CameraSongScript.UI
             SongScriptFolderCache.ScanStatusChanged -= OnSongScriptFolderCacheStatusChanged;
             if (_beatmapIndexService != null)
                 _beatmapIndexService.ScanStatusChanged -= OnBeatmapSongScriptCacheStatusChanged;
+            if (_missingBeatmapDownloadService != null)
+                _missingBeatmapDownloadService.StateChanged -= OnMissingBeatmapDownloadServiceStateChanged;
             if (_previewController != null)
                 _previewController.StateChanged -= OnPreviewStateChanged;
             PluginAdapterManager.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
@@ -110,6 +119,11 @@ namespace CameraSongScript.UI
             RefreshPreviewBindings();
             RefreshLocalizedUi();
             EnqueueCacheScanStatusRefresh();
+            if (_missingBeatmapDownloadService != null)
+            {
+                _missingBeatmapDownloadService.RefreshState();
+            }
+            EnqueueMissingBeatmapStatusRefresh();
         }
 
         protected void OnDisable()
@@ -202,6 +216,11 @@ namespace CameraSongScript.UI
             EnqueueCacheScanStatusRefresh();
         }
 
+        private void OnMissingBeatmapDownloadServiceStateChanged()
+        {
+            EnqueueMissingBeatmapStatusRefresh();
+        }
+
         private void EnqueueCacheScanStatusRefresh()
         {
             if (_cacheScanStatusRefreshQueued)
@@ -223,6 +242,40 @@ namespace CameraSongScript.UI
                 catch (Exception ex)
                 {
                     Plugin.Log.Warn($"SettingsView: Failed to refresh cache scan UI: {ex.Message}");
+                }
+            }
+
+            if (HMMainThreadDispatcher.instance != null)
+            {
+                HMMainThreadDispatcher.instance.Enqueue(Refresh);
+            }
+            else
+            {
+                Refresh();
+            }
+        }
+
+        private void EnqueueMissingBeatmapStatusRefresh()
+        {
+            if (_missingBeatmapStatusRefreshQueued)
+            {
+                return;
+            }
+
+            _missingBeatmapStatusRefreshQueued = true;
+
+            void Refresh()
+            {
+                _missingBeatmapStatusRefreshQueued = false;
+
+                try
+                {
+                    NotifyPropertyChanged(nameof(MissingBeatmapDownloadStatus));
+                    NotifyPropertyChanged(nameof(IsMissingBeatmapDownloadAvailable));
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Warn($"SettingsView: Failed to refresh missing beatmap download UI: {ex.Message}");
                 }
             }
 
@@ -315,7 +368,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelCommonCustomScene));
             NotifyPropertyChanged(nameof(LabelCommonProfile));
             NotifyPropertyChanged(nameof(SectionStatusPanel));
-            NotifyPropertyChanged(nameof(SectionOther));
+            NotifyPropertyChanged(nameof(SectionBeatmapScriptManagement));
             NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
             NotifyPropertyChanged(nameof(LabelPanelPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustPosition));
@@ -323,6 +376,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(ButtonStatusPanelTransformReset));
             NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
             NotifyPropertyChanged(nameof(ButtonRerunSongScriptCaches));
+            NotifyPropertyChanged(nameof(ButtonDownloadMissingBeatmaps));
             NotifyPropertyChanged(nameof(DetectedCameraMod));
             NotifyPropertyChanged(nameof(ScriptFileOptions));
             NotifyPropertyChanged(nameof(SelectedScriptFile));
@@ -346,6 +400,8 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(PreviewStatus));
             NotifyPropertyChanged(nameof(SongScriptCacheRefreshStatus));
             NotifyPropertyChanged(nameof(IsSongScriptCacheRefreshAvailable));
+            NotifyPropertyChanged(nameof(MissingBeatmapDownloadStatus));
+            NotifyPropertyChanged(nameof(IsMissingBeatmapDownloadAvailable));
 
             RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
             RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
@@ -558,6 +614,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(HintCommonCustomScene));
             NotifyPropertyChanged(nameof(HintCommonProfile));
             NotifyPropertyChanged(nameof(HintRerunSongScriptCaches));
+            NotifyPropertyChanged(nameof(HintDownloadMissingBeatmaps));
         }
 
         /// <summary>
@@ -699,8 +756,8 @@ namespace CameraSongScript.UI
         [UIValue("section-status-panel")]
         public string SectionStatusPanel => UiLocalization.Get("section-status-panel");
 
-        [UIValue("section-other")]
-        public string SectionOther => UiLocalization.Get("section-other");
+        [UIValue("section-beatmap-script-management")]
+        public string SectionBeatmapScriptManagement => UiLocalization.Get("section-beatmap-script-management");
 
         [UIValue("toggle-show-status-panel")]
         public string ToggleShowStatusPanel => UiLocalization.Get("toggle-show-status-panel");
@@ -739,6 +796,9 @@ namespace CameraSongScript.UI
 
         [UIValue("button-rerun-songscript-caches")]
         public string ButtonRerunSongScriptCaches => UiLocalization.Get("button-rerun-songscript-caches");
+
+        [UIValue("button-download-missing-beatmaps")]
+        public string ButtonDownloadMissingBeatmaps => UiLocalization.Get("button-download-missing-beatmaps");
 
         #endregion
 
@@ -1514,6 +1574,69 @@ namespace CameraSongScript.UI
             !SongScriptFolderCache.IsScanning &&
             (_beatmapIndexService == null || !_beatmapIndexService.IsScanning);
 
+        [UIValue("missing-beatmap-download-status")]
+        public string MissingBeatmapDownloadStatus
+        {
+            get
+            {
+                if (_missingBeatmapDownloadService == null)
+                {
+                    return UiLocalization.Get("missing-beatmaps-status-loading-songs");
+                }
+
+                if (_missingBeatmapDownloadService.IsDownloading)
+                {
+                    return UiLocalization.Format(
+                        "missing-beatmaps-status-downloading",
+                        _missingBeatmapDownloadService.DownloadProgressCurrent,
+                        _missingBeatmapDownloadService.DownloadProgressTotal);
+                }
+
+                if (!_missingBeatmapDownloadService.IsSongScriptFolderReady ||
+                    _missingBeatmapDownloadService.IsSongScriptFolderScanning)
+                {
+                    return UiLocalization.Get("missing-beatmaps-status-scanning");
+                }
+
+                if (!_missingBeatmapDownloadService.IsSongDetailsReady)
+                {
+                    return UiLocalization.Get("missing-beatmaps-status-waiting-songdetails");
+                }
+
+                if (!_missingBeatmapDownloadService.AreSongsLoaded ||
+                    _missingBeatmapDownloadService.AreSongsLoading)
+                {
+                    return UiLocalization.Get("missing-beatmaps-status-loading-songs");
+                }
+
+                if (_missingBeatmapDownloadService.MissingMapIdCount == 0)
+                {
+                    return UiLocalization.Get("missing-beatmaps-status-none");
+                }
+
+                if (_missingBeatmapDownloadService.DownloadableMapIdCount == 0)
+                {
+                    return UiLocalization.Format(
+                        "missing-beatmaps-status-no-downloadable",
+                        _missingBeatmapDownloadService.MissingMapIdCount,
+                        _missingBeatmapDownloadService.UnavailableOnBeatSaverCount,
+                        _missingBeatmapDownloadService.AlreadyLoadedLatestHashCount);
+                }
+
+                return UiLocalization.Format(
+                    "missing-beatmaps-status-ready",
+                    _missingBeatmapDownloadService.MissingMapIdCount,
+                    _missingBeatmapDownloadService.DownloadableMapIdCount,
+                    _missingBeatmapDownloadService.UnavailableOnBeatSaverCount,
+                    _missingBeatmapDownloadService.AlreadyLoadedLatestHashCount);
+            }
+        }
+
+        [UIValue("is-missing-beatmap-download-available")]
+        public bool IsMissingBeatmapDownloadAvailable =>
+            _missingBeatmapDownloadService != null &&
+            _missingBeatmapDownloadService.IsDownloadAvailable;
+
         [UIAction("rerun-songscript-caches")]
         private void RerunSongScriptCaches()
         {
@@ -1529,6 +1652,30 @@ namespace CameraSongScript.UI
             }
             EnqueueCacheScanStatusRefresh();
             _ = ReevaluateCurrentLevelWhenSongScriptFolderCacheReadyAsync(songScriptFolderScanTask);
+        }
+
+        [UIAction("download-missing-beatmaps")]
+        private void DownloadMissingBeatmaps()
+        {
+            if (!IsMissingBeatmapDownloadAvailable || _missingBeatmapDownloadService == null)
+            {
+                return;
+            }
+
+            _ = DownloadMissingBeatmapsAsync();
+        }
+
+        private async Task DownloadMissingBeatmapsAsync()
+        {
+            try
+            {
+                await _missingBeatmapDownloadService.DownloadMissingBeatmapsAsync().ConfigureAwait(false);
+                _scriptDetector.ReevaluateCurrentLevel();
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Warn($"SettingsView: Failed to download missing beatmaps: {ex.Message}");
+            }
         }
 
         private async Task ReevaluateCurrentLevelWhenSongScriptFolderCacheReadyAsync(Task scanTask)
@@ -1673,6 +1820,9 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-rerun-songscript-caches")]
         public string HintRerunSongScriptCaches => HoverHintLocalization.Get("hint-rerun-songscript-caches");
+
+        [UIValue("hint-download-missing-beatmaps")]
+        public string HintDownloadMissingBeatmaps => HoverHintLocalization.Get("hint-download-missing-beatmaps");
 
         #endregion
     }

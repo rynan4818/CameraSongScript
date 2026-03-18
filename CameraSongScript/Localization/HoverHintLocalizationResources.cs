@@ -69,6 +69,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Run the startup beatmap and SongScripts cache scan again",
                 [HoverHintLocalization.Lang_JA] = "起動時に実行している譜面フォルダとSongScriptsの検索・キャッシュ更新を再実行"
             },
+            ["hint-download-missing-beatmaps"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Download beatmaps referenced by SongScripts that are not installed yet",
+                [HoverHintLocalization.Lang_JA] = "SongScriptsで参照されていて未取得の譜面をBeatSaverから取得"
+            },
             // ========== CameraSongScriptModSettingView ==========
             ["hint-per-script-height"] = new Dictionary<string, string>
             {

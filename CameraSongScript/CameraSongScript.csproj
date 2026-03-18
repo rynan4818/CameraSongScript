@@ -86,10 +86,15 @@
       <HintPath>$(BeatSaberDir)\Libs\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="BeatSaverSharp">
+      <HintPath>$(BeatSaberDir)\Libs\BeatSaverSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="SiraUtil">
       <HintPath>$(BeatSaberDir)\Plugins\SiraUtil.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="netstandard" />
     <Reference Include="Zenject">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
       <Private>False</Private>
@@ -165,6 +170,7 @@
     <Compile Include="Models\CommonScriptCache.cs" />
     <Compile Include="Models\SongScriptFolderCache.cs" />
     <Compile Include="Services\SongScriptBeatmapIndexService.cs" />
+    <Compile Include="Services\SongScriptMissingBeatmapDownloadService.cs" />
     <Compile Include="Services\SongScriptMapIdResolver.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
     <Compile Include="Localization\HoverHintLocalizationResources.cs" />

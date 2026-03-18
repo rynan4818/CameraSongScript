@@ -10,6 +10,7 @@ namespace CameraSongScript.Installers
         {
             this.Container.Bind<CameraSongScriptDetector>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<SongScriptBeatmapIndexService>().AsSingle().NonLazy();
+            this.Container.BindInterfacesAndSelfTo<SongScriptMissingBeatmapDownloadService>().AsSingle().NonLazy();
         }
     }
 }
