@@ -51,8 +51,10 @@ namespace CameraSongScript.Services
                 if (!string.IsNullOrEmpty(fallbackMapId))
                 {
                     levelReference.MapId = fallbackMapId;
+#if DEBUG
                     Plugin.Log.Debug(
                         $"SongScriptMapIdResolver: Resolved mapId '{fallbackMapId}' from beatmap folder name '{levelPath}'.");
+#endif
                 }
             }
 

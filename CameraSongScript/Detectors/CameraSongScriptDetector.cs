@@ -350,6 +350,7 @@ namespace CameraSongScript.Detectors
             int chartCount = chartCandidates.Count;
             int ssCount = ssCandidates.Count;
             int totalCount = chartCount + ssCount;
+#if DEBUG
             if (totalCount > 0)
             {
                 string logName = string.IsNullOrEmpty(selectedDisplayName) ? "?" : selectedDisplayName;
@@ -358,6 +359,7 @@ namespace CameraSongScript.Detectors
                 else
                     Plugin.Log.Info($"CameraSongScriptDetector: Found {totalCount} valid script(s). Selected: {logName}");
             }
+#endif
 
             ct.ThrowIfCancellationRequested();
 
@@ -476,7 +478,9 @@ namespace CameraSongScript.Detectors
                 }
             }
 
+#if DEBUG
             Plugin.Log.Info($"CameraSongScriptDetector: Extracted zip entry '{entryName}' to temp file.");
+#endif
             return tempPath;
         }
 
@@ -578,7 +582,9 @@ namespace CameraSongScript.Detectors
                 return;
             }
 
+#if DEBUG
             Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
+#endif
 
             LoadSelectedScriptInfo(SelectedScriptPath);
 

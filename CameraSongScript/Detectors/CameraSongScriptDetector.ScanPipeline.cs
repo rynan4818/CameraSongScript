@@ -186,6 +186,7 @@ namespace CameraSongScript.Detectors
                     return;
                 }
 
+#if DEBUG
                 if (scanResult.TotalCount > 0)
                 {
                     string logName = string.IsNullOrEmpty(scanResult.SelectedScriptDisplayName) ? "?" : scanResult.SelectedScriptDisplayName;
@@ -194,6 +195,7 @@ namespace CameraSongScript.Detectors
                     else
                         Plugin.Log.Info($"CameraSongScriptDetector: Found {scanResult.TotalCount} valid script(s). Selected: {logName}");
                 }
+#endif
 
                 _candidateMap = scanResult.CandidateMap;
                 SelectedScriptPath = scanResult.SelectedScriptPath;
