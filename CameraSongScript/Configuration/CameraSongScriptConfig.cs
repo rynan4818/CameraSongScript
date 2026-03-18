@@ -104,15 +104,15 @@ namespace CameraSongScript.Configuration
         public virtual float PresetLeftLowerRightRotZ { get; set; } = 0.0f;
 
         public virtual float PresetLeftLowerLeftPosX { get; set; } = -3.7f;
-        public virtual float PresetLeftLowerLeftPosY { get; set; } = 0.3f;
+        public virtual float PresetLeftLowerLeftPosY { get; set; } = 0.25f;
         public virtual float PresetLeftLowerLeftPosZ { get; set; } = 1.0f;
         public virtual float PresetLeftLowerLeftRotX { get; set; } = 40.0f;
-        public virtual float PresetLeftLowerLeftRotY { get; set; } = -76.0f;
+        public virtual float PresetLeftLowerLeftRotY { get; set; } = 295.0f;
         public virtual float PresetLeftLowerLeftRotZ { get; set; } = 0.0f;
 
         // Center 領域
         public virtual float PresetCenterUpperRightPosX { get; set; } = 1.8f;
-        public virtual float PresetCenterUpperRightPosY { get; set; } = 2.9f;
+        public virtual float PresetCenterUpperRightPosY { get; set; } = 2.95f;
         public virtual float PresetCenterUpperRightPosZ { get; set; } = 3.7f;
         public virtual float PresetCenterUpperRightRotX { get; set; } = 0.0f;
         public virtual float PresetCenterUpperRightRotY { get; set; } = 27.0f;
@@ -142,7 +142,7 @@ namespace CameraSongScript.Configuration
         // Right 領域
         public virtual float PresetRightUpperRightPosX { get; set; } = 4.6f;
         public virtual float PresetRightUpperRightPosY { get; set; } = 3.4f;
-        public virtual float PresetRightUpperRightPosZ { get; set; } = 0.0f;
+        public virtual float PresetRightUpperRightPosZ { get; set; } = -0.35f;
         public virtual float PresetRightUpperRightRotX { get; set; } = 0.0f;
         public virtual float PresetRightUpperRightRotY { get; set; } = 86.0f;
         public virtual float PresetRightUpperRightRotZ { get; set; } = 0.0f;
@@ -156,16 +156,16 @@ namespace CameraSongScript.Configuration
 
         public virtual float PresetRightLowerRightPosX { get; set; } = 4.0f;
         public virtual float PresetRightLowerRightPosY { get; set; } = 0.2f;
-        public virtual float PresetRightLowerRightPosZ { get; set; } = 0.4f;
+        public virtual float PresetRightLowerRightPosZ { get; set; } = -0.1f;
         public virtual float PresetRightLowerRightRotX { get; set; } = 50.0f;
         public virtual float PresetRightLowerRightRotY { get; set; } = 76.0f;
         public virtual float PresetRightLowerRightRotZ { get; set; } = 0.0f;
 
         public virtual float PresetRightLowerLeftPosX { get; set; } = 2.6f;
-        public virtual float PresetRightLowerLeftPosY { get; set; } = 0.2f;
-        public virtual float PresetRightLowerLeftPosZ { get; set; } = 3.2f;
-        public virtual float PresetRightLowerLeftRotX { get; set; } = 45.0f;
-        public virtual float PresetRightLowerLeftRotY { get; set; } = 40.0f;
+        public virtual float PresetRightLowerLeftPosY { get; set; } = 0.15f;
+        public virtual float PresetRightLowerLeftPosZ { get; set; } = 2.65f;
+        public virtual float PresetRightLowerLeftRotX { get; set; } = 59.0f;
+        public virtual float PresetRightLowerLeftRotY { get; set; } = 49.0f;
         public virtual float PresetRightLowerLeftRotZ { get; set; } = 0.0f;
 
 
