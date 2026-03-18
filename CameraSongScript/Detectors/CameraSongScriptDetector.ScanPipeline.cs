@@ -95,7 +95,7 @@ namespace CameraSongScript.Detectors
             ct.ThrowIfCancellationRequested();
 
             var ssCandidates = new List<ScriptCandidate>();
-            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId);
+            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId, levelPath);
             if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
                 foreach (var entry in SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash))

@@ -295,7 +295,7 @@ namespace CameraSongScript.Detectors
 
             // --- Phase 2: SongScriptsフォルダからmapId/hashマッチング ---
             var ssCandidates = new List<ScriptCandidate>();
-            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId);
+            SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId, levelPath);
 #if DEBUG
             Plugin.Log.Debug(
                 $"CameraSongScriptDetector: Level selected. Resolved mapId/hash from LevelId '{levelId}': " +
@@ -510,14 +510,14 @@ namespace CameraSongScript.Detectors
         /// <summary>
         /// levelIDからSongScripts照合用のmapId/hashを解決する
         /// </summary>
-        private SongScriptLevelReference ResolveSongScriptLevelReference(string levelId)
+        private SongScriptLevelReference ResolveSongScriptLevelReference(string levelId, string levelPath)
         {
-            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId);
+            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId, levelPath);
 #if DEBUG
             if (levelReference.HasAnyValue)
             {
                 Plugin.Log.Notice(
-                    $"CameraSongScriptDetector: Resolved mapId/hash '{levelReference.MapId}'/'{levelReference.Hash}' from LevelId '{levelId}'");
+                    $"CameraSongScriptDetector: Resolved mapId/hash '{levelReference.MapId}'/'{levelReference.Hash}' from LevelId '{levelId}' and LevelPath '{levelPath}'");
             }
 #endif
             return levelReference;

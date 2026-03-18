@@ -80,7 +80,7 @@ namespace CameraSongScript.Services
         private ConcurrentDictionary<string, RuntimeState> _statesByFolderPath =
             new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
 
-        private ConcurrentDictionary<string, bool> _songScriptsFolderResultsByLevelId =
+        private ConcurrentDictionary<string, bool> _songScriptsFolderResultsByLookupKey =
             new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource _scanCts;
@@ -172,7 +172,7 @@ namespace CameraSongScript.Services
                 return true;
             }
 
-            return HasSongScriptsFolderScript(level.levelID);
+            return HasSongScriptsFolderScript(level.levelID, customLevel.customLevelPath);
         }
 
         private void HandleLoadingStarted(SongCore.Loader _)
@@ -182,7 +182,7 @@ namespace CameraSongScript.Services
             CancelCurrentScan();
 
             _statesByFolderPath = new ConcurrentDictionary<string, RuntimeState>(StringComparer.OrdinalIgnoreCase);
-            _songScriptsFolderResultsByLevelId =
+            _songScriptsFolderResultsByLookupKey =
                 new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, generation);
         }
@@ -218,7 +218,7 @@ namespace CameraSongScript.Services
             }
 
             _statesByFolderPath = nextStates;
-            _songScriptsFolderResultsByLevelId =
+            _songScriptsFolderResultsByLookupKey =
                 new ConcurrentDictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
             _canFilter = true;
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Scanning, 0, workItems.Count, string.Empty, generation);
@@ -581,30 +581,38 @@ namespace CameraSongScript.Services
             return removedAny;
         }
 
-        private bool HasSongScriptsFolderScript(string levelId)
+        private bool HasSongScriptsFolderScript(string levelId, string levelPath)
         {
-            if (string.IsNullOrEmpty(levelId) || !Models.SongScriptFolderCache.IsReady)
+            if ((string.IsNullOrEmpty(levelId) && string.IsNullOrEmpty(levelPath)) || !Models.SongScriptFolderCache.IsReady)
             {
                 return false;
             }
 
             if (!Plugin.IsSongDetailsReady)
             {
-                return ResolveSongScriptsFolderScriptCore(levelId);
+                return ResolveSongScriptsFolderScriptCore(levelId, levelPath);
             }
 
-            return _songScriptsFolderResultsByLevelId.GetOrAdd(levelId, ResolveSongScriptsFolderScriptCore);
+            string lookupCacheKey = CreateSongScriptsFolderLookupCacheKey(levelId, levelPath);
+            return _songScriptsFolderResultsByLookupKey.GetOrAdd(
+                lookupCacheKey,
+                _ => ResolveSongScriptsFolderScriptCore(levelId, levelPath));
         }
 
-        private bool ResolveSongScriptsFolderScriptCore(string levelId)
+        private bool ResolveSongScriptsFolderScriptCore(string levelId, string levelPath)
         {
-            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId);
+            SongScriptLevelReference levelReference = SongScriptMapIdResolver.ResolveLevelReferenceFromLevelId(levelId, levelPath);
             if (!levelReference.HasAnyValue)
             {
                 return false;
             }
 
             return Models.SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash).Count > 0;
+        }
+
+        private static string CreateSongScriptsFolderLookupCacheKey(string levelId, string levelPath)
+        {
+            return $"{levelId ?? string.Empty}|{NormalizeFolderPath(levelPath)}";
         }
 
         private void LoadPersistentCache()

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace CameraSongScript.Services
 {
@@ -12,11 +13,12 @@ namespace CameraSongScript.Services
 
     internal static class SongScriptMapIdResolver
     {
-        public static SongScriptLevelReference ResolveLevelReferenceFromLevelId(string levelId)
+        public static SongScriptLevelReference ResolveLevelReferenceFromLevelId(string levelId, string levelPath = null)
         {
             var levelReference = new SongScriptLevelReference();
             if (string.IsNullOrEmpty(levelId))
             {
+                levelReference.MapId = ExtractMapIdFromLevelPath(levelPath);
                 return levelReference;
             }
 
@@ -28,29 +30,38 @@ namespace CameraSongScript.Services
 
             levelReference.Hash = NormalizeLookupKey(hash);
 
-            if (string.IsNullOrEmpty(hash) || !Plugin.IsSongDetailsReady)
+            if (!string.IsNullOrEmpty(hash) && Plugin.IsSongDetailsReady)
             {
-                return levelReference;
-            }
-
-            try
-            {
-                if (Plugin.SongDetailsInstance.songs.FindByHash(hash, out var song))
+                try
                 {
-                    levelReference.MapId = NormalizeLookupKey(song.key);
+                    if (Plugin.SongDetailsInstance.songs.FindByHash(hash, out var song))
+                    {
+                        levelReference.MapId = NormalizeLookupKey(song.key);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Debug($"SongScriptMapIdResolver: SongDetailsCache lookup failed: {ex.Message}");
                 }
             }
-            catch (Exception ex)
+
+            if (string.IsNullOrEmpty(levelReference.MapId))
             {
-                Plugin.Log.Debug($"SongScriptMapIdResolver: SongDetailsCache lookup failed: {ex.Message}");
+                string fallbackMapId = ExtractMapIdFromLevelPath(levelPath);
+                if (!string.IsNullOrEmpty(fallbackMapId))
+                {
+                    levelReference.MapId = fallbackMapId;
+                    Plugin.Log.Debug(
+                        $"SongScriptMapIdResolver: Resolved mapId '{fallbackMapId}' from beatmap folder name '{levelPath}'.");
+                }
             }
 
             return levelReference;
         }
 
-        public static string ResolveMapIdFromLevelId(string levelId)
+        public static string ResolveMapIdFromLevelId(string levelId, string levelPath = null)
         {
-            return ResolveLevelReferenceFromLevelId(levelId).MapId;
+            return ResolveLevelReferenceFromLevelId(levelId, levelPath).MapId;
         }
 
         private static string ExtractHashFromLevelId(string levelId)
@@ -73,6 +84,58 @@ namespace CameraSongScript.Services
         private static string NormalizeLookupKey(string value)
         {
             return string.IsNullOrEmpty(value) ? string.Empty : value.ToLowerInvariant();
+        }
+
+        private static string ExtractMapIdFromLevelPath(string levelPath)
+        {
+            if (string.IsNullOrEmpty(levelPath))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                string trimmedPath = levelPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (string.IsNullOrEmpty(trimmedPath))
+                {
+                    return string.Empty;
+                }
+
+                string folderName = Path.GetFileName(trimmedPath);
+                return ExtractLeadingMapIdCandidate(folderName);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string ExtractLeadingMapIdCandidate(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            int length = 0;
+            while (length < value.Length && IsHexCharacter(value[length]))
+            {
+                length++;
+            }
+
+            if (length == 0 || length > 6)
+            {
+                return string.Empty;
+            }
+
+            return value.Substring(0, length).ToLowerInvariant();
+        }
+
+        private static bool IsHexCharacter(char value)
+        {
+            return (value >= '0' && value <= '9') ||
+                (value >= 'a' && value <= 'f') ||
+                (value >= 'A' && value <= 'F');
         }
     }
 }

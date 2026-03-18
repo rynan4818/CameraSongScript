@@ -101,7 +101,7 @@ namespace CameraSongScript.Localization
             ["button-preview-visual-settings-reset"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Reset Preview Visual Settings",
-                [HoverHintLocalization.Lang_JA] = "プレビュー表示調整をデフォルトに戻す"
+                [HoverHintLocalization.Lang_JA] = "プレビュー表示設定をリセット"
             },
             ["label-preview-visible-position-x"] = new Dictionary<string, string>
             {
@@ -206,22 +206,22 @@ namespace CameraSongScript.Localization
             ["label-panel-adjust-position"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Position",
-                [HoverHintLocalization.Lang_JA] = "Position"
+                [HoverHintLocalization.Lang_JA] = "位置"
             },
             ["label-panel-adjust-rotation"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Rotation",
-                [HoverHintLocalization.Lang_JA] = "Rotation"
+                [HoverHintLocalization.Lang_JA] = "回転角度"
             },
             ["button-status-panel-transform-reset"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Reset Position/Rotation",
-                [HoverHintLocalization.Lang_JA] = "位置/回転をリセット"
+                [HoverHintLocalization.Lang_JA] = "位置/回転角度をリセット"
             },
             ["button-rerun-songscript-caches"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Rebuild SongScript Caches",
-                [HoverHintLocalization.Lang_JA] = "譜面/SongScripts キャッシュを再検索"
+                [HoverHintLocalization.Lang_EN] = "Rescan SongScripts",
+                [HoverHintLocalization.Lang_JA] = "スクリプトを再検索"
             },
             ["cache-refresh-status-beatmap"] = new Dictionary<string, string>
             {
@@ -305,8 +305,8 @@ namespace CameraSongScript.Localization
             },
             ["warning-adapter-version-unsupported"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} version {1} is unsupported and will not be loaded. Allowed: {2}</color>",
-                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のバージョン {1} は対象外のため読み込めません。対応: {2}</color>"
+                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} Ver{1} is unsupported and will not be loaded. Allowed Ver{2}</color>",
+                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のVer{1} は対象外で使用不可。対応版Ver{2}</color>"
             },
             ["preview-initializing"] = new Dictionary<string, string>
             {
