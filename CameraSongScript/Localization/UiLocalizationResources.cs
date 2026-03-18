@@ -398,6 +398,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "<color=#00FF00>CameraSongScript: ON</color>",
                 [HoverHintLocalization.Lang_JA] = "<color=#00FF00>CameraSongScript: 有効</color>"
             },
+            ["panel-on-with-count"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "<color=#00FF00>CameraSongScript: ON</color> <color=#AAAAAA>({0} script(s) found)</color>",
+                [HoverHintLocalization.Lang_JA] = "<color=#00FF00>CameraSongScript: 有効</color> <color=#AAAAAA>({0}件検出)</color>"
+            },
             ["panel-script-line"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "<color=#AAAAAA>Script:</color> {0}",

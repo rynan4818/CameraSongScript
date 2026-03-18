@@ -207,6 +207,7 @@ namespace CameraSongScript.UI
             bool enabled = CameraSongScriptConfig.Instance.Enabled;
             bool hasScript = _scriptDetector.HasSongScript;
             bool isCommon = _scriptDetector.IsUsingCommonScript;
+            int detectedScriptCount = _scriptDetector.AvailableScriptFiles?.Count ?? 0;
 
             // 表示設定OFFの場合は完全に非表示
             if (!show)
@@ -264,7 +265,9 @@ namespace CameraSongScript.UI
             // 以下、有効かつスクリプトありの場合
             string scriptName = MakeWrapFriendly(_scriptDetector.SelectedScriptDisplayName);
 
-            string statusLine = UiLocalization.Get("panel-on");
+            string statusLine = detectedScriptCount > 0
+                ? UiLocalization.Format("panel-on-with-count", detectedScriptCount)
+                : UiLocalization.Get("panel-on");
             string scriptLine = UiLocalization.Format("panel-script-line", scriptName);
 
             var meta = _scriptDetector.CurrentMetadata;
