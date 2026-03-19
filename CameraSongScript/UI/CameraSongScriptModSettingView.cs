@@ -25,7 +25,7 @@ namespace CameraSongScript.UI
 
         public void Initialize()
         {
-            BSMLSettings.instance.AddSettingsMenu(_buttonName, ResourceName, this);
+            BSMLSettings.Instance.AddSettingsMenu(_buttonName, ResourceName, this);
             UiLocalization.LanguageChanged += OnLanguageChanged;
         }
 
@@ -35,7 +35,7 @@ namespace CameraSongScript.UI
                 return;
 
             UiLocalization.LanguageChanged -= OnLanguageChanged;
-            BSMLSettings.instance?.RemoveSettingsMenu(_buttonName);
+            BSMLSettings.Instance?.RemoveSettingsMenu(this);
             _disposedValue = true;
         }
 
@@ -147,7 +147,7 @@ namespace CameraSongScript.UI
             if (UiLanguageDropdown == null)
                 return;
 
-            UiLanguageDropdown.values = HoverHintLanguageOptions;
+            UiLanguageDropdown.Values = HoverHintLanguageOptions;
             UiLanguageDropdown.UpdateChoices();
             UiLanguageDropdown.ReceiveValue();
         }

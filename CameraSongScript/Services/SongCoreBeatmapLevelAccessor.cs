@@ -18,7 +18,7 @@ namespace CameraSongScript.Services
             return beatmapLevelsModel
                 ._customLevelsRepository?.beatmapLevelPacks
                 .Where(pack => pack is SongCore.OverrideClasses.SongCoreCustomBeatmapLevelPack)
-                .SelectMany(pack => pack.beatmapLevels) ??
+                .SelectMany(pack => pack.AllBeatmapLevels()) ??
                 Enumerable.Empty<BeatmapLevel>();
         }
 

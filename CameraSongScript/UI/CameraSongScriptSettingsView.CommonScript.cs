@@ -165,9 +165,9 @@ namespace CameraSongScript.UI
 
         private object GetSelectedCommonScriptValue(string fileName)
         {
-            if (commonScriptDropdown?.values != null)
+            if (commonScriptDropdown?.Values != null)
             {
-                foreach (object value in commonScriptDropdown.values)
+                foreach (object value in commonScriptDropdown.Values)
                 {
                     if (string.Equals(GetCanonicalCommonScriptName(value), fileName, StringComparison.Ordinal))
                         return value;

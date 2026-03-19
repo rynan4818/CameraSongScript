@@ -397,15 +397,15 @@ namespace CameraSongScript.UI
 
         private void SyncPreviewSlider()
         {
-            if (previewPositionSlider == null || previewPositionSlider.slider == null)
+            if (previewPositionSlider == null || previewPositionSlider.Slider == null)
                 return;
 
             float maxValue = Mathf.Max(_previewController != null ? _previewController.Duration : 0f, PreviewSliderStep);
-            previewPositionSlider.slider.minValue = 0f;
-            previewPositionSlider.slider.maxValue = maxValue;
-            previewPositionSlider.increments = PreviewSliderStep;
-            previewPositionSlider.slider.numberOfSteps = Mathf.Max(2, Mathf.RoundToInt(maxValue / PreviewSliderStep) + 1);
-            previewPositionSlider.interactable = CanPreview;
+            previewPositionSlider.Slider.minValue = 0f;
+            previewPositionSlider.Slider.maxValue = maxValue;
+            previewPositionSlider.Increments = PreviewSliderStep;
+            previewPositionSlider.Slider.numberOfSteps = Mathf.Max(2, Mathf.RoundToInt(maxValue / PreviewSliderStep) + 1);
+            previewPositionSlider.Interactable = CanPreview;
 
             _suppressPreviewSeek = true;
             previewPositionSlider.Value = Mathf.Clamp(_previewController != null ? _previewController.CurrentTime : 0f, 0f, maxValue);

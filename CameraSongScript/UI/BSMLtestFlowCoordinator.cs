@@ -19,12 +19,12 @@ namespace CameraSongScript.UI
         public void Initialize()
         {
             this._menuButton = new MenuButton("CameraSongScriptDebug", "", this.ShowMainFlowCoodniator);
-            MenuButtons.instance?.RegisterButton(this._menuButton);
+            MenuButtons.Instance?.RegisterButton(this._menuButton);
         }
 
         public void OnDestroy()
         {
-            MenuButtons.instance?.UnregisterButton(this._menuButton);
+            MenuButtons.Instance?.UnregisterButton(this._menuButton);
         }
 
         protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)

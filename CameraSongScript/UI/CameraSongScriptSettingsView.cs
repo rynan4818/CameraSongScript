@@ -81,7 +81,7 @@ namespace CameraSongScript.UI
 
         public void Initialize()
         {
-            GameplaySetup.instance.AddTab(TabName, this.ResourceName, this);
+            GameplaySetup.Instance.AddTab(TabName, this.ResourceName, this);
             _scriptDetector.ScanCompleted += OnScanCompleted;
             SongScriptFolderCache.ScanStatusChanged += OnSongScriptFolderCacheStatusChanged;
             if (_beatmapIndexService != null)
@@ -108,7 +108,7 @@ namespace CameraSongScript.UI
             UiLocalization.LanguageChanged -= OnLanguageChanged;
             DetachScriptFileDropdownButtonHandler();
             DetachCommonScriptDropdownButtonHandler();
-            GameplaySetup.instance?.RemoveTab(TabName);
+            GameplaySetup.Instance?.RemoveTab(TabName);
         }
 
         protected void OnEnable()
@@ -407,19 +407,19 @@ namespace CameraSongScript.UI
             if (dropdown == null)
                 return;
 
-            dropdown.values = options;
+            dropdown.Values = options;
             dropdown.UpdateChoices();
             dropdown.ReceiveValue();
         }
 
         private void EnsureScriptFileDropdownTextPresentation()
         {
-            if (scriptFileDropdown?.dropdown == null)
+            if (scriptFileDropdown?.Dropdown == null)
                 return;
 
             ApplyDropdownTextPresentation(scriptFileDropdown);
 
-            Button button = scriptFileDropdown.dropdown.GetField<Button, DropdownWithTableView>("_button");
+            Button button = scriptFileDropdown.Dropdown.GetField<Button, DropdownWithTableView>("_button");
             if (button == null || ReferenceEquals(button, _scriptFileDropdownButton))
                 return;
 
@@ -462,12 +462,12 @@ namespace CameraSongScript.UI
 
         private void EnsureCommonScriptDropdownTextPresentation()
         {
-            if (commonScriptDropdown?.dropdown == null)
+            if (commonScriptDropdown?.Dropdown == null)
                 return;
 
             ApplyDropdownTextPresentation(commonScriptDropdown);
 
-            Button button = commonScriptDropdown.dropdown.GetField<Button, DropdownWithTableView>("_button");
+            Button button = commonScriptDropdown.Dropdown.GetField<Button, DropdownWithTableView>("_button");
             if (button == null || ReferenceEquals(button, _commonScriptDropdownButton))
                 return;
 
@@ -510,10 +510,10 @@ namespace CameraSongScript.UI
 
         private static void ApplyDropdownTextPresentation(DropDownListSetting dropdown)
         {
-            if (dropdown?.dropdown == null)
+            if (dropdown?.Dropdown == null)
                 return;
 
-            foreach (TextMeshProUGUI text in dropdown.dropdown.GetComponentsInChildren<TextMeshProUGUI>(true))
+            foreach (TextMeshProUGUI text in dropdown.Dropdown.GetComponentsInChildren<TextMeshProUGUI>(true))
             {
                 if (text == null)
                     continue;
@@ -619,7 +619,7 @@ namespace CameraSongScript.UI
 
                     if (scriptFileDropdown != null)
                     {
-                        scriptFileDropdown.values = ScriptFileOptions;
+                        scriptFileDropdown.Values = ScriptFileOptions;
                         scriptFileDropdown.UpdateChoices();
                         scriptFileDropdown.ReceiveValue();
                         EnsureScriptFileDropdownTextPresentation();
@@ -979,9 +979,9 @@ namespace CameraSongScript.UI
 
         private object GetSelectedScriptFileValue(string fileName)
         {
-            if (scriptFileDropdown?.values != null)
+            if (scriptFileDropdown?.Values != null)
             {
-                foreach (object value in scriptFileDropdown.values)
+                foreach (object value in scriptFileDropdown.Values)
                 {
                     if (string.Equals(GetCanonicalScriptFileName(value), fileName, StringComparison.Ordinal))
                         return value;
