@@ -17,6 +17,7 @@ namespace CameraSongScript.UI
     {
         private const string ZeroWidthBreak = "\u200B";
 
+        private MainThreadDispatcher _mainThreadDispatcher;
         private CameraSongScriptDetector _scriptDetector;
         private bool _isLevelDetailVisible;
 
@@ -27,9 +28,10 @@ namespace CameraSongScript.UI
         public static string[] GetPresetNames() => StatusPanelPresetCatalog.GetLegacyNames();
 
         [Inject]
-        internal void Constractor(CameraSongScriptDetector scriptDetector)
+        internal void Constractor(CameraSongScriptDetector scriptDetector, MainThreadDispatcher mainThreadDispatcher)
         {
             _scriptDetector = scriptDetector;
+            _mainThreadDispatcher = mainThreadDispatcher;
         }
 
         public void Initialize()
@@ -104,7 +106,7 @@ namespace CameraSongScript.UI
 
         private void OnScanCompleted()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -119,7 +121,7 @@ namespace CameraSongScript.UI
 
         private void OnLanguageChanged()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -134,7 +136,7 @@ namespace CameraSongScript.UI
 
         private void OnAdapterVersionWarningsChanged()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -153,7 +155,7 @@ namespace CameraSongScript.UI
         /// </summary>
         private void OnConfigReloaded()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -164,6 +166,20 @@ namespace CameraSongScript.UI
                     Plugin.Log.Warn($"StatusView: Failed to apply config reload: {ex.Message}");
                 }
             });
+        }
+
+        private void DispatchToMainThread(Action action)
+        {
+            if (action == null)
+                return;
+
+            if (_mainThreadDispatcher != null)
+            {
+                _mainThreadDispatcher.DispatchOnMainThread(action);
+                return;
+            }
+
+            action();
         }
 
         /// <summary>

@@ -46,10 +46,10 @@ namespace CameraSongScript.Detectors
             if (action == null)
                 return;
 
-            var dispatcher = HMMainThreadDispatcher.instance;
+            var dispatcher = _mainThreadDispatcher;
             if (dispatcher != null)
             {
-                dispatcher.Enqueue(action);
+                dispatcher.DispatchOnMainThread(action);
                 return;
             }
 

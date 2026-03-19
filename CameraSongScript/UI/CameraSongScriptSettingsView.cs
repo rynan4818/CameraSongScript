@@ -34,6 +34,7 @@ namespace CameraSongScript.UI
         public const string TabName = "Camera Song Script";
         public string ResourceName => string.Join(".", GetType().Namespace, GetType().Name);
 
+        private MainThreadDispatcher _mainThreadDispatcher;
         private CameraSongScriptStatusView _statusView;
 
         private CameraSongScriptPreviewController _previewController;
@@ -63,12 +64,14 @@ namespace CameraSongScript.UI
 
         [Inject]
         internal void Constractor(
+            MainThreadDispatcher mainThreadDispatcher,
             CameraSongScriptStatusView statusView,
             CameraSongScriptPreviewController previewController,
             CameraSongScriptDetector scriptDetector,
             SongScriptBeatmapIndexService beatmapIndexService,
             SongScriptMissingBeatmapDownloadService missingBeatmapDownloadService)
         {
+            _mainThreadDispatcher = mainThreadDispatcher;
             _statusView = statusView;
             _previewController = previewController;
             _scriptDetector = scriptDetector;
@@ -168,7 +171,7 @@ namespace CameraSongScript.UI
 
         private void OnLanguageChanged()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -196,14 +199,7 @@ namespace CameraSongScript.UI
                 }
             }
 
-            if (HMMainThreadDispatcher.instance != null)
-            {
-                HMMainThreadDispatcher.instance.Enqueue(Refresh);
-            }
-            else
-            {
-                Refresh();
-            }
+            DispatchToMainThread(Refresh);
         }
 
         private void OnSongScriptFolderCacheStatusChanged()
@@ -245,14 +241,7 @@ namespace CameraSongScript.UI
                 }
             }
 
-            if (HMMainThreadDispatcher.instance != null)
-            {
-                HMMainThreadDispatcher.instance.Enqueue(Refresh);
-            }
-            else
-            {
-                Refresh();
-            }
+            DispatchToMainThread(Refresh);
         }
 
         private void EnqueueMissingBeatmapStatusRefresh()
@@ -279,14 +268,7 @@ namespace CameraSongScript.UI
                 }
             }
 
-            if (HMMainThreadDispatcher.instance != null)
-            {
-                HMMainThreadDispatcher.instance.Enqueue(Refresh);
-            }
-            else
-            {
-                Refresh();
-            }
+            DispatchToMainThread(Refresh);
         }
 
         private void RefreshMetadataBindings()
@@ -622,7 +604,7 @@ namespace CameraSongScript.UI
         /// </summary>
         private void OnScanCompleted()
         {
-            HMMainThreadDispatcher.instance?.Enqueue(() =>
+            DispatchToMainThread(() =>
             {
                 try
                 {
@@ -656,6 +638,20 @@ namespace CameraSongScript.UI
                     Plugin.Log.Warn($"SettingsView: Failed to update script file UI: {ex.Message}");
                 }
             });
+        }
+
+        private void DispatchToMainThread(Action action)
+        {
+            if (action == null)
+                return;
+
+            if (_mainThreadDispatcher != null)
+            {
+                _mainThreadDispatcher.DispatchOnMainThread(action);
+                return;
+            }
+
+            action();
         }
 
         #region UI文言ローカライズ
@@ -1044,8 +1040,14 @@ namespace CameraSongScript.UI
                             contentHeight = Mathf.Max(contentHeight, parentPreferredHeight, parentTransform.rect.height);
                         }
 
-                        scrollView.SetContentSize(contentHeight);
-                        scrollView.RefreshButtons();
+                        RectTransform scrollContent = scrollView.contentTransform;
+                        if (scrollContent != null)
+                        {
+                            float currentPosition = scrollView.position;
+                            scrollContent.sizeDelta = new Vector2(scrollContent.sizeDelta.x, contentHeight);
+                            scrollView.UpdateContentSize();
+                            scrollView.ScrollTo(currentPosition, false);
+                        }
                     }
                 }
             }

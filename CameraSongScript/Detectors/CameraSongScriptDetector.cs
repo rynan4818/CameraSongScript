@@ -15,6 +15,7 @@ using CameraSongScript.Utilities;
 using HMUI;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using Zenject;
 
 namespace CameraSongScript.Detectors
 {
@@ -28,6 +29,7 @@ namespace CameraSongScript.Detectors
     {
         internal static CameraSongScriptDetector Instance { get; private set; }
 
+        private MainThreadDispatcher _mainThreadDispatcher;
         private string _latestSelectedSong = string.Empty;
         private CancellationTokenSource _scanCts;
         private readonly object _scanLock = new object();
@@ -165,6 +167,12 @@ namespace CameraSongScript.Detectors
         public CameraSongScriptDetector()
         {
             Instance = this;
+        }
+
+        [Inject]
+        internal void Constractor(MainThreadDispatcher mainThreadDispatcher)
+        {
+            _mainThreadDispatcher = mainThreadDispatcher;
         }
 
         public void ProcessLevel(IPreviewBeatmapLevel level)
