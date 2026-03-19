@@ -168,24 +168,32 @@ namespace CameraSongScript.Services
             _pausedForGameplay = false;
         }
 
-        public bool HasAnySongScript(IPreviewBeatmapLevel level)
+        public bool HasAnySongScript(BeatmapLevel level)
         {
-            if (!CanFilter || !(level is CustomPreviewBeatmapLevel customLevel))
+            if (!CanFilter || level == null)
             {
                 return false;
             }
 
-            return GetLevelSortInfo(level, customLevel).HasAnySongScript;
+            return GetLevelSortInfo(level).HasAnySongScript;
         }
 
-        public SongScriptLevelSortInfo GetLevelSortInfo(IPreviewBeatmapLevel level)
+        public SongScriptLevelSortInfo GetLevelSortInfo(BeatmapLevel level)
         {
-            if (!CanFilter || !(level is CustomPreviewBeatmapLevel customLevel))
+            if (!CanFilter || level == null)
             {
                 return new SongScriptLevelSortInfo();
             }
 
-            return GetLevelSortInfo(level, customLevel);
+            string levelPath = SongCoreBeatmapLevelAccessor.GetLevelFolderPath(level);
+            SongScriptLevelSortInfo songScriptsFolderSortInfo = GetSongScriptsFolderSortInfo(level.levelID, levelPath);
+
+            return new SongScriptLevelSortInfo
+            {
+                HasSongScriptsFolderScript = songScriptsFolderSortInfo.HasSongScriptsFolderScript,
+                SongScriptsSortFileName = songScriptsFolderSortInfo.SongScriptsSortFileName ?? string.Empty,
+                HasChartFolderSongScript = HasChartFolderSongScript(levelPath)
+            };
         }
 
         private void HandleLoadingStarted(SongCore.Loader _)
@@ -200,7 +208,7 @@ namespace CameraSongScript.Services
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, generation);
         }
 
-        private void HandleSongsLoaded(SongCore.Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
+        private void HandleSongsLoaded(SongCore.Loader _, ConcurrentDictionary<string, BeatmapLevel> __)
         {
             RefreshIndex();
         }
@@ -392,32 +400,20 @@ namespace CameraSongScript.Services
         {
             var workItems = new Dictionary<string, BeatmapWorkItem>(StringComparer.OrdinalIgnoreCase);
 
-            void AddLevel(CustomPreviewBeatmapLevel level)
+            void AddLevel(BeatmapLevel level)
             {
-                if (level == null || string.IsNullOrEmpty(level.customLevelPath))
+                if (level == null)
                 {
                     return;
                 }
 
-                string folderPath = NormalizeFolderPath(level.customLevelPath);
+                string folderPath = SongCoreBeatmapLevelAccessor.GetLevelFolderPath(level);
                 if (string.IsNullOrEmpty(folderPath) || workItems.ContainsKey(folderPath))
                 {
                     return;
                 }
 
-                string hash = SongCore.Collections.hashForLevelID(level.levelID);
-                if (string.IsNullOrEmpty(hash))
-                {
-                    try
-                    {
-                        hash = SongCore.Utilities.Hashing.GetCustomLevelHash(level);
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.Log.Debug($"SongScriptBeatmapIndexService: Failed to resolve hash for '{folderPath}': {ex.Message}");
-                        hash = string.Empty;
-                    }
-                }
+                string hash = SongCoreBeatmapLevelAccessor.GetLevelHash(level);
 
                 workItems[folderPath] = new BeatmapWorkItem
                 {
@@ -426,27 +422,9 @@ namespace CameraSongScript.Services
                 };
             }
 
-            foreach (CustomPreviewBeatmapLevel level in SongCore.Loader.CustomLevels.Values)
+            foreach (BeatmapLevel level in SongCoreBeatmapLevelAccessor.GetCustomBeatmapLevels())
             {
                 AddLevel(level);
-            }
-
-            foreach (CustomPreviewBeatmapLevel level in SongCore.Loader.CustomWIPLevels.Values)
-            {
-                AddLevel(level);
-            }
-
-            foreach (CustomPreviewBeatmapLevel level in SongCore.Loader.CachedWIPLevels.Values)
-            {
-                AddLevel(level);
-            }
-
-            foreach (var separateSongFolder in SongCore.Loader.SeperateSongFolders)
-            {
-                foreach (CustomPreviewBeatmapLevel level in separateSongFolder.Levels.Values)
-                {
-                    AddLevel(level);
-                }
             }
 
             return workItems.Values.ToList();
@@ -594,28 +572,16 @@ namespace CameraSongScript.Services
             return removedAny;
         }
 
-        private SongScriptLevelSortInfo GetLevelSortInfo(IPreviewBeatmapLevel level, CustomPreviewBeatmapLevel customLevel)
+        private bool HasChartFolderSongScript(string levelPath)
         {
-            SongScriptLevelSortInfo songScriptsFolderSortInfo = GetSongScriptsFolderSortInfo(level.levelID, customLevel.customLevelPath);
-
-            return new SongScriptLevelSortInfo
-            {
-                HasSongScriptsFolderScript = songScriptsFolderSortInfo.HasSongScriptsFolderScript,
-                SongScriptsSortFileName = songScriptsFolderSortInfo.SongScriptsSortFileName ?? string.Empty,
-                HasChartFolderSongScript = HasChartFolderSongScript(customLevel)
-            };
-        }
-
-        private bool HasChartFolderSongScript(CustomPreviewBeatmapLevel customLevel)
-        {
-            if (customLevel == null)
+            if (string.IsNullOrEmpty(levelPath))
             {
                 return false;
             }
 
-            string folderPath = NormalizeFolderPath(customLevel.customLevelPath);
-            return !string.IsNullOrEmpty(folderPath) &&
-                _statesByFolderPath.TryGetValue(folderPath, out var state) &&
+            string normalizedPath = NormalizeFolderPath(levelPath);
+            return !string.IsNullOrEmpty(normalizedPath) &&
+                _statesByFolderPath.TryGetValue(normalizedPath, out var state) &&
                 state.ChartFolderScanComplete &&
                 state.HasChartFolderSongScript;
         }

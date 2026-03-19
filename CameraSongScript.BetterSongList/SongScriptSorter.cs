@@ -15,7 +15,7 @@ namespace CameraSongScript.BetterSongList
     {
         private sealed class IndexedLevel
         {
-            public IPreviewBeatmapLevel Level { get; set; }
+            public BeatmapLevel Level { get; set; }
             public int OriginalIndex { get; set; }
             public SongScriptLevelSortInfo SortInfo { get; set; }
         }
@@ -28,7 +28,7 @@ namespace CameraSongScript.BetterSongList
             SongScriptBeatmapIndexService.Instance != null &&
             SongScriptBeatmapIndexService.Instance.CanFilter;
 
-        public void ContextSwitch(LevelCategory levelCategory, IAnnotatedBeatmapLevelCollection playlist)
+        public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
             visible = levelCategory == LevelCategory.CustomSongs || levelCategory == LevelCategory.None;
         }
@@ -47,7 +47,7 @@ namespace CameraSongScript.BetterSongList
             }
         }
 
-        public void DoSort(ref IEnumerable<IPreviewBeatmapLevel> levels, bool ascending)
+        public void DoSort(ref IEnumerable<BeatmapLevel> levels, bool ascending)
         {
             SongScriptBeatmapIndexService indexService = SongScriptBeatmapIndexService.Instance;
             if (indexService == null || levels == null)

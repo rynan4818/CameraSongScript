@@ -17,7 +17,7 @@ namespace CameraSongScript.BetterSongList
             SongScriptBeatmapIndexService.Instance != null &&
             SongScriptBeatmapIndexService.Instance.CanFilter;
 
-        public void ContextSwitch(LevelCategory levelCategory, IAnnotatedBeatmapLevelCollection playlist)
+        public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
             visible = levelCategory == LevelCategory.CustomSongs || levelCategory == LevelCategory.None;
         }
@@ -36,7 +36,7 @@ namespace CameraSongScript.BetterSongList
             }
         }
 
-        public bool GetValueFor(IPreviewBeatmapLevel level)
+        public bool GetValueFor(BeatmapLevel level)
         {
             var indexService = SongScriptBeatmapIndexService.Instance;
             return indexService != null && indexService.HasAnySongScript(level);

@@ -58,26 +58,23 @@ namespace CameraSongScript.Detectors
             _statusView?.SetLevelDetailVisible(true);
         }
 
-        private void OnDifficultyChanged(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
+        private void OnDifficultyChanged(StandardLevelDetailViewController controller)
         {
-            UpdateCurrentSongSettings(beatmap);
-            _scriptDetector.ResolveProfileName();
-            if (beatmap?.level is CustomPreviewBeatmapLevel customLevel)
-            {
-                _scriptDetector.ProcessLevel(customLevel);
-            }
-            // ProcessLevelが同一曲ガードでスキップされた場合でも、
-            // プロファイル名のキャッシュを更新して再同期する
-            _scriptDetector.SyncCameraPlusPath();
+            HandleLevelSelectionChanged(controller);
         }
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
         {
-            UpdateCurrentSongSettings(controller?.selectedDifficultyBeatmap);
+            HandleLevelSelectionChanged(controller);
+        }
+
+        private void HandleLevelSelectionChanged(StandardLevelDetailViewController controller)
+        {
+            UpdateCurrentSongSettings(controller?.beatmapKey);
             _scriptDetector.ResolveProfileName();
-            if (controller?.selectedDifficultyBeatmap?.level is CustomPreviewBeatmapLevel customLevel)
+            if (controller?.beatmapLevel != null)
             {
-                _scriptDetector.ProcessLevel(customLevel);
+                _scriptDetector.ProcessLevel(controller.beatmapLevel);
             }
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
@@ -90,19 +87,23 @@ namespace CameraSongScript.Detectors
             _previewController?.Clear();
         }
 
-        private void UpdateCurrentSongSettings(IDifficultyBeatmap beatmap)
+        private void UpdateCurrentSongSettings(BeatmapKey? beatmapKey)
         {
-            if (beatmap != null)
+            if (beatmapKey.HasValue && beatmapKey.Value.IsValid())
             {
-                string levelId = beatmap.level.levelID;
-                int difficulty = (int)beatmap.difficulty;
-                string characteristic = beatmap.parentDifficultyBeatmapSet.beatmapCharacteristic.serializedName;
-                SongSettingsManager.SetCurrentSong(levelId, difficulty, characteristic);
+                BeatmapKey key = beatmapKey.Value;
+                string levelId = key.levelId;
+                int difficulty = (int)key.difficulty;
+                string characteristic = key.beatmapCharacteristic?.serializedName;
+
+                if (!string.IsNullOrEmpty(levelId) && !string.IsNullOrEmpty(characteristic))
+                {
+                    SongSettingsManager.SetCurrentSong(levelId, difficulty, characteristic);
+                    return;
+                }
             }
-            else
-            {
-                SongSettingsManager.ClearCurrentSong();
-            }
+
+            SongSettingsManager.ClearCurrentSong();
         }
     }
 }

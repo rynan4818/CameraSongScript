@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using CameraSongScript.Configuration;
+using PolyglotLanguage = BGLib.Polyglot.Language;
+using PolyglotLocalization = BGLib.Polyglot.Localization;
 
 namespace CameraSongScript.Localization
 {
@@ -46,7 +48,7 @@ namespace CameraSongScript.Localization
         {
             try
             {
-                if (Polyglot.Localization.Instance.SelectedLanguage == Polyglot.Language.Japanese)
+                if (PolyglotLocalization.Instance.SelectedLanguage == PolyglotLanguage.Japanese)
                 {
                     return Lang_JA;
                 }

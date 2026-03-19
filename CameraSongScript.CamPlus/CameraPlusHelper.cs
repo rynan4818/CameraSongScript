@@ -75,7 +75,7 @@ namespace CameraSongScript.CamPlus
         /// </summary>
         private static void OnActiveSceneChangedPrefix()
         {
-            CustomPreviewBeatmapLevelPatch.customLevelPath = _pendingScriptPath;
+            SongScriptBeatmapPatch.customLevelPath = _pendingScriptPath;
         }
 
         /// <summary>

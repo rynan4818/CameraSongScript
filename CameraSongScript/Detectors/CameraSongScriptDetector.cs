@@ -175,18 +175,21 @@ namespace CameraSongScript.Detectors
             _mainThreadDispatcher = mainThreadDispatcher;
         }
 
-        public void ProcessLevel(IPreviewBeatmapLevel level)
+        public void ProcessLevel(BeatmapLevel level)
         {
-            if (level is CustomPreviewBeatmapLevel customLevel)
+            string levelPath = SongCoreBeatmapLevelAccessor.GetLevelFolderPath(level);
+            if (string.IsNullOrEmpty(levelPath))
             {
-                if (customLevel.customLevelPath != _latestSelectedSong)
-                {
-                    _latestSelectedSong = customLevel.customLevelPath;
+                return;
+            }
+
+            if (!string.Equals(levelPath, _latestSelectedSong, StringComparison.OrdinalIgnoreCase))
+            {
+                _latestSelectedSong = levelPath;
 #if DEBUG
-                    Plugin.Log.Notice($"Selected CustomLevel Path:\n {customLevel.customLevelPath}");
+                Plugin.Log.Notice($"Selected CustomLevel Path:\n {levelPath}");
 #endif
-                    RequestScan(customLevel.customLevelPath, customLevel.levelID);
-                }
+                RequestScan(levelPath, level.levelID);
             }
         }
 

@@ -297,7 +297,7 @@ namespace CameraSongScript.Services
             RefreshState();
         }
 
-        private void HandleSongsLoaded(Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
+        private void HandleSongsLoaded(Loader _, ConcurrentDictionary<string, BeatmapLevel> __)
         {
             RefreshState();
         }
@@ -409,8 +409,8 @@ namespace CameraSongScript.Services
             }
 
             var completionSource = new TaskCompletionSource<bool>();
-            Action<Loader, ConcurrentDictionary<string, CustomPreviewBeatmapLevel>> songsLoadedHandler = null;
-            songsLoadedHandler = delegate (Loader loader, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> levels)
+            Action<Loader, ConcurrentDictionary<string, BeatmapLevel>> songsLoadedHandler = null;
+            songsLoadedHandler = delegate (Loader loader, ConcurrentDictionary<string, BeatmapLevel> levels)
             {
                 Loader.SongsLoadedEvent -= songsLoadedHandler;
                 completionSource.TrySetResult(true);
@@ -460,14 +460,17 @@ namespace CameraSongScript.Services
                 }
             }
 
-            void AddLevel(CustomPreviewBeatmapLevel level)
+            void AddLevel(BeatmapLevel level)
             {
                 if (level == null || string.IsNullOrEmpty(level.levelID))
                 {
                     return;
                 }
 
-                string mapId = NormalizeMapId(SongScriptMapIdResolver.ResolveMapIdFromLevelId(level.levelID, level.customLevelPath));
+                string mapId = NormalizeMapId(
+                    SongScriptMapIdResolver.ResolveMapIdFromLevelId(
+                        level.levelID,
+                        SongCoreBeatmapLevelAccessor.GetLevelFolderPath(level)));
                 if (!string.IsNullOrEmpty(mapId))
                 {
                     mapIds.Add(mapId);
@@ -491,27 +494,9 @@ namespace CameraSongScript.Services
                 }
             }
 
-            foreach (CustomPreviewBeatmapLevel level in Loader.CustomLevels.Values)
+            foreach (BeatmapLevel level in SongCoreBeatmapLevelAccessor.GetCustomBeatmapLevels())
             {
                 AddLevel(level);
-            }
-
-            foreach (CustomPreviewBeatmapLevel level in Loader.CustomWIPLevels.Values)
-            {
-                AddLevel(level);
-            }
-
-            foreach (CustomPreviewBeatmapLevel level in Loader.CachedWIPLevels.Values)
-            {
-                AddLevel(level);
-            }
-
-            foreach (var separateSongFolder in Loader.SeperateSongFolders)
-            {
-                foreach (CustomPreviewBeatmapLevel level in separateSongFolder.Levels.Values)
-                {
-                    AddLevel(level);
-                }
             }
 
             return mapIds;
