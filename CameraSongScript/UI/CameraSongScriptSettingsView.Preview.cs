@@ -19,8 +19,11 @@ namespace CameraSongScript.UI
         private const float PreviewMiniatureScaleStep = 0.01f;
         private const float PreviewVisiblePositionStep = 0.1f;
         private const float PreviewPathLineWidthStep = 0.001f;
+        private const float PreviewScreenScaleStep = 0.0001f;
+        private const float PreviewScreenPositionYStep = 0.01f;
         private const float MinimumPreviewMiniatureScale = 0.01f;
         private const float MinimumPreviewPathLineWidth = 0.001f;
+        private const float MinimumPreviewScreenScale = 0.0001f;
 
         [UIValue("can-preview")]
         public bool CanPreview => _previewController != null && _previewController.CanPreviewSelection;
@@ -92,6 +95,12 @@ namespace CameraSongScript.UI
         [UIValue("label-preview-path-line-width")]
         public string LabelPreviewPathLineWidth => UiLocalization.Get("label-preview-path-line-width");
 
+        [UIValue("label-preview-screen-scale")]
+        public string LabelPreviewScreenScale => UiLocalization.Get("label-preview-screen-scale");
+
+        [UIValue("label-preview-screen-position-y")]
+        public string LabelPreviewScreenPositionY => UiLocalization.Get("label-preview-screen-position-y");
+
         [UIValue("preview-miniature-scale-value")]
         public string PreviewMiniatureScaleValue => FormatPreviewConfigValue(
             CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewMiniatureScale : 0f,
@@ -116,6 +125,16 @@ namespace CameraSongScript.UI
         public string PreviewPathLineWidthValue => FormatPreviewConfigValue(
             CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewPathLineWidth : 0f,
             "0.000");
+
+        [UIValue("preview-screen-scale-value")]
+        public string PreviewScreenScaleValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewScreenScale : 0f,
+            "0.0000");
+
+        [UIValue("preview-screen-position-y-value")]
+        public string PreviewScreenPositionYValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.PreviewScreenPositionY : 0f,
+            "0.00");
 
         [UIAction("preview-show-start")]
         private void PreviewShowStart()
@@ -184,6 +203,30 @@ namespace CameraSongScript.UI
             AdjustPreviewPathLineWidth(PreviewPathLineWidthStep);
         }
 
+        [UIAction("preview-screen-scale-decrease")]
+        private void PreviewScreenScaleDecrease()
+        {
+            AdjustPreviewScreenScale(-PreviewScreenScaleStep);
+        }
+
+        [UIAction("preview-screen-scale-increase")]
+        private void PreviewScreenScaleIncrease()
+        {
+            AdjustPreviewScreenScale(PreviewScreenScaleStep);
+        }
+
+        [UIAction("preview-screen-position-y-decrease")]
+        private void PreviewScreenPositionYDecrease()
+        {
+            AdjustPreviewScreenPositionY(-PreviewScreenPositionYStep);
+        }
+
+        [UIAction("preview-screen-position-y-increase")]
+        private void PreviewScreenPositionYIncrease()
+        {
+            AdjustPreviewScreenPositionY(PreviewScreenPositionYStep);
+        }
+
         [UIAction("reset-preview-visual-settings")]
         private void ResetPreviewVisualSettings()
         {
@@ -199,18 +242,24 @@ namespace CameraSongScript.UI
             changed |= !Mathf.Approximately(config.PreviewVisiblePositionY, defaults.PreviewVisiblePositionY);
             changed |= !Mathf.Approximately(config.PreviewVisiblePositionZ, defaults.PreviewVisiblePositionZ);
             changed |= !Mathf.Approximately(config.PreviewPathLineWidth, defaults.PreviewPathLineWidth);
+            changed |= !Mathf.Approximately(config.PreviewScreenScale, defaults.PreviewScreenScale);
+            changed |= !Mathf.Approximately(config.PreviewScreenPositionY, defaults.PreviewScreenPositionY);
 
             config.PreviewMiniatureScale = defaults.PreviewMiniatureScale;
             config.PreviewVisiblePositionX = defaults.PreviewVisiblePositionX;
             config.PreviewVisiblePositionY = defaults.PreviewVisiblePositionY;
             config.PreviewVisiblePositionZ = defaults.PreviewVisiblePositionZ;
             config.PreviewPathLineWidth = defaults.PreviewPathLineWidth;
+            config.PreviewScreenScale = defaults.PreviewScreenScale;
+            config.PreviewScreenPositionY = defaults.PreviewScreenPositionY;
 
             NotifyPropertyChanged(nameof(PreviewMiniatureScaleValue));
             NotifyPropertyChanged(nameof(PreviewVisiblePositionXValue));
             NotifyPropertyChanged(nameof(PreviewVisiblePositionYValue));
             NotifyPropertyChanged(nameof(PreviewVisiblePositionZValue));
             NotifyPropertyChanged(nameof(PreviewPathLineWidthValue));
+            NotifyPropertyChanged(nameof(PreviewScreenScaleValue));
+            NotifyPropertyChanged(nameof(PreviewScreenPositionYValue));
 
             if (changed)
                 HandlePreviewVisualChanged();
@@ -367,6 +416,36 @@ namespace CameraSongScript.UI
 
             config.PreviewPathLineWidth = newValue;
             RefreshPreviewVisualSettingUi(nameof(PreviewPathLineWidthValue));
+        }
+
+        private void AdjustPreviewScreenScale(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumPreviewScreenScale,
+                RoundToDecimals(config.PreviewScreenScale + delta, 4));
+            if (Mathf.Approximately(config.PreviewScreenScale, newValue))
+                return;
+
+            config.PreviewScreenScale = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewScreenScaleValue));
+        }
+
+        private void AdjustPreviewScreenPositionY(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = RoundToDecimals(config.PreviewScreenPositionY + delta, 2);
+            if (Mathf.Approximately(config.PreviewScreenPositionY, newValue))
+                return;
+
+            config.PreviewScreenPositionY = newValue;
+            RefreshPreviewVisualSettingUi(nameof(PreviewScreenPositionYValue));
         }
 
         private void RefreshPreviewBindings()

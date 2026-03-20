@@ -158,6 +158,7 @@
     <horizontal pad-top="1">
       <text text="~label-preview-miniature-scale" font-size="3.2" color="#CCCCCC" align="Left"/>
       <text text="~label-preview-visible-position-x" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <text text="~label-preview-visible-position-y" font-size="3.2" color="#CCCCCC" align="Left"/>
     </horizontal>
     <horizontal>
       <button text="-" on-click="preview-miniature-scale-decrease" min-width="10" />
@@ -166,26 +167,33 @@
       <button text="-" on-click="preview-visible-position-x-decrease" min-width="10" />
       <text text="~preview-visible-position-x-value" font-size="3.2" align="Center" />
       <button text="+" on-click="preview-visible-position-x-increase" min-width="10" />
-    </horizontal>
-    <horizontal pad-top="1">
-      <text text="~label-preview-visible-position-y" font-size="3.2" color="#CCCCCC" align="Left"/>
-      <text text="~label-preview-visible-position-z" font-size="3.2" color="#CCCCCC" align="Left"/>
-    </horizontal>
-    <horizontal>
       <button text="-" on-click="preview-visible-position-y-decrease" min-width="10" />
       <text text="~preview-visible-position-y-value" font-size="3.2" align="Center" />
       <button text="+" on-click="preview-visible-position-y-increase" min-width="10" />
+    </horizontal>
+    <horizontal pad-top="1">
+      <text text="~label-preview-visible-position-z" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <text text="~label-preview-path-line-width" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <text text="~label-preview-screen-scale" font-size="3.2" color="#CCCCCC" align="Left"/>
+    </horizontal>
+    <horizontal>
       <button text="-" on-click="preview-visible-position-z-decrease" min-width="10" />
       <text text="~preview-visible-position-z-value" font-size="3.2" align="Center" />
       <button text="+" on-click="preview-visible-position-z-increase" min-width="10" />
-    </horizontal>
-    <horizontal pad-top="1">
-      <text text="~label-preview-path-line-width" font-size="3.2" color="#CCCCCC" align="Left"/>
-    </horizontal>
-    <horizontal>
       <button text="-" on-click="preview-path-line-width-decrease" min-width="10" />
       <text text="~preview-path-line-width-value" font-size="3.2" align="Center" />
       <button text="+" on-click="preview-path-line-width-increase" min-width="10" />
+      <button text="-" on-click="preview-screen-scale-decrease" min-width="10" />
+      <text text="~preview-screen-scale-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="preview-screen-scale-increase" min-width="10" />
+    </horizontal>
+    <horizontal pad-top="1">
+      <text text="~label-preview-screen-position-y" font-size="3.2" color="#CCCCCC" align="Left"/>
+    </horizontal>
+    <horizontal>
+      <button text="-" on-click="preview-screen-position-y-decrease" min-width="10" />
+      <text text="~preview-screen-position-y-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="preview-screen-position-y-increase" min-width="10" />
       <button text="~button-preview-visual-settings-reset" on-click="reset-preview-visual-settings" min-width="28" />
     </horizontal>
   </settings-container>

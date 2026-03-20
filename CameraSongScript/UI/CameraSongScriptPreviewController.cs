@@ -24,7 +24,8 @@ namespace CameraSongScript.UI
         private const float DefaultMiniatureScale = 0.15f;
         private const float DefaultStageLineWidth = 0.012f;
         private const float DefaultPathLineWidth = 0.004f;
-        private const float ScreenScale = 0.0025f;
+        private const float DefaultScreenScale = 0.0025f;
+        private const float DefaultScreenPositionY = 0.78f;
         private const float EndPoseEpsilon = 0.0001f;
         private const float StageHalfWidth = 1.5f;
         private const float StageFrontZ = -1.0f;
@@ -414,6 +415,18 @@ namespace CameraSongScript.UI
             return config != null ? config.PreviewPathLineWidth : DefaultPathLineWidth;
         }
 
+        private static float GetPreviewScreenScale()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewScreenScale : DefaultScreenScale;
+        }
+
+        private static float GetPreviewScreenPositionY()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewScreenPositionY : DefaultScreenPositionY;
+        }
+
         private Transform CreatePreviewSceneContents(Transform parent, float stageLineWidth, float pathLineWidth, bool includeCameraMarker)
         {
             CreateStageVolume(parent, stageLineWidth);
@@ -473,12 +486,13 @@ namespace CameraSongScript.UI
             screenRootObject.transform.SetParent(parent, false);
 
             Transform screenTransform = screenRootObject.transform;
-            screenTransform.localPosition = new Vector3(0f, 0.78f, 0.05f);
+            screenTransform.localPosition = new Vector3(0f, GetPreviewScreenPositionY(), 0.05f);
             
             // Convert PreviewPanelSize (Vector2 width/height) to Quad Scale.
-            // ScreenScale scales the whole thing down.
-            float width = PreviewPanelSize.x * ScreenScale;
-            float height = PreviewPanelSize.y * ScreenScale;
+            // Preview screen scale scales the whole thing down.
+            float previewScreenScale = GetPreviewScreenScale();
+            float width = PreviewPanelSize.x * previewScreenScale;
+            float height = PreviewPanelSize.y * previewScreenScale;
             screenTransform.localScale = new Vector3(width, height, 1f);
             screenTransform.localRotation = GetPreviewScreenRotation(Vector3.forward);
 

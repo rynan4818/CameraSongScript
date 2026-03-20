@@ -106,22 +106,32 @@ namespace CameraSongScript.Localization
             ["label-preview-visible-position-x"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position X",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 X"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 X"
             },
             ["label-preview-visible-position-y"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position Y",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Y"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 Y"
             },
             ["label-preview-visible-position-z"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position Z",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Z"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 Z"
             },
             ["label-preview-path-line-width"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Path Line Width",
                 [HoverHintLocalization.Lang_JA] = "経路線幅"
+            },
+            ["label-preview-screen-scale"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Screen Scale",
+                [HoverHintLocalization.Lang_JA] = "再生画面サイズ"
+            },
+            ["label-preview-screen-position-y"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Screen Height",
+                [HoverHintLocalization.Lang_JA] = "再生画面の高さ"
             },
             ["toggle-use-audio-sync"] = new Dictionary<string, string>
             {

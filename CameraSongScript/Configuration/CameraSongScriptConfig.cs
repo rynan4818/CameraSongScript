@@ -194,6 +194,10 @@ namespace CameraSongScript.Configuration
         public virtual float PreviewStageLineWidth { get; set; } = 0.012f;
         /// <summary>プレビューの移動経路線幅</summary>
         public virtual float PreviewPathLineWidth { get; set; } = 0.004f;
+        /// <summary>プレビュー再生画面のスケール（uniform）</summary>
+        public virtual float PreviewScreenScale { get; set; } = 0.0025f;
+        /// <summary>プレビュー再生画面のローカルY位置</summary>
+        public virtual float PreviewScreenPositionY { get; set; } = 0.78f;
 
         // --- 汎用スクリプト（CommonScripts）設定 ---
 
@@ -361,6 +365,8 @@ namespace CameraSongScript.Configuration
             this.PreviewVisiblePositionZ = other.PreviewVisiblePositionZ;
             this.PreviewStageLineWidth = other.PreviewStageLineWidth;
             this.PreviewPathLineWidth = other.PreviewPathLineWidth;
+            this.PreviewScreenScale = other.PreviewScreenScale;
+            this.PreviewScreenPositionY = other.PreviewScreenPositionY;
 
             this.UseCommonScriptAsFallback = other.UseCommonScriptAsFallback;
             this.ForceCommonScript = other.ForceCommonScript;
