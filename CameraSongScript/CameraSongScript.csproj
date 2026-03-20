@@ -163,6 +163,7 @@
     <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Utilities\NumericStringParser.cs" />
+    <Compile Include="Utilities\ScriptFolderPathResolver.cs" />
     <Compile Include="Utilities\SongScriptDisplayLabelFormatter.cs" />
     <Compile Include="Models\SongSettingsManager.cs" />
     <Compile Include="Models\ScriptOffsetManager.cs" />

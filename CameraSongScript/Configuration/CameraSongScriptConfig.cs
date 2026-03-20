@@ -199,6 +199,12 @@ namespace CameraSongScript.Configuration
         /// <summary>プレビュー再生画面のローカルY位置</summary>
         public virtual float PreviewScreenPositionY { get; set; } = 0.78f;
 
+        /// <summary>CommonScripts フォルダのパス（相対パスはゲームルート基準）</summary>
+        public virtual string CommonScriptsFolderPath { get; set; } = @"UserData\CameraSongScript\CommonScripts";
+
+        /// <summary>SongScripts フォルダのパス（相対パスはゲームルート基準）</summary>
+        public virtual string SongScriptsFolderPath { get; set; } = @"UserData\CameraSongScript\SongScripts";
+
         // --- 汎用スクリプト（CommonScripts）設定 ---
 
         /// <summary>
@@ -367,6 +373,8 @@ namespace CameraSongScript.Configuration
             this.PreviewPathLineWidth = other.PreviewPathLineWidth;
             this.PreviewScreenScale = other.PreviewScreenScale;
             this.PreviewScreenPositionY = other.PreviewScreenPositionY;
+            this.CommonScriptsFolderPath = other.CommonScriptsFolderPath;
+            this.SongScriptsFolderPath = other.SongScriptsFolderPath;
 
             this.UseCommonScriptAsFallback = other.UseCommonScriptAsFallback;
             this.ForceCommonScript = other.ForceCommonScript;
