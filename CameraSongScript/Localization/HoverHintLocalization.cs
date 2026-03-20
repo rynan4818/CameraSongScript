@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using CameraSongScript.Configuration;
-using PolyglotLanguage = BGLib.Polyglot.Language;
+using PolyglotLanguage = BGLib.Polyglot.LocalizationLanguage;
 using PolyglotLocalization = BGLib.Polyglot.Localization;
 
 namespace CameraSongScript.Localization

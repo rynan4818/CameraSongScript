@@ -65,7 +65,7 @@ namespace CameraSongScript.Services
 
             try
             {
-                return SongCore.Collections.hashForLevelID(level.levelID) ?? string.Empty;
+                return SongCore.Collections.GetCustomLevelHash(level.levelID) ?? string.Empty;
             }
             catch (Exception ex)
             {

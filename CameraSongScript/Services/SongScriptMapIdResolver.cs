@@ -22,7 +22,7 @@ namespace CameraSongScript.Services
                 return levelReference;
             }
 
-            string hash = SongCore.Collections.hashForLevelID(levelId);
+            string hash = SongCore.Collections.GetCustomLevelHash(levelId);
             if (string.IsNullOrEmpty(hash))
             {
                 hash = ExtractHashFromLevelId(levelId);
