@@ -275,9 +275,17 @@ namespace CameraSongScript.UI
 
         private void HandlePreviewSelectionChanged()
         {
-            _previewController?.HandleSelectionChanged();
-            _lastPreviewUiTime = float.NegativeInfinity;
-            RefreshPreviewBindings();
+            _suppressPreviewSeek = true;
+            try
+            {
+                _previewController?.HandleSelectionChanged();
+                _lastPreviewUiTime = float.NegativeInfinity;
+                RefreshPreviewBindings();
+            }
+            finally
+            {
+                _suppressPreviewSeek = false;
+            }
         }
 
         private void HandlePreviewVisualChanged()

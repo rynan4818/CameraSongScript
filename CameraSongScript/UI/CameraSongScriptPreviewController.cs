@@ -184,7 +184,7 @@ namespace CameraSongScript.UI
                 return;
             }
 
-            ReloadPreviewFromCurrentSelection(false, false, 1, false);
+            ReloadPreviewFromCurrentSelection(false, _isPlaying, _speedMultiplier, false);
         }
 
         public void HandleVisualChange()
