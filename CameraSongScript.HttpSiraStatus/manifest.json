@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "CameraSongScript.HttpSiraStatus",
+  "name": "CameraSongScript.HttpSiraStatus",
+  "author": "rynan4818",
+  "version": "0.1.2",
+  "description": "HttpSiraStatus adapter plugin for CameraSongScript",
+  "gameVersion": "1.37.1",
+  "dependsOn": {
+    "BSIPA": "^4.3.4",
+    "CameraSongScript": "=0.1.2",
+    "HttpSiraStatus": ">=11.0.0"
+  }
+}

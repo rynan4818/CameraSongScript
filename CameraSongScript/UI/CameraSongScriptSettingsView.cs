@@ -337,11 +337,15 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelPreviewVisiblePositionY));
             NotifyPropertyChanged(nameof(LabelPreviewVisiblePositionZ));
             NotifyPropertyChanged(nameof(LabelPreviewPathLineWidth));
+            NotifyPropertyChanged(nameof(LabelPreviewScreenScale));
+            NotifyPropertyChanged(nameof(LabelPreviewScreenPositionY));
             NotifyPropertyChanged(nameof(ToggleUseAudioSync));
             NotifyPropertyChanged(nameof(LabelTargetCamera));
             NotifyPropertyChanged(nameof(LabelCustomScene));
             NotifyPropertyChanged(nameof(ButtonAddCustomScene));
+            NotifyPropertyChanged(nameof(ButtonRefreshCamera2Lists));
             NotifyPropertyChanged(nameof(LabelSongScriptProfile));
+            NotifyPropertyChanged(nameof(ButtonRefreshCameraPlusProfiles));
             NotifyPropertyChanged(nameof(SectionCommonScript));
             NotifyPropertyChanged(nameof(ToggleFallbackToCommon));
             NotifyPropertyChanged(nameof(ToggleForceCommonScript));
@@ -352,6 +356,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(SectionStatusPanel));
             NotifyPropertyChanged(nameof(SectionBeatmapScriptManagement));
             NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
+            NotifyPropertyChanged(nameof(ToggleShortenStatusPanelScriptPath));
             NotifyPropertyChanged(nameof(LabelPanelPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustRotation));
@@ -384,6 +389,8 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(IsSongScriptCacheRefreshAvailable));
             NotifyPropertyChanged(nameof(MissingBeatmapDownloadStatus));
             NotifyPropertyChanged(nameof(IsMissingBeatmapDownloadAvailable));
+            NotifyPropertyChanged(nameof(IsCamera2ListRefreshAvailable));
+            NotifyPropertyChanged(nameof(IsCameraPlusProfileRefreshAvailable));
 
             RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
             RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
@@ -586,8 +593,10 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(HintTargetCamera));
             NotifyPropertyChanged(nameof(HintCustomScene));
             NotifyPropertyChanged(nameof(HintAddCustomScene));
+            NotifyPropertyChanged(nameof(HintRefreshCamera2Lists));
             NotifyPropertyChanged(nameof(HintScriptProfile));
             NotifyPropertyChanged(nameof(HintShowStatusPanel));
+            NotifyPropertyChanged(nameof(HintShortenStatusPanelScriptPath));
             NotifyPropertyChanged(nameof(HintPanelPosition));
             NotifyPropertyChanged(nameof(HintCommonFallback));
             NotifyPropertyChanged(nameof(HintForceCommon));
@@ -725,8 +734,14 @@ namespace CameraSongScript.UI
         [UIValue("button-add-custom-scene")]
         public string ButtonAddCustomScene => UiLocalization.Get("button-add-custom-scene");
 
+        [UIValue("button-refresh-camera2-lists")]
+        public string ButtonRefreshCamera2Lists => UiLocalization.Get("button-refresh-camera2-lists");
+
         [UIValue("label-songscript-profile")]
         public string LabelSongScriptProfile => UiLocalization.Get("label-songscript-profile");
+
+        [UIValue("button-refresh-cameraplus-profiles")]
+        public string ButtonRefreshCameraPlusProfiles => UiLocalization.Get("button-refresh-cameraplus-profiles");
 
         [UIValue("section-common-script")]
         public string SectionCommonScript => UiLocalization.Get("section-common-script");
@@ -757,6 +772,9 @@ namespace CameraSongScript.UI
 
         [UIValue("toggle-show-status-panel")]
         public string ToggleShowStatusPanel => UiLocalization.Get("toggle-show-status-panel");
+
+        [UIValue("toggle-shorten-status-panel-script-path")]
+        public string ToggleShortenStatusPanelScriptPath => UiLocalization.Get("toggle-shorten-status-panel-script-path");
 
         [UIValue("label-panel-position")]
         public string LabelPanelPosition => UiLocalization.Get("label-panel-position");
@@ -795,6 +813,11 @@ namespace CameraSongScript.UI
 
         [UIValue("button-download-missing-beatmaps")]
         public string ButtonDownloadMissingBeatmaps => UiLocalization.Get("button-download-missing-beatmaps");
+
+        [UIValue("is-cameraplus-profile-refresh-available")]
+        public bool IsCameraPlusProfileRefreshAvailable =>
+            CameraModDetector.IsCameraPlus &&
+            Plugin.IsCamPlusHelperReady;
 
         #endregion
 
@@ -1336,6 +1359,17 @@ namespace CameraSongScript.UI
             }
         }
 
+        [UIValue("shorten-status-panel-script-path")]
+        public bool ShortenStatusPanelScriptPath
+        {
+            get => CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath;
+            set
+            {
+                CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath = value;
+                _statusView?.UpdateContent();
+            }
+        }
+
         [UIValue("status-panel-position-options")]
         public List<object> StatusPanelPositionOptions
         {
@@ -1667,6 +1701,23 @@ namespace CameraSongScript.UI
             _ = DownloadMissingBeatmapsAsync();
         }
 
+        [UIAction("refresh-cameraplus-profiles")]
+        private void RefreshCameraPlusProfiles()
+        {
+            if (!IsCameraPlusProfileRefreshAvailable)
+            {
+                return;
+            }
+
+            NotifyPropertyChanged(nameof(ProfileOptions));
+            NotifyPropertyChanged(nameof(SongScriptProfile));
+            NotifyPropertyChanged(nameof(CommonProfileOptions));
+            NotifyPropertyChanged(nameof(CommonProfile));
+
+            RefreshDropdown(songScriptProfileDropdown, ProfileOptions);
+            RefreshDropdown(commonProfileDropdown, CommonProfileOptions);
+        }
+
         private async Task DownloadMissingBeatmapsAsync()
         {
             try
@@ -1788,12 +1839,18 @@ namespace CameraSongScript.UI
         [UIValue("hint-add-custom-scene")]
         public string HintAddCustomScene => HoverHintLocalization.Get("hint-add-custom-scene");
 
+        [UIValue("hint-refresh-camera2-lists")]
+        public string HintRefreshCamera2Lists => HoverHintLocalization.Get("hint-refresh-camera2-lists");
+
         [UIValue("hint-script-profile")]
         public string HintScriptProfile => HoverHintLocalization.Get("hint-script-profile");
 
 
         [UIValue("hint-show-status-panel")]
         public string HintShowStatusPanel => HoverHintLocalization.Get("hint-show-status-panel");
+
+        [UIValue("hint-shorten-status-panel-script-path")]
+        public string HintShortenStatusPanelScriptPath => HoverHintLocalization.Get("hint-shorten-status-panel-script-path");
 
         [UIValue("hint-panel-position")]
         public string HintPanelPosition => HoverHintLocalization.Get("hint-panel-position");
@@ -1819,6 +1876,9 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-common-profile")]
         public string HintCommonProfile => HoverHintLocalization.Get("hint-common-profile");
+
+        [UIValue("hint-refresh-cameraplus-profiles")]
+        public string HintRefreshCameraPlusProfiles => HoverHintLocalization.Get("hint-refresh-cameraplus-profiles");
 
         [UIValue("hint-rerun-songscript-caches")]
         public string HintRerunSongScriptCaches => HoverHintLocalization.Get("hint-rerun-songscript-caches");

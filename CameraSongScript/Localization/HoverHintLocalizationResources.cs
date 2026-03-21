@@ -49,15 +49,30 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Register and update the single camera selected as the 'Target Camera' as the 'CameraSongScript' custom scene name for Camera2",
                 [HoverHintLocalization.Lang_JA] = "上記の「対象カメラ」に選ばれた単独のカメラを、カスタムシーンの「CameraSongScript」としてCamera2に登録・更新"
             },
+            ["hint-refresh-camera2-lists"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Reload the latest Camera2 camera and custom scene lists into all Camera2 dropdowns",
+                [HoverHintLocalization.Lang_JA] = "Camera2の最新カメラ一覧とカスタムシーン一覧を、関連するすべてのドロップダウンに再読込します"
+            },
             ["hint-script-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "CameraPlus profile to use when SongScript is detected",
                 [HoverHintLocalization.Lang_JA] = "曲専用スクリプト検出時に切り替えるCameraPlusプロファイル"
             },
+            ["hint-refresh-cameraplus-profiles"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Reload the latest CameraPlus profile list into both profile dropdowns",
+                [HoverHintLocalization.Lang_JA] = "CameraPlusの最新プロファイル一覧を両方のプロファイルドロップダウンに再読込します"
+            },
             ["hint-show-status-panel"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Show status indicator panel outside tab",
                 [HoverHintLocalization.Lang_JA] = "タブ外にステータスインジケータパネルを表示"
+            },
+            ["hint-shorten-status-panel-script-path"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Use the same shortened script label style as the green status display in the status panel",
+                [HoverHintLocalization.Lang_JA] = "ステータスパネルのスクリプト表示を、緑のステータス表示と同じ短縮表記にする"
             },
             ["hint-panel-position"] = new Dictionary<string, string>
             {
