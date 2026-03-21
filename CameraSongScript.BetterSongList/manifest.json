@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "CameraSongScript.BetterSongList",
+  "name": "CameraSongScript.BetterSongList",
+  "author": "rynan4818",
+  "version": "0.0.1",
+  "description": "BetterSongList adapter plugin for CameraSongScript",
+  "gameVersion": "1.20.0",
+  "dependsOn": {
+    "BSIPA": "^4.2.2",
+    "CameraSongScript": "=0.0.1",
+    "BetterSongList": "=0.3.3"
+  }
+}

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
 	<PropertyGroup>
-		<ImportBSMTTargets>False</ImportBSMTTargets>
+		<ImportBSMTTargets>True</ImportBSMTTargets>
+		<BSMTProjectType>BSIPA</BSMTProjectType>
 	</PropertyGroup>
 </Project>

@@ -146,6 +146,7 @@
     <Compile Include="Detectors\CameraModDetector.cs" />
     <Compile Include="Configuration\CameraSongScriptConfig.cs" />
     <Compile Include="Configuration\StatusPanelPresetCatalog.cs" />
+    <Compile Include="AdapterRegistry.cs" />
     <Compile Include="Detectors\LevelSelectionDetector.cs" />
     <Compile Include="Detectors\CameraSongScriptDetector.cs" />
     <Compile Include="Detectors\CameraSongScriptDetector.ScanPipeline.cs" />
