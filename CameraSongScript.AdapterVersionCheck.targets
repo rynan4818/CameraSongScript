@@ -3,6 +3,8 @@
   <Target Name="ValidateCameraSongScriptAssemblyVersion" AfterTargets="CoreCompile" Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
       <_CameraSongScriptProjectReference Include="@(ProjectReference)" Condition="'%(Filename)%(Extension)' == 'CameraSongScript.csproj'" />
+      <_AdapterAssemblyPath Include="@(IntermediateAssembly)" Condition="'@(IntermediateAssembly)' != ''" />
+      <_AdapterAssemblyPath Include="$(TargetPath)" Condition="'@(_AdapterAssemblyPath)' == '' and '$(TargetPath)' != ''" />
     </ItemGroup>
 
     <Error Condition="'@(_CameraSongScriptProjectReference)' == ''" Text="CameraSongScript.csproj への ProjectReference が見つからないため、AssemblyVersion の整合性チェックを実行できません。" />
@@ -11,10 +13,12 @@
       <Output TaskParameter="TargetOutputs" ItemName="_CameraSongScriptTargetPath" />
     </MSBuild>
 
+    <Error Condition="'@(_AdapterAssemblyPath)' == ''" Text="$(MSBuildProjectName) の出力 DLL パスを取得できなかったため、AssemblyVersion の整合性チェックを実行できません。" />
+    <Error Condition="!Exists('@(_AdapterAssemblyPath)')" Text="$(MSBuildProjectName) の出力 DLL が見つからないため、AssemblyVersion の整合性チェックを実行できません: @(_AdapterAssemblyPath)" />
     <Error Condition="'@(_CameraSongScriptTargetPath)' == ''" Text="CameraSongScript の出力 DLL パスを取得できなかったため、AssemblyVersion の整合性チェックを実行できません。" />
     <Error Condition="!Exists('@(_CameraSongScriptTargetPath)')" Text="CameraSongScript の出力 DLL が見つからないため、AssemblyVersion の整合性チェックを実行できません: @(_CameraSongScriptTargetPath)" />
 
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+    <GetAssemblyIdentity AssemblyFiles="@(_AdapterAssemblyPath)">
       <Output TaskParameter="Assemblies" ItemName="_AdapterAssemblyIdentity" />
     </GetAssemblyIdentity>
 
