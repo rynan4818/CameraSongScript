@@ -106,22 +106,32 @@ namespace CameraSongScript.Localization
             ["label-preview-visible-position-x"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position X",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 X"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 X"
             },
             ["label-preview-visible-position-y"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position Y",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Y"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 Y"
             },
             ["label-preview-visible-position-z"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Position Z",
-                [HoverHintLocalization.Lang_JA] = "プレビューの表示位置 Z"
+                [HoverHintLocalization.Lang_JA] = "プレビュー位置 Z"
             },
             ["label-preview-path-line-width"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Preview Path Line Width",
                 [HoverHintLocalization.Lang_JA] = "経路線幅"
+            },
+            ["label-preview-screen-scale"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Screen Scale",
+                [HoverHintLocalization.Lang_JA] = "再生画面サイズ"
+            },
+            ["label-preview-screen-position-y"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Preview Screen Height",
+                [HoverHintLocalization.Lang_JA] = "再生画面の高さ"
             },
             ["toggle-use-audio-sync"] = new Dictionary<string, string>
             {
@@ -140,13 +150,23 @@ namespace CameraSongScript.Localization
             },
             ["button-add-custom-scene"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Add 'CameraSongScript' Custom Scene",
-                [HoverHintLocalization.Lang_JA] = "'CameraSongScript' カスタムシーンを追加"
+                [HoverHintLocalization.Lang_EN] = "Add a dedicated custom scene",
+                [HoverHintLocalization.Lang_JA] = "専用カスタムシーン追加"
+            },
+            ["button-refresh-camera2-lists"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Refresh Camera2 Lists",
+                [HoverHintLocalization.Lang_JA] = "Camera2一覧再読込"
             },
             ["label-songscript-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "SongScript Profile",
                 [HoverHintLocalization.Lang_JA] = "曲専用プロファイル"
+            },
+            ["button-refresh-cameraplus-profiles"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Refresh Profiles",
+                [HoverHintLocalization.Lang_JA] = "プロファイル再読込"
             },
             ["section-common-script"] = new Dictionary<string, string>
             {
@@ -197,6 +217,11 @@ namespace CameraSongScript.Localization
             {
                 [HoverHintLocalization.Lang_EN] = "Show Status Panel",
                 [HoverHintLocalization.Lang_JA] = "ステータスパネルを表示"
+            },
+            ["toggle-shorten-status-panel-script-path"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Shorten Script Path in Panel",
+                [HoverHintLocalization.Lang_JA] = "ステータスパネルのスクリプト表示を短縮"
             },
             ["label-panel-position"] = new Dictionary<string, string>
             {
@@ -345,8 +370,8 @@ namespace CameraSongScript.Localization
             },
             ["warning-adapter-version-unsupported"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} Ver{1} is unsupported and will not be loaded. Allowed Ver{2}</color>",
-                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のVer{1} は対象外で使用不可。対応版Ver{2}</color>"
+                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} Ver{1} does not match CameraSongScript Ver{2} and will not be loaded</color>",
+                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のVer{1} は CameraSongScript のVer{2} と一致しないため使用不可</color>"
             },
             ["preview-initializing"] = new Dictionary<string, string>
             {

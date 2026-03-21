@@ -83,12 +83,25 @@ namespace CameraSongScript.UI
                 }
 
                 Plugin.CamHelper.CreateOrUpdateCustomScene("CameraSongScript", camerasToAdd);
-                
-                // ドロップダウンのリストとUIを更新
-                NotifyPropertyChanged(nameof(CustomSceneOptions));
-                NotifyPropertyChanged(nameof(SelectedCustomScene));
-                RefreshDropdown(customSceneDropdown, CustomSceneOptions);
+
+                RefreshCamera2Dropdowns();
             }
+        }
+
+        [UIValue("is-camera2-list-refresh-available")]
+        public bool IsCamera2ListRefreshAvailable =>
+            CameraModDetector.IsCamera2 &&
+            Plugin.IsCamHelperReady;
+
+        [UIAction("refresh-camera2-lists")]
+        public void RefreshCamera2Lists()
+        {
+            if (!IsCamera2ListRefreshAvailable)
+            {
+                return;
+            }
+
+            RefreshCamera2Dropdowns();
         }
 
         [UIValue("use-audio-sync")]
@@ -136,6 +149,23 @@ namespace CameraSongScript.UI
                 if (cam == UiLocalization.OptionAll) cam = string.Empty;
                 CameraSongScriptConfig.Instance.TargetCameras = cam ?? string.Empty;
             }
+        }
+
+        private void RefreshCamera2Dropdowns()
+        {
+            NotifyPropertyChanged(nameof(TargetCameraOptions));
+            NotifyPropertyChanged(nameof(TargetCameras));
+            NotifyPropertyChanged(nameof(CustomSceneOptions));
+            NotifyPropertyChanged(nameof(SelectedCustomScene));
+            NotifyPropertyChanged(nameof(CommonTargetCameraOptions));
+            NotifyPropertyChanged(nameof(CommonTargetCamera));
+            NotifyPropertyChanged(nameof(CommonCustomSceneOptions));
+            NotifyPropertyChanged(nameof(CommonCustomScene));
+
+            RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
+            RefreshDropdown(customSceneDropdown, CustomSceneOptions);
+            RefreshDropdown(commonTargetCameraDropdown, CommonTargetCameraOptions);
+            RefreshDropdown(commonCustomSceneDropdown, CommonCustomSceneOptions);
         }
 
         #endregion

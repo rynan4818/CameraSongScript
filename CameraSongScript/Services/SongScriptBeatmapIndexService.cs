@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using CameraSongScript.Utilities;
 using Zenject;
 
 namespace CameraSongScript.Services
@@ -75,8 +76,7 @@ namespace CameraSongScript.Services
         private static readonly string CacheFilePath =
             Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "BeatmapSongScriptCache.json");
 
-        private static readonly string SongScriptsFolderPath =
-            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScripts");
+        private static string SongScriptsFolderPath => ScriptFolderPathResolver.GetSongScriptsFolderPath();
 
         private readonly object _cacheLock = new object();
         private readonly HashSet<string> _skipFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
