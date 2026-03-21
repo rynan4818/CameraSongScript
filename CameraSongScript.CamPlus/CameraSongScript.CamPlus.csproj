@@ -74,6 +74,7 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\CameraSongScript.AdapterVersionCheck.targets" Condition="Exists('..\CameraSongScript.AdapterVersionCheck.targets')" />
   <Target Name="CopyToLibs" AfterTargets="Build">
     <Message Text="Copying $(AssemblyName).dll to $(BeatSaberDir)\Libs" Importance="high" />
     <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(BeatSaberDir)\Libs" />

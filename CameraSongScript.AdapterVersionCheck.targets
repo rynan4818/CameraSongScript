@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="ValidateCameraSongScriptAssemblyVersion" AfterTargets="CoreCompile" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_CameraSongScriptProjectReference Include="@(ProjectReference)" Condition="'%(Filename)%(Extension)' == 'CameraSongScript.csproj'" />
+    </ItemGroup>
+
+    <Error Condition="'@(_CameraSongScriptProjectReference)' == ''" Text="CameraSongScript.csproj への ProjectReference が見つからないため、AssemblyVersion の整合性チェックを実行できません。" />
+
+    <MSBuild Projects="@(_CameraSongScriptProjectReference)" Targets="GetTargetPath" BuildInParallel="false" Properties="Configuration=$(Configuration);Platform=$(Platform)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CameraSongScriptTargetPath" />
+    </MSBuild>
+
+    <Error Condition="'@(_CameraSongScriptTargetPath)' == ''" Text="CameraSongScript の出力 DLL パスを取得できなかったため、AssemblyVersion の整合性チェックを実行できません。" />
+    <Error Condition="!Exists('@(_CameraSongScriptTargetPath)')" Text="CameraSongScript の出力 DLL が見つからないため、AssemblyVersion の整合性チェックを実行できません: @(_CameraSongScriptTargetPath)" />
+
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="_AdapterAssemblyIdentity" />
+    </GetAssemblyIdentity>
+
+    <GetAssemblyIdentity AssemblyFiles="@(_CameraSongScriptTargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="_CameraSongScriptAssemblyIdentity" />
+    </GetAssemblyIdentity>
+
+    <PropertyGroup>
+      <_AdapterAssemblyVersion>%(_AdapterAssemblyIdentity.Version)</_AdapterAssemblyVersion>
+      <_CameraSongScriptAssemblyVersion>%(_CameraSongScriptAssemblyIdentity.Version)</_CameraSongScriptAssemblyVersion>
+    </PropertyGroup>
+
+    <Error Condition="'$(_AdapterAssemblyVersion)' == ''" Text="$(MSBuildProjectName) の AssemblyVersion を取得できませんでした。" />
+    <Error Condition="'$(_CameraSongScriptAssemblyVersion)' == ''" Text="CameraSongScript の AssemblyVersion を取得できませんでした。" />
+    <Error Condition="'$(_AdapterAssemblyVersion)' != '$(_CameraSongScriptAssemblyVersion)'" Text="$(MSBuildProjectName) の AssemblyVersion ($(_AdapterAssemblyVersion)) が CameraSongScript の AssemblyVersion ($(_CameraSongScriptAssemblyVersion)) と一致しません。" />
+  </Target>
+</Project>
