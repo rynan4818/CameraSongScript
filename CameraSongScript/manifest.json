@@ -3,13 +3,17 @@
   "id": "CameraSongScript",
   "name": "CameraSongScript",
   "author": "rynan4818",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Adds SongScript functionality to Camera2 and CameraPlus",
-  "gameVersion": "1.20.0",
+  "gameVersion": "1.34.2",
   "dependsOn": {
-    "BSIPA": "^4.2.2",
-    "SiraUtil": "^3.0.5",
-    "BeatSaberMarkupLanguage": "^1.6.3",
-    "BeatSaverSharp": "^3.3.0"
+    "BSIPA": "^4.3.2",
+    "SiraUtil": "^3.1.6",
+    "BeatSaberMarkupLanguage": "^1.8.0",
+    "BeatSaverSharp": "^3.4.5",
+    "SongCore": "^3.12.1",
+    "SongDetailsCache": "^1.2.2",
+    "System.IO.Compression": "^4.6.57",
+    "System.IO.Compression.FileSystem": "^4.7.3056"
   }
 }

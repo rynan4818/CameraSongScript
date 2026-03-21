@@ -45,5 +45,26 @@ namespace CameraSongScript.Detectors
             }
             Plugin.Log.Warn("No supported camera mod detected (Camera2 or CameraPlus).");
         }
+
+        internal static void RegisterDetectedMod(CameraModType modType)
+        {
+            if (modType == CameraModType.None)
+            {
+                return;
+            }
+
+            if (DetectedMod != CameraModType.None && DetectedMod != modType)
+            {
+                return;
+            }
+
+            if (DetectedMod == modType)
+            {
+                return;
+            }
+
+            DetectedMod = modType;
+            Plugin.Log?.Info($"Detected camera mod via adapter registration: {modType}");
+        }
     }
 }

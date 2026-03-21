@@ -75,6 +75,11 @@ namespace CameraSongScript.Configuration
         public virtual bool ShowStatusPanel { get; set; } = true;
 
         /// <summary>
+        /// ステータスパネルのスクリプト表示を短縮するかどうか
+        /// </summary>
+        public virtual bool ShortenStatusPanelScriptPath { get; set; } = false;
+
+        /// <summary>
         /// ステータスインジケータパネルのプリセット位置インデックス
         /// </summary>
         public virtual int StatusPanelPosition { get; set; } = 11;
@@ -194,6 +199,16 @@ namespace CameraSongScript.Configuration
         public virtual float PreviewStageLineWidth { get; set; } = 0.012f;
         /// <summary>プレビューの移動経路線幅</summary>
         public virtual float PreviewPathLineWidth { get; set; } = 0.004f;
+        /// <summary>プレビュー再生画面のスケール（uniform）</summary>
+        public virtual float PreviewScreenScale { get; set; } = 0.0025f;
+        /// <summary>プレビュー再生画面のローカルY位置</summary>
+        public virtual float PreviewScreenPositionY { get; set; } = 0.78f;
+
+        /// <summary>CommonScripts フォルダのパス（相対パスはゲームルート基準）</summary>
+        public virtual string CommonScriptsFolderPath { get; set; } = @"UserData\CameraSongScript\CommonScripts";
+
+        /// <summary>SongScripts フォルダのパス（相対パスはゲームルート基準）</summary>
+        public virtual string SongScriptsFolderPath { get; set; } = @"UserData\CameraSongScript\SongScripts";
 
         // --- 汎用スクリプト（CommonScripts）設定 ---
 
@@ -265,6 +280,7 @@ namespace CameraSongScript.Configuration
             this.HoverHintLanguage = other.HoverHintLanguage;
             this.ShowHoverHints = other.ShowHoverHints;
             this.ShowStatusPanel = other.ShowStatusPanel;
+            this.ShortenStatusPanelScriptPath = other.ShortenStatusPanelScriptPath;
             this.StatusPanelPosition = other.StatusPanelPosition;
 
             this.PresetLeftUpperRightPosX = other.PresetLeftUpperRightPosX;
@@ -361,6 +377,10 @@ namespace CameraSongScript.Configuration
             this.PreviewVisiblePositionZ = other.PreviewVisiblePositionZ;
             this.PreviewStageLineWidth = other.PreviewStageLineWidth;
             this.PreviewPathLineWidth = other.PreviewPathLineWidth;
+            this.PreviewScreenScale = other.PreviewScreenScale;
+            this.PreviewScreenPositionY = other.PreviewScreenPositionY;
+            this.CommonScriptsFolderPath = other.CommonScriptsFolderPath;
+            this.SongScriptsFolderPath = other.SongScriptsFolderPath;
 
             this.UseCommonScriptAsFallback = other.UseCommonScriptAsFallback;
             this.ForceCommonScript = other.ForceCommonScript;

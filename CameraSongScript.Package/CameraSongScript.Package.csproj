@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E5F6A7B8-5555-6666-7777-88889999AAAA}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CameraSongScript.Package</RootNamespace>
+    <AssemblyName>CameraSongScript.Package</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <DisableCopyToGame>true</DisableCopyToGame>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="PackagingMarker.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Target Name="CreateCombinedReleaseZip" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' and '$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <_CoreProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\CameraSongScript'))</_CoreProjectDirectory>
+      <_CoreProjectPath>$(_CoreProjectDirectory)\CameraSongScript.csproj</_CoreProjectPath>
+      <_CombinedArtifactDestination>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(OutputPath)Artifact'))</_CombinedArtifactDestination>
+      <_CombinedPluginsDirectory>$(_CombinedArtifactDestination)\Plugins</_CombinedPluginsDirectory>
+      <_CombinedZipOutputDirectory>$(_CoreProjectDirectory)\bin\$(Configuration)\zip\</_CombinedZipOutputDirectory>
+      <_PackageBuildProperties>Configuration=$(Configuration);Platform=$(Platform);DisableCopyToGame=$(DisableCopyToGame);DisableCopyToPlugins=$(DisableCopyToPlugins);GameDirectory=$(GameDirectory)</_PackageBuildProperties>
+    </PropertyGroup>
+    <Message Text="Target: CreateCombinedReleaseZip" Importance="high" />
+    <ItemGroup>
+      <_ProjectsToPackage Include="$(_CoreProjectPath)" />
+      <_ProjectsToPackage Include="$(MSBuildProjectDirectory)\..\CameraSongScript.BetterSongList\CameraSongScript.BetterSongList.csproj" />
+      <_ProjectsToPackage Include="$(MSBuildProjectDirectory)\..\CameraSongScript.Cam2\CameraSongScript.Cam2.csproj" />
+      <_ProjectsToPackage Include="$(MSBuildProjectDirectory)\..\CameraSongScript.CamPlus\CameraSongScript.CamPlus.csproj" />
+      <_ProjectsToPackage Include="$(MSBuildProjectDirectory)\..\CameraSongScript.HttpSiraStatus\CameraSongScript.HttpSiraStatus.csproj" />
+    </ItemGroup>
+    <MSBuild Projects="@(_ProjectsToPackage)" Targets="Build" BuildInParallel="false" Properties="$(_PackageBuildProperties)" />
+    <MSBuild Projects="@(_ProjectsToPackage)" Targets="GetTargetPath" BuildInParallel="false" Properties="$(_PackageBuildProperties)">
+      <Output TaskParameter="TargetOutputs" ItemName="_ReferencedTargetPaths" />
+    </MSBuild>
+    <Error Condition="'@(_ReferencedTargetPaths)' == ''" Text="combined zip 用の参照プロジェクト出力を取得できませんでした。" />
+    <ItemGroup>
+      <_MissingReferencedTarget Include="@(_ReferencedTargetPaths)" Condition="!Exists('%(Identity)')" />
+      <_CombinedPluginOutput Include="@(_ReferencedTargetPaths)">
+        <OutputPath>Plugins\%(Filename)%(Extension)</OutputPath>
+      </_CombinedPluginOutput>
+      <_ExistingCoreZip Include="$(_CombinedZipOutputDirectory)CameraSongScript*.zip" />
+    </ItemGroup>
+    <Error Condition="'@(_MissingReferencedTarget)' != ''" Text="combined zip に必要な出力 DLL が見つかりません: @(_MissingReferencedTarget, ', ')" />
+    <Error Condition="'@(_ExistingCoreZip)' == ''" Text="CameraSongScript の Release zip が見つからないため、combined zip を作成できません: $(_CombinedZipOutputDirectory)" />
+    <RemoveDir Directories="$(_CombinedArtifactDestination)" Condition="Exists('$(_CombinedArtifactDestination)')" />
+    <MakeDir Directories="$(_CombinedPluginsDirectory)" />
+    <Message Text="   Copying '%(_CombinedPluginOutput.Identity)' to '$(_CombinedArtifactDestination)\%(_CombinedPluginOutput.OutputPath)'." Importance="high" />
+    <Copy SourceFiles="@(_CombinedPluginOutput)" DestinationFiles="@(_CombinedPluginOutput->'$(_CombinedArtifactDestination)\%(OutputPath)')" />
+    <Delete Files="@(_ExistingCoreZip)" TreatErrorsAsWarnings="true" ContinueOnError="true" />
+    <ZipDirectory SourceDirectory="$(_CombinedArtifactDestination)" DestinationFile="@(_ExistingCoreZip)" Overwrite="true" />
+  </Target>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

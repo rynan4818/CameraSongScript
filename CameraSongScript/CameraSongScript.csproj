@@ -156,6 +156,7 @@
     <Compile Include="Detectors\CameraModDetector.cs" />
     <Compile Include="Configuration\CameraSongScriptConfig.cs" />
     <Compile Include="Configuration\StatusPanelPresetCatalog.cs" />
+    <Compile Include="AdapterRegistry.cs" />
     <Compile Include="Detectors\LevelSelectionDetector.cs" />
     <Compile Include="Detectors\CameraSongScriptDetector.cs" />
     <Compile Include="Detectors\CameraSongScriptDetector.ScanPipeline.cs" />
@@ -173,6 +174,7 @@
     <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Utilities\NumericStringParser.cs" />
+    <Compile Include="Utilities\ScriptFolderPathResolver.cs" />
     <Compile Include="Utilities\SongScriptDisplayLabelFormatter.cs" />
     <Compile Include="Models\SongSettingsManager.cs" />
     <Compile Include="Models\ScriptOffsetManager.cs" />

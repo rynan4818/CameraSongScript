@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
 using CameraSongScript.Localization;
+using CameraSongScript.Utilities;
 
 namespace CameraSongScript.Models
 {
@@ -28,8 +29,7 @@ namespace CameraSongScript.Models
     /// </summary>
     internal static class CommonScriptCache
     {
-        private static readonly string CommonScriptFolderPath =
-            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "CommonScripts");
+        private static string CommonScriptFolderPath => ScriptFolderPathResolver.GetCommonScriptsFolderPath();
 
         private static List<CommonScriptEntry> _scripts = new List<CommonScriptEntry>();
         private static readonly Random _random = new Random();
