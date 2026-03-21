@@ -16,25 +16,7 @@ namespace CameraSongScript
     [Plugin(RuntimeOptions.SingleStartInit)]
     public class Plugin
     {
-        private static readonly Version[] SupportedHttpSiraStatusAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedBetterSongListAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedCam2AdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedCamPlusAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
+        private static Version ExpectedAdapterVersion => typeof(Plugin).Assembly.GetName().Version;
 
         internal static IPALogger Log { get; private set; }
         internal static ICameraHelper CamHelper { get; private set; }
@@ -90,7 +72,7 @@ namespace CameraSongScript
                 CamHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<ICameraHelper>(
                     "CameraSongScript.Cam2",
                     "CameraSongScript.Cam2.dll",
-                    SupportedCam2AdapterVersions,
+                    ExpectedAdapterVersion,
                     "CameraSongScript.Cam2.Camera2Helper");
                 if (CamHelper == null)
                 {
@@ -114,7 +96,7 @@ namespace CameraSongScript
                 CamPlusHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<ICameraPlusHelper>(
                     "CameraSongScript.CamPlus",
                     "CameraSongScript.CamPlus.dll",
-                    SupportedCamPlusAdapterVersions,
+                    ExpectedAdapterVersion,
                     "CameraSongScript.CamPlus.CameraPlusHelper");
                 if (CamPlusHelper == null)
                 {
@@ -160,7 +142,7 @@ namespace CameraSongScript
             HttpSiraStatusHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<IHttpSiraStatusHelper>(
                 "CameraSongScript.HttpSiraStatus",
                 "CameraSongScript.HttpSiraStatus.dll",
-                SupportedHttpSiraStatusAdapterVersions,
+                ExpectedAdapterVersion,
                 "CameraSongScript.HttpSiraStatus.HttpSiraStatusHelper");
 
             if (HttpSiraStatusHelper == null)
@@ -194,7 +176,7 @@ namespace CameraSongScript
             BetterSongListHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<IBetterSongListHelper>(
                 "CameraSongScript.BetterSongList",
                 "CameraSongScript.BetterSongList.dll",
-                SupportedBetterSongListAdapterVersions,
+                ExpectedAdapterVersion,
                 "CameraSongScript.BetterSongList.BetterSongListHelper");
 
             if (BetterSongListHelper == null)

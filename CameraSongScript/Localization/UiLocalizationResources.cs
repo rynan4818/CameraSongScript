@@ -355,8 +355,8 @@ namespace CameraSongScript.Localization
             },
             ["warning-adapter-version-unsupported"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} Ver{1} is unsupported and will not be loaded. Allowed Ver{2}</color>",
-                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のVer{1} は対象外で使用不可。対応版Ver{2}</color>"
+                [HoverHintLocalization.Lang_EN] = "<color=#FF5555>Warning: {0} Ver{1} does not match CameraSongScript Ver{2} and will not be loaded</color>",
+                [HoverHintLocalization.Lang_JA] = "<color=#FF5555>警告: {0} のVer{1} は CameraSongScript のVer{2} と一致しないため使用不可</color>"
             },
             ["preview-initializing"] = new Dictionary<string, string>
             {

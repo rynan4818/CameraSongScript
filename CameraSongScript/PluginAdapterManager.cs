@@ -11,16 +11,16 @@ namespace CameraSongScript
     {
         private sealed class AdapterVersionWarningInfo
         {
-            internal AdapterVersionWarningInfo(string adapterFileName, string detectedVersionText, string supportedVersionsText)
+            internal AdapterVersionWarningInfo(string adapterFileName, string detectedVersionText, string expectedVersionText)
             {
                 AdapterFileName = adapterFileName;
                 DetectedVersionText = detectedVersionText;
-                SupportedVersionsText = supportedVersionsText;
+                ExpectedVersionText = expectedVersionText;
             }
 
             internal string AdapterFileName { get; private set; }
             internal string DetectedVersionText { get; private set; }
-            internal string SupportedVersionsText { get; private set; }
+            internal string ExpectedVersionText { get; private set; }
         }
 
         private static readonly string[] AdapterWarningOrder =
@@ -65,7 +65,7 @@ namespace CameraSongScript
                         "warning-adapter-version-unsupported",
                         warning.AdapterFileName,
                         warning.DetectedVersionText,
-                        warning.SupportedVersionsText));
+                        warning.ExpectedVersionText));
                 }
             }
 
@@ -75,7 +75,7 @@ namespace CameraSongScript
         internal static T TryCreateAdapterWithVersionCheck<T>(
             string assemblyName,
             string adapterFileName,
-            IEnumerable<Version> supportedVersions,
+            Version expectedVersion,
             string typeName) where T : class
         {
             try
@@ -101,15 +101,15 @@ namespace CameraSongScript
                     }
                 }
 
-                if (!IsSupportedAdapterVersion(detectedVersion, supportedVersions))
+                if (!IsMatchingAdapterVersion(detectedVersion, expectedVersion))
                 {
                     if (SetUnsupportedAdapterVersionWarning(
                         adapterFileName,
                         FormatVersion(detectedVersion),
-                        FormatSupportedVersions(supportedVersions)))
+                        FormatVersion(expectedVersion)))
                     {
                         Plugin.Log.Warn(
-                            $"Adapter '{adapterFileName}' version {FormatVersion(detectedVersion)} is not supported. Allowed versions: {FormatSupportedVersions(supportedVersions)}.");
+                            $"Adapter '{adapterFileName}' version {FormatVersion(detectedVersion)} does not match CameraSongScript version {FormatVersion(expectedVersion)} and will not be loaded.");
                     }
 
                     return null;
@@ -230,24 +230,16 @@ namespace CameraSongScript
             }
         }
 
-        private static bool IsSupportedAdapterVersion(Version detectedVersion, IEnumerable<Version> supportedVersions)
+        private static bool IsMatchingAdapterVersion(Version detectedVersion, Version expectedVersion)
         {
             Version normalizedDetectedVersion = NormalizeVersion(detectedVersion);
-            if (normalizedDetectedVersion == null || supportedVersions == null)
+            Version normalizedExpectedVersion = NormalizeVersion(expectedVersion);
+            if (normalizedDetectedVersion == null || normalizedExpectedVersion == null)
             {
                 return false;
             }
 
-            foreach (Version supportedVersion in supportedVersions)
-            {
-                Version normalizedSupportedVersion = NormalizeVersion(supportedVersion);
-                if (normalizedSupportedVersion != null && normalizedSupportedVersion.Equals(normalizedDetectedVersion))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return normalizedDetectedVersion.Equals(normalizedExpectedVersion);
         }
 
         private static Version NormalizeVersion(Version version)
@@ -270,25 +262,15 @@ namespace CameraSongScript
             return normalizedVersion != null ? normalizedVersion.ToString(4) : "unknown";
         }
 
-        private static string FormatSupportedVersions(IEnumerable<Version> versions)
-        {
-            if (versions == null)
-            {
-                return "none";
-            }
-
-            return string.Join(", ", versions.Select(FormatVersion).ToArray());
-        }
-
         private static bool SetUnsupportedAdapterVersionWarning(
             string adapterFileName,
             string detectedVersionText,
-            string supportedVersionsText)
+            string expectedVersionText)
         {
             AdapterVersionWarningInfo existingWarning;
             if (UnsupportedAdapterVersionWarnings.TryGetValue(adapterFileName, out existingWarning) &&
                 string.Equals(existingWarning.DetectedVersionText, detectedVersionText, StringComparison.Ordinal) &&
-                string.Equals(existingWarning.SupportedVersionsText, supportedVersionsText, StringComparison.Ordinal))
+                string.Equals(existingWarning.ExpectedVersionText, expectedVersionText, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -296,7 +278,7 @@ namespace CameraSongScript
             UnsupportedAdapterVersionWarnings[adapterFileName] = new AdapterVersionWarningInfo(
                 adapterFileName,
                 detectedVersionText,
-                supportedVersionsText);
+                expectedVersionText);
 
             NotifyAdapterVersionWarningsChanged();
             return true;
