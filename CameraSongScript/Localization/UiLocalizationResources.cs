@@ -208,6 +208,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Show Status Panel",
                 [HoverHintLocalization.Lang_JA] = "ステータスパネルを表示"
             },
+            ["toggle-shorten-status-panel-script-path"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Shorten Script Path in Panel",
+                [HoverHintLocalization.Lang_JA] = "ステータスパネルのスクリプト表示を短縮"
+            },
             ["label-panel-position"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Panel Position",

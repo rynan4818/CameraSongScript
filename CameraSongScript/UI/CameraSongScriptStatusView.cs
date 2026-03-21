@@ -2,6 +2,7 @@ using System;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Localization;
+using CameraSongScript.Utilities;
 using HMUI;
 using TMPro;
 using UnityEngine;
@@ -228,7 +229,7 @@ namespace CameraSongScript.UI
                     commonName = UiLocalization.GetOptionDisplay(
                         CameraSongScriptConfig.Instance.SelectedCommonScript,
                         UiLocalization.OptionRandom);
-                commonName = MakeWrapFriendly(commonName);
+                commonName = FormatStatusPanelScriptLabel(commonName);
 
                 string commonText = UiLocalization.Get("panel-common");
                 commonText += "\n" + UiLocalization.Format("panel-script-line", commonName);
@@ -263,7 +264,7 @@ namespace CameraSongScript.UI
             }
 
             // 以下、有効かつスクリプトありの場合
-            string scriptName = MakeWrapFriendly(_scriptDetector.SelectedScriptDisplayName);
+            string scriptName = FormatStatusPanelScriptLabel(_scriptDetector.SelectedScriptDisplayName);
 
             string statusLine = detectedScriptCount > 0
                 ? UiLocalization.Format("panel-on-with-count", detectedScriptCount)
@@ -354,6 +355,17 @@ namespace CameraSongScript.UI
                 .Replace("_", "_" + ZeroWidthBreak)
                 .Replace("-", "-" + ZeroWidthBreak)
                 .Replace(".", "." + ZeroWidthBreak);
+        }
+
+        private static string FormatStatusPanelScriptLabel(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
+
+            if (CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath)
+                value = SongScriptDisplayLabelFormatter.Format(value);
+
+            return MakeWrapFriendly(value);
         }
 
         private string GetCamera2UnsupportedWarningText()

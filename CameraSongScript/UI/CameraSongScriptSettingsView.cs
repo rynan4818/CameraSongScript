@@ -372,6 +372,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(SectionStatusPanel));
             NotifyPropertyChanged(nameof(SectionBeatmapScriptManagement));
             NotifyPropertyChanged(nameof(ToggleShowStatusPanel));
+            NotifyPropertyChanged(nameof(ToggleShortenStatusPanelScriptPath));
             NotifyPropertyChanged(nameof(LabelPanelPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustRotation));
@@ -608,6 +609,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(HintAddCustomScene));
             NotifyPropertyChanged(nameof(HintScriptProfile));
             NotifyPropertyChanged(nameof(HintShowStatusPanel));
+            NotifyPropertyChanged(nameof(HintShortenStatusPanelScriptPath));
             NotifyPropertyChanged(nameof(HintPanelPosition));
             NotifyPropertyChanged(nameof(HintCommonFallback));
             NotifyPropertyChanged(nameof(HintForceCommon));
@@ -763,6 +765,9 @@ namespace CameraSongScript.UI
 
         [UIValue("toggle-show-status-panel")]
         public string ToggleShowStatusPanel => UiLocalization.Get("toggle-show-status-panel");
+
+        [UIValue("toggle-shorten-status-panel-script-path")]
+        public string ToggleShortenStatusPanelScriptPath => UiLocalization.Get("toggle-shorten-status-panel-script-path");
 
         [UIValue("label-panel-position")]
         public string LabelPanelPosition => UiLocalization.Get("label-panel-position");
@@ -1336,6 +1341,17 @@ namespace CameraSongScript.UI
             }
         }
 
+        [UIValue("shorten-status-panel-script-path")]
+        public bool ShortenStatusPanelScriptPath
+        {
+            get => CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath;
+            set
+            {
+                CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath = value;
+                _statusView?.UpdateContent();
+            }
+        }
+
         [UIValue("status-panel-position-options")]
         public List<object> StatusPanelPositionOptions
         {
@@ -1794,6 +1810,9 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-show-status-panel")]
         public string HintShowStatusPanel => HoverHintLocalization.Get("hint-show-status-panel");
+
+        [UIValue("hint-shorten-status-panel-script-path")]
+        public string HintShortenStatusPanelScriptPath => HoverHintLocalization.Get("hint-shorten-status-panel-script-path");
 
         [UIValue("hint-panel-position")]
         public string HintPanelPosition => HoverHintLocalization.Get("hint-panel-position");

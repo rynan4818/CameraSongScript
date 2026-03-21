@@ -75,6 +75,11 @@ namespace CameraSongScript.Configuration
         public virtual bool ShowStatusPanel { get; set; } = true;
 
         /// <summary>
+        /// ステータスパネルのスクリプト表示を短縮するかどうか
+        /// </summary>
+        public virtual bool ShortenStatusPanelScriptPath { get; set; } = false;
+
+        /// <summary>
         /// ステータスインジケータパネルのプリセット位置インデックス
         /// </summary>
         public virtual int StatusPanelPosition { get; set; } = 11;
@@ -275,6 +280,7 @@ namespace CameraSongScript.Configuration
             this.HoverHintLanguage = other.HoverHintLanguage;
             this.ShowHoverHints = other.ShowHoverHints;
             this.ShowStatusPanel = other.ShowStatusPanel;
+            this.ShortenStatusPanelScriptPath = other.ShortenStatusPanelScriptPath;
             this.StatusPanelPosition = other.StatusPanelPosition;
 
             this.PresetLeftUpperRightPosX = other.PresetLeftUpperRightPosX;

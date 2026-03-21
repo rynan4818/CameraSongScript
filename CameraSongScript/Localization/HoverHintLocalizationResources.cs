@@ -59,6 +59,11 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Show status indicator panel outside tab",
                 [HoverHintLocalization.Lang_JA] = "タブ外にステータスインジケータパネルを表示"
             },
+            ["hint-shorten-status-panel-script-path"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Use the same shortened script label style as the green status display in the status panel",
+                [HoverHintLocalization.Lang_JA] = "ステータスパネルのスクリプト表示を、緑のステータス表示と同じ短縮表記にする"
+            },
             ["hint-panel-position"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Select status panel position",

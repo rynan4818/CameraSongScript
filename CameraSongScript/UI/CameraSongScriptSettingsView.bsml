@@ -128,6 +128,9 @@
       <toggle-setting text="~toggle-show-status-panel" value="show-status-panel" apply-on-change="true" hover-hint="~hint-show-status-panel"/>
     </horizontal>
     <horizontal>
+      <toggle-setting text="~toggle-shorten-status-panel-script-path" value="shorten-status-panel-script-path" apply-on-change="true" hover-hint="~hint-shorten-status-panel-script-path"/>
+    </horizontal>
+    <horizontal>
       <dropdown-list-setting id="status-panel-position-dropdown" text="~label-panel-position" value="status-panel-position" options="status-panel-position-options" apply-on-change="true" hover-hint="~hint-panel-position"/>
     </horizontal>
     <horizontal pad-top="2">
