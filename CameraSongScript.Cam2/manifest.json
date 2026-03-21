@@ -3,12 +3,12 @@
   "id": "CameraSongScript.Cam2",
   "name": "CameraSongScript.Cam2",
   "author": "rynan4818",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Camera2 adapter plugin for CameraSongScript",
-  "gameVersion": "1.21.0",
+  "gameVersion": "1.34.2",
   "dependsOn": {
-    "BSIPA": "^4.2.2",
-    "CameraSongScript": "=0.1.0",
-    "Camera2": "^0.6.91"
+    "BSIPA": "^4.3.2",
+    "CameraSongScript": "=0.1.1",
+    "Camera2": "^0.6.109"
   }
 }
