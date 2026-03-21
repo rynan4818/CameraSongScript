@@ -361,7 +361,9 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelTargetCamera));
             NotifyPropertyChanged(nameof(LabelCustomScene));
             NotifyPropertyChanged(nameof(ButtonAddCustomScene));
+            NotifyPropertyChanged(nameof(ButtonRefreshCamera2Lists));
             NotifyPropertyChanged(nameof(LabelSongScriptProfile));
+            NotifyPropertyChanged(nameof(ButtonRefreshCameraPlusProfiles));
             NotifyPropertyChanged(nameof(SectionCommonScript));
             NotifyPropertyChanged(nameof(ToggleFallbackToCommon));
             NotifyPropertyChanged(nameof(ToggleForceCommonScript));
@@ -405,6 +407,8 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(IsSongScriptCacheRefreshAvailable));
             NotifyPropertyChanged(nameof(MissingBeatmapDownloadStatus));
             NotifyPropertyChanged(nameof(IsMissingBeatmapDownloadAvailable));
+            NotifyPropertyChanged(nameof(IsCamera2ListRefreshAvailable));
+            NotifyPropertyChanged(nameof(IsCameraPlusProfileRefreshAvailable));
 
             RefreshDropdown(scriptFileDropdown, ScriptFileOptions);
             RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
@@ -607,6 +611,7 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(HintTargetCamera));
             NotifyPropertyChanged(nameof(HintCustomScene));
             NotifyPropertyChanged(nameof(HintAddCustomScene));
+            NotifyPropertyChanged(nameof(HintRefreshCamera2Lists));
             NotifyPropertyChanged(nameof(HintScriptProfile));
             NotifyPropertyChanged(nameof(HintShowStatusPanel));
             NotifyPropertyChanged(nameof(HintShortenStatusPanelScriptPath));
@@ -733,8 +738,14 @@ namespace CameraSongScript.UI
         [UIValue("button-add-custom-scene")]
         public string ButtonAddCustomScene => UiLocalization.Get("button-add-custom-scene");
 
+        [UIValue("button-refresh-camera2-lists")]
+        public string ButtonRefreshCamera2Lists => UiLocalization.Get("button-refresh-camera2-lists");
+
         [UIValue("label-songscript-profile")]
         public string LabelSongScriptProfile => UiLocalization.Get("label-songscript-profile");
+
+        [UIValue("button-refresh-cameraplus-profiles")]
+        public string ButtonRefreshCameraPlusProfiles => UiLocalization.Get("button-refresh-cameraplus-profiles");
 
         [UIValue("section-common-script")]
         public string SectionCommonScript => UiLocalization.Get("section-common-script");
@@ -806,6 +817,11 @@ namespace CameraSongScript.UI
 
         [UIValue("button-download-missing-beatmaps")]
         public string ButtonDownloadMissingBeatmaps => UiLocalization.Get("button-download-missing-beatmaps");
+
+        [UIValue("is-cameraplus-profile-refresh-available")]
+        public bool IsCameraPlusProfileRefreshAvailable =>
+            CameraModDetector.IsCameraPlus &&
+            Plugin.IsCamPlusHelperReady;
 
         #endregion
 
@@ -1683,6 +1699,23 @@ namespace CameraSongScript.UI
             _ = DownloadMissingBeatmapsAsync();
         }
 
+        [UIAction("refresh-cameraplus-profiles")]
+        private void RefreshCameraPlusProfiles()
+        {
+            if (!IsCameraPlusProfileRefreshAvailable)
+            {
+                return;
+            }
+
+            NotifyPropertyChanged(nameof(ProfileOptions));
+            NotifyPropertyChanged(nameof(SongScriptProfile));
+            NotifyPropertyChanged(nameof(CommonProfileOptions));
+            NotifyPropertyChanged(nameof(CommonProfile));
+
+            RefreshDropdown(songScriptProfileDropdown, ProfileOptions);
+            RefreshDropdown(commonProfileDropdown, CommonProfileOptions);
+        }
+
         private async Task DownloadMissingBeatmapsAsync()
         {
             try
@@ -1804,6 +1837,9 @@ namespace CameraSongScript.UI
         [UIValue("hint-add-custom-scene")]
         public string HintAddCustomScene => HoverHintLocalization.Get("hint-add-custom-scene");
 
+        [UIValue("hint-refresh-camera2-lists")]
+        public string HintRefreshCamera2Lists => HoverHintLocalization.Get("hint-refresh-camera2-lists");
+
         [UIValue("hint-script-profile")]
         public string HintScriptProfile => HoverHintLocalization.Get("hint-script-profile");
 
@@ -1838,6 +1874,9 @@ namespace CameraSongScript.UI
 
         [UIValue("hint-common-profile")]
         public string HintCommonProfile => HoverHintLocalization.Get("hint-common-profile");
+
+        [UIValue("hint-refresh-cameraplus-profiles")]
+        public string HintRefreshCameraPlusProfiles => HoverHintLocalization.Get("hint-refresh-cameraplus-profiles");
 
         [UIValue("hint-rerun-songscript-caches")]
         public string HintRerunSongScriptCaches => HoverHintLocalization.Get("hint-rerun-songscript-caches");

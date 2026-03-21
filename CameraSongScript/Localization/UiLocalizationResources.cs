@@ -150,13 +150,23 @@ namespace CameraSongScript.Localization
             },
             ["button-add-custom-scene"] = new Dictionary<string, string>
             {
-                [HoverHintLocalization.Lang_EN] = "Add 'CameraSongScript' Custom Scene",
-                [HoverHintLocalization.Lang_JA] = "'CameraSongScript' カスタムシーンを追加"
+                [HoverHintLocalization.Lang_EN] = "Add a dedicated custom scene",
+                [HoverHintLocalization.Lang_JA] = "専用カスタムシーン追加"
+            },
+            ["button-refresh-camera2-lists"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Refresh Camera2 Lists",
+                [HoverHintLocalization.Lang_JA] = "Camera2一覧再読込"
             },
             ["label-songscript-profile"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "SongScript Profile",
                 [HoverHintLocalization.Lang_JA] = "曲専用プロファイル"
+            },
+            ["button-refresh-cameraplus-profiles"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Refresh Profiles",
+                [HoverHintLocalization.Lang_JA] = "プロファイル再読込"
             },
             ["section-common-script"] = new Dictionary<string, string>
             {
