@@ -8,7 +8,6 @@ namespace CameraSongScript.Installers
     {
         public override void InstallBindings()
         {
-            this.Container.BindInterfacesAndSelfTo<BetterSongListMenuRegistrationRetry>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<CameraSongScriptPreviewController>().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<CameraSongScriptSettingsView>().FromNewComponentAsViewController().AsSingle().NonLazy();
             this.Container.BindInterfacesAndSelfTo<CameraSongScriptStatusView>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
