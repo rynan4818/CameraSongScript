@@ -44,6 +44,10 @@
       <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\IPA.Loader.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SiraUtil">
+      <HintPath>$(GameDirectory)\Plugins\SiraUtil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
@@ -58,6 +62,10 @@
       <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Zenject-usage">
+      <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CameraSongScript\CameraSongScript.csproj">
@@ -68,6 +76,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HttpSiraStatusHelper.cs" />
+    <Compile Include="HttpSiraStatusBootstrap.cs" />
+    <Compile Include="Installers\HttpSiraStatusAppInstaller.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

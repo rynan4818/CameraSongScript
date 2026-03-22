@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Installers;
-using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using IPA;
 using IPA.Config;
@@ -17,14 +16,6 @@ namespace CameraSongScript
     public class Plugin
     {
         internal static IPALogger Log { get; private set; }
-        internal static ICameraHelper CamHelper => AdapterRegistry.CameraHelper;
-        internal static ICameraPlusHelper CamPlusHelper => AdapterRegistry.CameraPlusHelper;
-        internal static IHttpSiraStatusHelper HttpSiraStatusHelper => AdapterRegistry.HttpSiraStatusHelper;
-        internal static IBetterSongListHelper BetterSongListHelper => AdapterRegistry.BetterSongListHelper;
-        internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
-        internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
-        internal static bool IsHttpSiraStatusHelperReady => HttpSiraStatusHelper != null && HttpSiraStatusHelper.IsInitialized;
-        internal static bool IsBetterSongListHelperReady => BetterSongListHelper != null && BetterSongListHelper.IsInitialized;
         internal static event Action SongDetailsCacheInitialized;
 
         internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
@@ -63,9 +54,6 @@ namespace CameraSongScript
             // 4. CommonScriptsフォルダのスキャン・キャッシュ構築（非同期）
             var commonScriptScanTask = CommonScriptCache.ScanAsync();
             _ = ReevaluateSelectedLevelWhenReady(commonScriptScanTask, "CommonScripts");
-
-            EnsureHttpSiraStatusHelperLoaded();
-            EnsureBetterSongListHelperLoaded();
             Log.Info("CameraSongScript started.");
         }
 
@@ -73,47 +61,6 @@ namespace CameraSongScript
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-        }
-
-        internal static void EnsureHttpSiraStatusHelperLoaded()
-        {
-            if (IsHttpSiraStatusHelperReady)
-            {
-                return;
-            }
-
-            var helper = HttpSiraStatusHelper;
-            if (helper == null)
-            {
-                return;
-            }
-
-            if (!helper.Initialize())
-            {
-                Log.Warn("HttpSiraStatus adapter initialization did not complete successfully.");
-            }
-        }
-
-        internal static void EnsureBetterSongListHelperLoaded()
-        {
-            if (IsBetterSongListHelperReady)
-            {
-                return;
-            }
-
-            var helper = BetterSongListHelper;
-            if (helper == null)
-            {
-                return;
-            }
-
-            if (!helper.Initialize())
-            {
-                Log.Warn("BetterSongList helper initialization did not complete successfully.");
-                return;
-            }
-
-            Log.Info("BetterSongList helper initialized.");
         }
 
         internal static string GetUnsupportedAdapterVersionWarningText()

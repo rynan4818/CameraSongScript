@@ -24,9 +24,9 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
-                if (Plugin.IsCamPlusHelperReady)
+                if (_cameraPlusHelper != null && _cameraPlusHelper.IsInitialized)
                 {
-                    foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
+                    foreach (var profile in _cameraPlusHelper.GetProfileList())
                     {
                         if (!string.IsNullOrEmpty(profile))
                             list.Add(profile);
@@ -41,14 +41,14 @@ namespace CameraSongScript.UI
         {
             get
             {
-                if (!Plugin.IsCamPlusHelperReady) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
+                if (_cameraPlusHelper == null || !_cameraPlusHelper.IsInitialized) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
                 string profile = _scriptDetector.ResolvedProfileName;
                 if (string.IsNullOrEmpty(profile)) return UiLocalization.GetOptionDisplay(UiLocalization.OptionNoChange, UiLocalization.OptionNoChange);
                 return UiLocalization.GetOptionDisplay(profile, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
             }
             set
             {
-                if (!Plugin.IsCamPlusHelperReady) return;
+                if (_cameraPlusHelper == null || !_cameraPlusHelper.IsInitialized) return;
                 string profile = UiLocalization.ToCanonicalOption(value as string, UiLocalization.OptionNoChange, UiLocalization.OptionDelete);
                 if (string.IsNullOrEmpty(profile))
                     profile = UiLocalization.OptionNoChange;

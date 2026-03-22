@@ -193,11 +193,11 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionSameAsSongScript };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
                 {
                     try
                     {
-                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
+                        var cams = _cameraHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
                         foreach (var cam in cams) list.Add(cam);
                     }
                     catch (Exception ex)
@@ -234,11 +234,11 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionSameAsSongScript };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
                 {
                     try
                     {
-                        var scenes = Plugin.CamHelper.CustomScenes;
+                        var scenes = _cameraHelper.CustomScenes;
                         if (scenes != null)
                         {
                             foreach (var scene in scenes) list.Add(scene);
@@ -280,9 +280,9 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionSameAsSongScript, UiLocalization.OptionNoChange, UiLocalization.OptionDelete };
-                if (Plugin.IsCamPlusHelperReady)
+                if (_cameraPlusHelper != null && _cameraPlusHelper.IsInitialized)
                 {
-                    foreach (var profile in Plugin.CamPlusHelper.GetProfileList())
+                    foreach (var profile in _cameraPlusHelper.GetProfileList())
                     {
                         if (!string.IsNullOrEmpty(profile))
                             list.Add(profile);

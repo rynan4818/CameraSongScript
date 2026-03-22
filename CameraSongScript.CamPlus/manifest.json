@@ -8,6 +8,7 @@
   "gameVersion": "1.21.0",
   "dependsOn": {
     "BSIPA": "^4.2.2",
+    "SiraUtil": "^3.0.6",
     "CameraSongScript": "=0.1.0",
     "CameraPlus": ">=7.0.0"
   }

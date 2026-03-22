@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CameraSongScript.Configuration;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Services;
@@ -15,6 +16,7 @@ using CameraSongScript.Utilities;
 using HMUI;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using Zenject;
 
 namespace CameraSongScript.Detectors
 {
@@ -27,6 +29,7 @@ namespace CameraSongScript.Detectors
     internal partial class CameraSongScriptDetector
     {
         internal static CameraSongScriptDetector Instance { get; private set; }
+        private readonly ICameraPlusHelper _cameraPlusHelper;
 
         private string _latestSelectedSong = string.Empty;
         private CancellationTokenSource _scanCts;
@@ -162,8 +165,9 @@ namespace CameraSongScript.Detectors
             "cinema-video.json"
         };
 
-        public CameraSongScriptDetector()
+        public CameraSongScriptDetector([InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
+            _cameraPlusHelper = cameraPlusHelper;
             Instance = this;
         }
 
@@ -611,7 +615,7 @@ namespace CameraSongScript.Detectors
         /// </summary>
         public void SyncCameraPlusPath()
         {
-            if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
+            if (CameraModDetector.IsCameraPlus && _cameraPlusHelper != null && _cameraPlusHelper.IsInitialized)
             {
                 string profileToSet = string.Empty;
 
@@ -619,7 +623,7 @@ namespace CameraSongScript.Detectors
                 if (IsUsingCommonScript && !string.IsNullOrEmpty(ResolvedCommonScriptPath))
                 {
                     string commonEffectivePath = GenerateCommonOffsetScript(ResolvedCommonScriptPath);
-                    Plugin.CamPlusHelper.SetScriptPath(commonEffectivePath);
+                    _cameraPlusHelper.SetScriptPath(commonEffectivePath);
 
                     // 汎用スクリプト用プロファイル
                     profileToSet = CameraSongScriptConfig.Instance.CommonScriptProfile;
@@ -627,11 +631,11 @@ namespace CameraSongScript.Detectors
                 }
                 else if (HasSongScript && CameraSongScriptConfig.Instance.Enabled)
                 {
-                    Plugin.CamPlusHelper.SetScriptPath(EffectiveScriptPath);
+                    _cameraPlusHelper.SetScriptPath(EffectiveScriptPath);
                 }
                 else
                 {
-                    Plugin.CamPlusHelper.SetScriptPath(string.Empty);
+                    _cameraPlusHelper.SetScriptPath(string.Empty);
                 }
 
                 // 2. プロファイル名の決定
@@ -650,7 +654,7 @@ namespace CameraSongScript.Detectors
                         profileToSet = string.Empty;
                     }
 
-                    Plugin.CamPlusHelper.SetSongSpecificScriptProfile(profileToSet);
+                    _cameraPlusHelper.SetSongSpecificScriptProfile(profileToSet);
                 }
             }
         }
