@@ -1,5 +1,6 @@
-using CameraSongScript.Interfaces;
+using CameraSongScript.HttpSiraStatus.Installers;
 using IPA;
+using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 
 namespace CameraSongScript.HttpSiraStatus
@@ -9,44 +10,25 @@ namespace CameraSongScript.HttpSiraStatus
     {
         internal static IPALogger Log { get; private set; }
 
-        private IHttpSiraStatusHelper _helper;
-
         [Init]
-        public void Init(IPALogger logger)
+        public void Init(IPALogger logger, Zenjector zenjector)
         {
             Log = logger;
             Log.Info("CameraSongScript.HttpSiraStatus initialized.");
+
+            zenjector.Install<HttpSiraStatusAppInstaller>(Location.App);
         }
 
         [OnStart]
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-
-            var helper = new HttpSiraStatusHelper();
-            _helper = helper;
-            global::CameraSongScript.AdapterRegistry.RegisterHttpSiraStatusHelper(helper);
-
-            if (helper.Initialize())
-            {
-                Log.Info("HttpSiraStatus adapter registered.");
-            }
-            else
-            {
-                Log.Warn("HttpSiraStatus adapter registered but initialization will be retried later.");
-            }
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-
-            if (_helper != null)
-            {
-                global::CameraSongScript.AdapterRegistry.UnregisterHttpSiraStatusHelper(_helper);
-                _helper = null;
-            }
         }
     }
 }

@@ -12,6 +12,7 @@ using HMUI;
 using IPA.Utilities;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using CameraSongScript.Localization;
 using CameraSongScript.Services;
@@ -44,6 +45,8 @@ namespace CameraSongScript.UI
         private SongScriptBeatmapIndexService _beatmapIndexService;
 
         private SongScriptMissingBeatmapDownloadService _missingBeatmapDownloadService;
+        private ICameraHelper _cameraHelper;
+        private ICameraPlusHelper _cameraPlusHelper;
 
         private const float PreviewSliderStep = 0.05f;
         private const float StatusPanelPositionStep = 0.05f;
@@ -69,7 +72,9 @@ namespace CameraSongScript.UI
             CameraSongScriptPreviewController previewController,
             CameraSongScriptDetector scriptDetector,
             SongScriptBeatmapIndexService beatmapIndexService,
-            SongScriptMissingBeatmapDownloadService missingBeatmapDownloadService)
+            SongScriptMissingBeatmapDownloadService missingBeatmapDownloadService,
+            [InjectOptional] ICameraHelper cameraHelper,
+            [InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
             _mainThreadDispatcher = mainThreadDispatcher;
             _statusView = statusView;
@@ -77,6 +82,8 @@ namespace CameraSongScript.UI
             _scriptDetector = scriptDetector;
             _beatmapIndexService = beatmapIndexService;
             _missingBeatmapDownloadService = missingBeatmapDownloadService;
+            _cameraHelper = cameraHelper;
+            _cameraPlusHelper = cameraPlusHelper;
         }
 
         public void Initialize()
@@ -817,7 +824,8 @@ namespace CameraSongScript.UI
         [UIValue("is-cameraplus-profile-refresh-available")]
         public bool IsCameraPlusProfileRefreshAvailable =>
             CameraModDetector.IsCameraPlus &&
-            Plugin.IsCamPlusHelperReady;
+            _cameraPlusHelper != null &&
+            _cameraPlusHelper.IsInitialized;
 
         #endregion
 

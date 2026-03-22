@@ -1,5 +1,6 @@
 using CameraSongScript.Detectors;
 using CameraSongScript.Gameplay;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Services;
 using Zenject;
 
@@ -9,12 +10,11 @@ namespace CameraSongScript.Installers
     {
         public override void InstallBindings()
         {
-            Plugin.EnsureHttpSiraStatusHelperLoaded();
-
             this.Container.Bind<CameraSongScriptPlayContextResolver>().AsSingle();
             this.Container.BindInterfacesAndSelfTo<SongScriptGameplayScanPauseController>().AsSingle().NonLazy();
 
-            if (Plugin.IsHttpSiraStatusHelperReady)
+            IHttpSiraStatusHelper httpSiraStatusHelper = this.Container.TryResolve<IHttpSiraStatusHelper>();
+            if (httpSiraStatusHelper != null && httpSiraStatusHelper.IsInitialized)
             {
                 this.Container.BindInterfacesAndSelfTo<CameraSongScriptHttpSiraStatusSender>().AsSingle().NonLazy();
             }
@@ -23,7 +23,8 @@ namespace CameraSongScript.Installers
             // CameraPlusモードではCameraPlus自身のCameraMovement.csがスクリプトを実行する
             if (CameraModDetector.IsCamera2)
             {
-                if (Plugin.IsCamHelperReady)
+                ICameraHelper cameraHelper = this.Container.TryResolve<ICameraHelper>();
+                if (cameraHelper != null && cameraHelper.IsInitialized)
                 {
                     this.Container.BindInterfacesAndSelfTo<CameraSongScriptController>().AsSingle().NonLazy();
                 }
@@ -34,8 +35,16 @@ namespace CameraSongScript.Installers
             }
             else if (CameraModDetector.IsCameraPlus)
             {
-                // CameraPlusモード: プレイ開始時にランダム汎用スクリプトを解決する
-                this.Container.BindInterfacesAndSelfTo<CameraPlusPlayStartResolver>().AsSingle().NonLazy();
+                ICameraPlusHelper cameraPlusHelper = this.Container.TryResolve<ICameraPlusHelper>();
+                if (cameraPlusHelper != null && cameraPlusHelper.IsInitialized)
+                {
+                    // CameraPlusモード: プレイ開始時にランダム汎用スクリプトを解決する
+                    this.Container.BindInterfacesAndSelfTo<CameraPlusPlayStartResolver>().AsSingle().NonLazy();
+                }
+                else
+                {
+                    Plugin.Log?.Warn("CameraPlusPlayStartResolver binding skipped because the CameraPlus helper is not ready.");
+                }
             }
         }
     }

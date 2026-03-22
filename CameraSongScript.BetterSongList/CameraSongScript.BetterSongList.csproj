@@ -48,8 +48,20 @@
       <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Main.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SiraUtil">
+      <HintPath>$(GameDirectory)\Plugins\SiraUtil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="Zenject">
+      <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Zenject-usage">
+      <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CameraSongScript\CameraSongScript.csproj">
@@ -60,6 +72,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BetterSongListHelper.cs" />
+    <Compile Include="BetterSongListBootstrap.cs" />
+    <Compile Include="Installers\BetterSongListAppInstaller.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="SongScriptFilter.cs" />
     <Compile Include="SongScriptSorter.cs" />

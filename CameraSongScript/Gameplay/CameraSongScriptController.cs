@@ -23,6 +23,7 @@ namespace CameraSongScript.Gameplay
         private readonly AudioTimeSyncController _audioTimeSyncController;
         private readonly PauseController _pauseController;
         private readonly CameraSongScriptPlayContextResolver _playContextResolver;
+        private readonly ICameraHelper _cameraHelper;
         private Transform _cachedHeadTransform;
 
         private bool _dataLoaded = false;
@@ -67,15 +68,23 @@ namespace CameraSongScript.Gameplay
         internal CameraSongScriptController(
             AudioTimeSyncController audioTimeSyncController,
             [InjectOptional] PauseController pauseController,
-            CameraSongScriptPlayContextResolver playContextResolver)
+            CameraSongScriptPlayContextResolver playContextResolver,
+            [InjectOptional] ICameraHelper cameraHelper)
         {
             _audioTimeSyncController = audioTimeSyncController;
             _pauseController = pauseController;
             _playContextResolver = playContextResolver;
+            _cameraHelper = cameraHelper;
         }
 
         public void Initialize()
         {
+            if (_cameraHelper == null || !_cameraHelper.IsInitialized)
+            {
+                Plugin.Log.Warn("SongScript: Camera2 helper is unavailable; CameraSongScriptController will stay inactive.");
+                return;
+            }
+
             var playContext = _playContextResolver.Resolve();
             if (!playContext.HasScript)
                 return;
@@ -114,9 +123,9 @@ namespace CameraSongScript.Gameplay
         public void Dispose()
         {
             // カスタムシーンの復元
-            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
             {
-                Plugin.CamHelper.RestoreGameSceneSetup();
+                _cameraHelper.RestoreGameSceneSetup();
             }
 
             if (_pauseController != null)
@@ -145,7 +154,7 @@ namespace CameraSongScript.Gameplay
                 if (_customSceneSwitchDelay <= 0)
                 {
                     _pendingCustomSceneSwitch = false;
-                    Plugin.CamHelper.PreGameSceneCurrentSetup(_resolvedCustomSceneToSwitch);
+                    _cameraHelper?.PreGameSceneCurrentSetup(_resolvedCustomSceneToSwitch);
                 }
             }
 
@@ -266,7 +275,9 @@ namespace CameraSongScript.Gameplay
             string[] targetNames = CameraSongScriptConfig.Instance.GetTargetCameraNames();
             if (targetNames.Length > 0)
                 return targetNames;
-            return Plugin.CamHelper.GetActiveCameras();
+            return _cameraHelper != null
+                ? _cameraHelper.GetActiveCameras()
+                : Array.Empty<string>();
         }
 
         /// <summary>
@@ -278,7 +289,7 @@ namespace CameraSongScript.Gameplay
 
             foreach (var camName in GetTargetOrActiveCameras())
             {
-                var token = Plugin.CamHelper.GetTokenForCamera(camName);
+                var token = _cameraHelper?.GetTokenForCamera(camName);
                 if (token != null)
                 {
                     _tokens[camName] = token;
