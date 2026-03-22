@@ -1,81 +1,40 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using CameraPlus;
 using CameraPlus.Configuration;
-using CameraPlus.HarmonyPatches;
 using CameraPlus.Utilities;
 using CameraSongScript.Interfaces;
-using HarmonyLib;
 
 namespace CameraSongScript.CamPlus
 {
     /// <summary>
     /// CameraPlusのcustomLevelPathを制御するICameraPlusHelper実装
     /// Publicize済みのCameraPlus.dllを参照してinternalクラスにアクセスする
-    ///
-    /// タイミング保証:
-    /// SetScriptPath()で受け取ったパスは _pendingScriptPath に保持され、
-    /// CameraPlusController.OnActiveSceneChanged の Harmony Prefix で
-    /// customLevelPath に書き込まれる。これにより、CameraPlusがシーン遷移時に
-    /// customLevelPath を参照する前に、必ずCameraSongScript側の値が反映される。
     /// </summary>
     public class CameraPlusHelper : ICameraPlusHelper
     {
-        private static string _pendingScriptPath = string.Empty;
-        private static Harmony _harmony;
+        internal static string PendingScriptPath { get; private set; } = string.Empty;
 
         public bool IsInitialized { get; private set; }
 
         public bool Initialize()
         {
-            try
-            {
-                _harmony = new Harmony("com.github.rynan4818.CameraSongScript.CamPlus");
-
-                var original = typeof(CameraPlusController).GetMethod(
-                    nameof(CameraPlusController.OnActiveSceneChanged),
-                    BindingFlags.Public | BindingFlags.Instance);
-
-                if (original == null)
-                    return false;
-
-                var prefix = typeof(CameraPlusHelper).GetMethod(
-                    nameof(OnActiveSceneChangedPrefix),
-                    BindingFlags.Static | BindingFlags.NonPublic);
-
-                _harmony.Patch(original, prefix: new HarmonyMethod(prefix));
-                IsInitialized = true;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            IsInitialized = true;
+            return true;
         }
 
         /// <summary>
         /// CameraPlusに注入するスクリプトパスを設定する（Pending方式）
-        /// 実際の customLevelPath への書き込みは OnActiveSceneChanged の Prefix で行われる
         /// </summary>
         public void SetScriptPath(string fullPath)
         {
-            _pendingScriptPath = fullPath ?? string.Empty;
+            PendingScriptPath = fullPath ?? string.Empty;
         }
 
         public string GetCurrentPath()
         {
-            return _pendingScriptPath;
-        }
-
-        /// <summary>
-        /// CameraPlusController.OnActiveSceneChanged の直前に実行される Harmony Prefix
-        /// CameraPlusがcustomLevelPathを参照する前に、CameraSongScript側の値を確実に反映する
-        /// </summary>
-        private static void OnActiveSceneChangedPrefix()
-        {
-            SongScriptBeatmapPatch.customLevelPath = _pendingScriptPath;
+            return PendingScriptPath;
         }
 
         /// <summary>

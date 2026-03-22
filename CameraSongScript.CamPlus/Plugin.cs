@@ -1,5 +1,8 @@
-using CameraSongScript.Interfaces;
+using CameraSongScript.CamPlus.Installers;
+using HarmonyLib;
 using IPA;
+using SiraUtil.Zenject;
+using System.Reflection;
 using IPALogger = IPA.Logging.Logger;
 
 namespace CameraSongScript.CamPlus
@@ -8,43 +11,32 @@ namespace CameraSongScript.CamPlus
     public class Plugin
     {
         internal static IPALogger Log { get; private set; }
-
-        private ICameraPlusHelper _helper;
+        private const string HarmonyId = "com.github.rynan4818.CameraSongScript.CamPlus";
+        private Harmony _harmony;
 
         [Init]
-        public void Init(IPALogger logger)
+        public void Init(IPALogger logger, Zenjector zenjector)
         {
             Log = logger;
             Log.Info("CameraSongScript.CamPlus initialized.");
+
+            zenjector.Install<CameraSongScriptCamPlusAppInstaller>(Location.App);
         }
 
         [OnStart]
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-
-            var helper = new CameraPlusHelper();
-            if (!helper.Initialize())
-            {
-                Log.Error("CameraPlus adapter initialization failed.");
-                return;
-            }
-
-            _helper = helper;
-            global::CameraSongScript.AdapterRegistry.RegisterCameraPlusHelper(helper);
-            Log.Info("CameraPlus adapter registered.");
+            _harmony = new Harmony(HarmonyId);
+            _harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-
-            if (_helper != null)
-            {
-                global::CameraSongScript.AdapterRegistry.UnregisterCameraPlusHelper(_helper);
-                _helper = null;
-            }
+            _harmony?.UnpatchSelf();
+            _harmony = null;
         }
     }
 }

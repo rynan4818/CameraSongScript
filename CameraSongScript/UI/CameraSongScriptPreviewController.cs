@@ -1,5 +1,6 @@
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Utilities;
@@ -50,6 +51,8 @@ namespace CameraSongScript.UI
         private static Material _solidMaterialTemplate;
 
         private readonly CameraSongScriptDetector _scriptDetector;
+        private readonly ICameraHelper _cameraHelper;
+        private readonly ICameraPlusHelper _cameraPlusHelper;
 
         private readonly List<TimelineSegment> _segments = new List<TimelineSegment>();
         private readonly List<LineRenderer> _pathLineRenderers = new List<LineRenderer>();
@@ -78,9 +81,14 @@ namespace CameraSongScript.UI
         public string LoadedScriptDisplayName => _loadedScriptDisplayName;
         public event Action StateChanged;
 
-        public CameraSongScriptPreviewController(CameraSongScriptDetector scriptDetector)
+        public CameraSongScriptPreviewController(
+            CameraSongScriptDetector scriptDetector,
+            [InjectOptional] ICameraHelper cameraHelper,
+            [InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
             _scriptDetector = scriptDetector;
+            _cameraHelper = cameraHelper;
+            _cameraPlusHelper = cameraPlusHelper;
         }
 
         public bool CanPreviewSelection
@@ -499,14 +507,13 @@ namespace CameraSongScript.UI
             _previewRenderer = screenRootObject.GetComponent<MeshRenderer>();
 
             Material customMaterial = null;
-            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
             {
-                customMaterial = Plugin.CamHelper.GetPreviewMaterial();
+                customMaterial = _cameraHelper.GetPreviewMaterial();
             }
-            else if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
+            else if (CameraModDetector.IsCameraPlus && _cameraPlusHelper != null && _cameraPlusHelper.IsInitialized)
             {
-                customMaterial = Plugin.CamPlusHelper.GetPreviewMaterial();
-                Plugin.Log.Info($"customMaterial: {customMaterial}");
+                customMaterial = _cameraPlusHelper.GetPreviewMaterial();
             }
 
             if (customMaterial != null)

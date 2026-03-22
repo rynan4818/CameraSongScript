@@ -1,12 +1,8 @@
-using System;
-using System.Linq;
 using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using HttpSiraStatus.Enums;
 using HttpSiraStatus.Interfaces;
 using HttpSiraStatus.Util;
-using UnityEngine;
-using Zenject;
 
 namespace CameraSongScript.HttpSiraStatus
 {
@@ -15,25 +11,24 @@ namespace CameraSongScript.HttpSiraStatus
     /// </summary>
     public class HttpSiraStatusHelper : IHttpSiraStatusHelper
     {
-        private IStatusManager _statusManager;
+        private readonly IStatusManager _statusManager;
 
         public bool IsInitialized { get; private set; }
 
+        internal HttpSiraStatusHelper(IStatusManager statusManager)
+        {
+            _statusManager = statusManager;
+        }
+
         public bool Initialize()
         {
-            IsInitialized = true;
-            return true;
+            IsInitialized = _statusManager != null;
+            return IsInitialized;
         }
 
         public void SendPlayContext(CameraSongScriptPlayContext playContext)
         {
             if (!IsInitialized || playContext == null)
-            {
-                return;
-            }
-
-            var statusManager = ResolveStatusManager();
-            if (statusManager == null)
             {
                 return;
             }
@@ -62,51 +57,8 @@ namespace CameraSongScript.HttpSiraStatus
 
             rootObject["metadata"] = metadataObject;
 
-            statusManager.OtherJSON["CameraSongScript"] = rootObject;
-            statusManager.EmitStatusUpdate(ChangedProperty.Other, BeatSaberEvent.Other);
-        }
-
-        private IStatusManager ResolveStatusManager()
-        {
-            if (_statusManager != null)
-            {
-                return _statusManager;
-            }
-
-            try
-            {
-                var gameScenesManager = Resources.FindObjectsOfTypeAll<GameScenesManager>().FirstOrDefault();
-                _statusManager = TryResolveStatusManager(gameScenesManager?.currentScenesContainer);
-                if (_statusManager != null)
-                {
-                    return _statusManager;
-                }
-
-                foreach (var sceneContext in Resources.FindObjectsOfTypeAll<SceneContext>())
-                {
-                    _statusManager = TryResolveStatusManager(sceneContext.Container);
-                    if (_statusManager != null)
-                    {
-                        return _statusManager;
-                    }
-                }
-
-                if (ProjectContext.HasInstance)
-                {
-                    _statusManager = TryResolveStatusManager(ProjectContext.Instance.Container);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[CameraSongScript.HttpSiraStatus] Failed to resolve IStatusManager: {ex}");
-            }
-
-            return _statusManager;
-        }
-
-        private static IStatusManager TryResolveStatusManager(DiContainer container)
-        {
-            return container?.TryResolve<IStatusManager>();
+            _statusManager.OtherJSON["CameraSongScript"] = rootObject;
+            _statusManager.EmitStatusUpdate(ChangedProperty.Other, BeatSaberEvent.Other);
         }
 
         private static void AddString(JSONObject parent, string key, string value)
