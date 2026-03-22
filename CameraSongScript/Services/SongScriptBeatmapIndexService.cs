@@ -107,8 +107,6 @@ namespace CameraSongScript.Services
         private string _lastScanErrorMessage = string.Empty;
         private long _scanGeneration;
 
-        public static SongScriptBeatmapIndexService Instance { get; private set; }
-
         public bool CanFilter => _canFilter && !_disposed;
         public bool IsScanning => _isScanning;
         internal BeatmapSongScriptCacheScanState ScanState => _scanState;
@@ -120,10 +118,7 @@ namespace CameraSongScript.Services
 
         public void Initialize()
         {
-            Instance = this;
-
             LoadPersistentCache();
-            Plugin.EnsureBetterSongListHelperLoaded();
 
             SongCore.Loader.LoadingStartedEvent += HandleLoadingStarted;
             SongCore.Loader.SongsLoadedEvent += HandleSongsLoaded;
@@ -152,12 +147,7 @@ namespace CameraSongScript.Services
             SavePersistentCache();
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, _scanGeneration);
 
-            if (ReferenceEquals(Instance, this))
-            {
-                Instance = null;
-            }
         }
-
         public void PauseForGameplay()
         {
             _pausedForGameplay = true;

@@ -6,12 +6,18 @@ namespace CameraSongScript.BetterSongList
 {
     public class BetterSongListHelper : IBetterSongListHelper
     {
-        private static readonly SongScriptFilter FilterInstance = new SongScriptFilter();
-        private static readonly SongScriptSorter SorterInstance = new SongScriptSorter();
-        private static bool _filterRegistered;
-        private static bool _sorterRegistered;
+        private readonly SongScriptFilter _filter;
+        private readonly SongScriptSorter _sorter;
+        private bool _filterRegistered;
+        private bool _sorterRegistered;
 
         public bool IsInitialized { get; private set; }
+
+        internal BetterSongListHelper(SongScriptFilter filter, SongScriptSorter sorter)
+        {
+            _filter = filter;
+            _sorter = sorter;
+        }
 
         public bool Initialize()
         {
@@ -51,7 +57,7 @@ namespace CameraSongScript.BetterSongList
             }
         }
 
-        private static bool EnsureFilterRegistered()
+        private bool EnsureFilterRegistered()
         {
             if (_filterRegistered)
             {
@@ -60,7 +66,7 @@ namespace CameraSongScript.BetterSongList
 
             try
             {
-                _filterRegistered = FilterMethods.Register(FilterInstance);
+                _filterRegistered = FilterMethods.Register(_filter);
                 if (!_filterRegistered)
                 {
                     Plugin.Log.Warn("BetterSongList filter registration was rejected. AllowPluginSortsAndFilters may be disabled.");
@@ -80,7 +86,7 @@ namespace CameraSongScript.BetterSongList
             }
         }
 
-        private static bool EnsureSorterRegistered()
+        private bool EnsureSorterRegistered()
         {
             if (_sorterRegistered)
             {
@@ -89,7 +95,7 @@ namespace CameraSongScript.BetterSongList
 
             try
             {
-                _sorterRegistered = SortMethods.RegisterCustomSorter(SorterInstance);
+                _sorterRegistered = SortMethods.RegisterCustomSorter(_sorter);
                 if (!_sorterRegistered)
                 {
                     Plugin.Log.Warn("BetterSongList sorter registration was rejected. AllowPluginSortsAndFilters may be disabled.");

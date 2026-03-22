@@ -41,6 +41,10 @@
       <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\IPA.Loader.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="SiraUtil">
+      <HintPath>$(GameDirectory)\Plugins\SiraUtil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="0Harmony">
@@ -55,6 +59,14 @@
       <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Zenject">
+      <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Zenject-usage">
+      <HintPath>$(GameDirectory)\Beat Saber_Data\Managed\Zenject-usage.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CameraSongScript\CameraSongScript.csproj">
@@ -65,6 +77,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CameraPlusHelper.cs" />
+    <Compile Include="CameraSongScriptCamPlusBootstrap.cs" />
+    <Compile Include="HarmonyPatches\OnActiveSceneChangedPatch.cs" />
+    <Compile Include="Installers\CameraSongScriptCamPlusAppInstaller.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

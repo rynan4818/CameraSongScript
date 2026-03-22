@@ -1,5 +1,5 @@
-using CameraSongScript.Interfaces;
 using IPA;
+using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 
 namespace CameraSongScript.BetterSongList
@@ -9,26 +9,13 @@ namespace CameraSongScript.BetterSongList
     {
         internal static IPALogger Log { get; private set; }
 
-        private IBetterSongListHelper _helper;
-
         [Init]
-        public void Init(IPALogger logger)
+        public void Init(IPALogger logger, Zenjector zenjector)
         {
             Log = logger;
             Log.Info("CameraSongScript.BetterSongList initialized.");
 
-            var helper = new BetterSongListHelper();
-            _helper = helper;
-            global::CameraSongScript.AdapterRegistry.RegisterBetterSongListHelper(helper);
-
-            if (helper.Initialize())
-            {
-                Log.Info("BetterSongList adapter registered.");
-            }
-            else
-            {
-                Log.Warn("BetterSongList adapter registration did not complete successfully.");
-            }
+            zenjector.Install<Installers.BetterSongListAppInstaller>(Location.App);
         }
 
         [OnStart]
@@ -41,12 +28,6 @@ namespace CameraSongScript.BetterSongList
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-
-            if (_helper != null)
-            {
-                global::CameraSongScript.AdapterRegistry.UnregisterBetterSongListHelper(_helper);
-                _helper = null;
-            }
         }
     }
 }

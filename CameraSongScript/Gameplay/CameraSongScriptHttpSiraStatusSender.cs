@@ -1,4 +1,5 @@
 using System;
+using CameraSongScript.Interfaces;
 using Zenject;
 
 namespace CameraSongScript.Gameplay
@@ -9,23 +10,26 @@ namespace CameraSongScript.Gameplay
     public class CameraSongScriptHttpSiraStatusSender : IInitializable
     {
         private readonly CameraSongScriptPlayContextResolver _playContextResolver;
+        private readonly IHttpSiraStatusHelper _httpSiraStatusHelper;
 
-        internal CameraSongScriptHttpSiraStatusSender(CameraSongScriptPlayContextResolver playContextResolver)
+        internal CameraSongScriptHttpSiraStatusSender(
+            CameraSongScriptPlayContextResolver playContextResolver,
+            [InjectOptional] IHttpSiraStatusHelper httpSiraStatusHelper)
         {
             _playContextResolver = playContextResolver;
+            _httpSiraStatusHelper = httpSiraStatusHelper;
         }
 
         public void Initialize()
         {
             try
             {
-                var helper = Plugin.HttpSiraStatusHelper;
-                if (helper == null || !helper.IsInitialized)
+                if (_httpSiraStatusHelper == null || !_httpSiraStatusHelper.IsInitialized)
                 {
                     return;
                 }
 
-                helper.SendPlayContext(_playContextResolver.Resolve());
+                _httpSiraStatusHelper.SendPlayContext(_playContextResolver.Resolve());
             }
             catch (Exception ex)
             {

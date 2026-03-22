@@ -13,6 +13,13 @@ namespace CameraSongScript.BetterSongList
 {
     internal sealed class SongScriptSorter : ISorterCustom, ITransformerPlugin
     {
+        private readonly SongScriptBeatmapIndexService _indexService;
+
+        internal SongScriptSorter(SongScriptBeatmapIndexService indexService)
+        {
+            _indexService = indexService;
+        }
+
         private sealed class IndexedLevel
         {
             public BeatmapLevel Level { get; set; }
@@ -24,9 +31,7 @@ namespace CameraSongScript.BetterSongList
 
         public bool visible { get; private set; }
 
-        public bool isReady =>
-            SongScriptBeatmapIndexService.Instance != null &&
-            SongScriptBeatmapIndexService.Instance.CanFilter;
+        public bool isReady => _indexService != null && _indexService.CanFilter;
 
         public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
@@ -37,8 +42,7 @@ namespace CameraSongScript.BetterSongList
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                SongScriptBeatmapIndexService indexService = SongScriptBeatmapIndexService.Instance;
-                if (indexService != null && indexService.CanFilter)
+                if (_indexService != null && _indexService.CanFilter)
                 {
                     return;
                 }
@@ -49,8 +53,7 @@ namespace CameraSongScript.BetterSongList
 
         public void DoSort(ref IEnumerable<BeatmapLevel> levels, bool ascending)
         {
-            SongScriptBeatmapIndexService indexService = SongScriptBeatmapIndexService.Instance;
-            if (indexService == null || levels == null)
+            if (_indexService == null || levels == null)
             {
                 return;
             }
@@ -60,7 +63,7 @@ namespace CameraSongScript.BetterSongList
                 {
                     Level = level,
                     OriginalIndex = originalIndex,
-                    SortInfo = indexService.GetLevelSortInfo(level)
+                    SortInfo = _indexService.GetLevelSortInfo(level)
                 })
                 .ToArray();
 

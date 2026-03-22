@@ -1,5 +1,5 @@
-using CameraSongScript.Interfaces;
 using IPA;
+using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 
 namespace CameraSongScript.Cam2
@@ -9,42 +9,25 @@ namespace CameraSongScript.Cam2
     {
         internal static IPALogger Log { get; private set; }
 
-        private ICameraHelper _helper;
-
         [Init]
-        public void Init(IPALogger logger)
+        public void Init(IPALogger logger, Zenjector zenjector)
         {
             Log = logger;
             Log.Info("CameraSongScript.Cam2 initialized.");
+
+            zenjector.Install<Installers.CameraSongScriptCam2AppInstaller>(Location.App);
         }
 
         [OnStart]
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-
-            var helper = new Camera2Helper();
-            if (!helper.Initialize())
-            {
-                Log.Error("Camera2 adapter initialization failed.");
-                return;
-            }
-
-            _helper = helper;
-            global::CameraSongScript.AdapterRegistry.RegisterCameraHelper(helper);
-            Log.Info("Camera2 adapter registered.");
         }
 
         [OnExit]
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-
-            if (_helper != null)
-            {
-                global::CameraSongScript.AdapterRegistry.UnregisterCameraHelper(_helper);
-                _helper = null;
-            }
         }
     }
 }
