@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using CameraSongScript.Utilities;
 using Zenject;
 
 namespace CameraSongScript.Services
@@ -36,6 +37,8 @@ namespace CameraSongScript.Services
     {
         private const int CacheVersion = 1;
         private const string CacheFormatVersion = "1.0";
+
+        public static SongScriptBeatmapIndexService Current { get; private set; }
 
         private sealed class BeatmapWorkItem
         {
@@ -75,8 +78,7 @@ namespace CameraSongScript.Services
         private static readonly string CacheFilePath =
             Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "BeatmapSongScriptCache.json");
 
-        private static readonly string SongScriptsFolderPath =
-            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScripts");
+        private static string SongScriptsFolderPath => ScriptFolderPathResolver.GetSongScriptsFolderPath();
 
         private readonly object _cacheLock = new object();
         private readonly HashSet<string> _skipFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -107,8 +109,6 @@ namespace CameraSongScript.Services
         private string _lastScanErrorMessage = string.Empty;
         private long _scanGeneration;
 
-        public static SongScriptBeatmapIndexService Instance { get; private set; }
-
         public bool CanFilter => _canFilter && !_disposed;
         public bool IsScanning => _isScanning;
         internal BeatmapSongScriptCacheScanState ScanState => _scanState;
@@ -120,10 +120,8 @@ namespace CameraSongScript.Services
 
         public void Initialize()
         {
-            Instance = this;
-
+            Current = this;
             LoadPersistentCache();
-            Plugin.EnsureBetterSongListHelperLoaded();
 
             SongCore.Loader.LoadingStartedEvent += HandleLoadingStarted;
             SongCore.Loader.SongsLoadedEvent += HandleSongsLoaded;
@@ -141,6 +139,11 @@ namespace CameraSongScript.Services
                 return;
             }
 
+            if (ReferenceEquals(Current, this))
+            {
+                Current = null;
+            }
+
             _disposed = true;
             _canFilter = false;
 
@@ -152,12 +155,7 @@ namespace CameraSongScript.Services
             SavePersistentCache();
             UpdateScanStatus(BeatmapSongScriptCacheScanState.Idle, 0, 0, string.Empty, _scanGeneration);
 
-            if (ReferenceEquals(Instance, this))
-            {
-                Instance = null;
-            }
         }
-
         public void PauseForGameplay()
         {
             _pausedForGameplay = true;

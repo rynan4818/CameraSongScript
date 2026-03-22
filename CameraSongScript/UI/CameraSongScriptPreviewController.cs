@@ -1,5 +1,6 @@
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
 using CameraSongScript.Utilities;
@@ -24,7 +25,8 @@ namespace CameraSongScript.UI
         private const float DefaultMiniatureScale = 0.15f;
         private const float DefaultStageLineWidth = 0.012f;
         private const float DefaultPathLineWidth = 0.004f;
-        private const float ScreenScale = 0.0025f;
+        private const float DefaultScreenScale = 0.0025f;
+        private const float DefaultScreenPositionY = 0.78f;
         private const float EndPoseEpsilon = 0.0001f;
         private const float StageHalfWidth = 1.5f;
         private const float StageFrontZ = -1.0f;
@@ -49,6 +51,8 @@ namespace CameraSongScript.UI
         private static Material _solidMaterialTemplate;
 
         private readonly CameraSongScriptDetector _scriptDetector;
+        private readonly ICameraHelper _cameraHelper;
+        private readonly ICameraPlusHelper _cameraPlusHelper;
 
         private readonly List<TimelineSegment> _segments = new List<TimelineSegment>();
         private readonly List<LineRenderer> _pathLineRenderers = new List<LineRenderer>();
@@ -77,9 +81,14 @@ namespace CameraSongScript.UI
         public string LoadedScriptDisplayName => _loadedScriptDisplayName;
         public event Action StateChanged;
 
-        public CameraSongScriptPreviewController(CameraSongScriptDetector scriptDetector)
+        public CameraSongScriptPreviewController(
+            CameraSongScriptDetector scriptDetector,
+            [InjectOptional] ICameraHelper cameraHelper,
+            [InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
             _scriptDetector = scriptDetector;
+            _cameraHelper = cameraHelper;
+            _cameraPlusHelper = cameraPlusHelper;
         }
 
         public bool CanPreviewSelection
@@ -184,7 +193,7 @@ namespace CameraSongScript.UI
                 return;
             }
 
-            ReloadPreviewFromCurrentSelection(false, false, 1, false);
+            ReloadPreviewFromCurrentSelection(false, _isPlaying, _speedMultiplier, false);
         }
 
         public void HandleVisualChange()
@@ -414,6 +423,18 @@ namespace CameraSongScript.UI
             return config != null ? config.PreviewPathLineWidth : DefaultPathLineWidth;
         }
 
+        private static float GetPreviewScreenScale()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewScreenScale : DefaultScreenScale;
+        }
+
+        private static float GetPreviewScreenPositionY()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            return config != null ? config.PreviewScreenPositionY : DefaultScreenPositionY;
+        }
+
         private Transform CreatePreviewSceneContents(Transform parent, float stageLineWidth, float pathLineWidth, bool includeCameraMarker)
         {
             CreateStageVolume(parent, stageLineWidth);
@@ -473,26 +494,26 @@ namespace CameraSongScript.UI
             screenRootObject.transform.SetParent(parent, false);
 
             Transform screenTransform = screenRootObject.transform;
-            screenTransform.localPosition = new Vector3(0f, 0.78f, 0.05f);
+            screenTransform.localPosition = new Vector3(0f, GetPreviewScreenPositionY(), 0.05f);
             
             // Convert PreviewPanelSize (Vector2 width/height) to Quad Scale.
-            // ScreenScale scales the whole thing down.
-            float width = PreviewPanelSize.x * ScreenScale;
-            float height = PreviewPanelSize.y * ScreenScale;
+            // Preview screen scale scales the whole thing down.
+            float previewScreenScale = GetPreviewScreenScale();
+            float width = PreviewPanelSize.x * previewScreenScale;
+            float height = PreviewPanelSize.y * previewScreenScale;
             screenTransform.localScale = new Vector3(width, height, 1f);
             screenTransform.localRotation = GetPreviewScreenRotation(Vector3.forward);
 
             _previewRenderer = screenRootObject.GetComponent<MeshRenderer>();
 
             Material customMaterial = null;
-            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
             {
-                customMaterial = Plugin.CamHelper.GetPreviewMaterial();
+                customMaterial = _cameraHelper.GetPreviewMaterial();
             }
-            else if (CameraModDetector.IsCameraPlus && Plugin.IsCamPlusHelperReady)
+            else if (CameraModDetector.IsCameraPlus && _cameraPlusHelper != null && _cameraPlusHelper.IsInitialized)
             {
-                customMaterial = Plugin.CamPlusHelper.GetPreviewMaterial();
-                Plugin.Log.Info($"customMaterial: {customMaterial}");
+                customMaterial = _cameraPlusHelper.GetPreviewMaterial();
             }
 
             if (customMaterial != null)

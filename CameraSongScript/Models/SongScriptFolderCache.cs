@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using IPA.Utilities;
 using Newtonsoft.Json;
+using CameraSongScript.Utilities;
 
 namespace CameraSongScript.Models
 {
@@ -87,8 +88,7 @@ namespace CameraSongScript.Models
             public MetadataElements Metadata { get; set; }
         }
 
-        private static readonly string SongScriptFolderPath =
-            Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScripts");
+        private static string SongScriptFolderPath => ScriptFolderPathResolver.GetSongScriptsFolderPath();
 
         private static readonly string CacheFilePath =
             Path.Combine(UnityGame.UserDataPath, "CameraSongScript", "SongScriptsFolderCache.json");

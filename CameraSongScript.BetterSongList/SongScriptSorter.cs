@@ -13,6 +13,12 @@ namespace CameraSongScript.BetterSongList
 {
     internal sealed class SongScriptSorter : ISorterCustom, ITransformerPlugin
     {
+        internal SongScriptSorter()
+        {
+        }
+
+        private static SongScriptBeatmapIndexService IndexService => SongScriptBeatmapIndexService.Current;
+
         private sealed class IndexedLevel
         {
             public BeatmapLevel Level { get; set; }
@@ -24,9 +30,7 @@ namespace CameraSongScript.BetterSongList
 
         public bool visible { get; private set; }
 
-        public bool isReady =>
-            SongScriptBeatmapIndexService.Instance != null &&
-            SongScriptBeatmapIndexService.Instance.CanFilter;
+        public bool isReady => IndexService != null && IndexService.CanFilter;
 
         public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
@@ -37,7 +41,7 @@ namespace CameraSongScript.BetterSongList
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                SongScriptBeatmapIndexService indexService = SongScriptBeatmapIndexService.Instance;
+                SongScriptBeatmapIndexService indexService = IndexService;
                 if (indexService != null && indexService.CanFilter)
                 {
                     return;
@@ -49,7 +53,7 @@ namespace CameraSongScript.BetterSongList
 
         public void DoSort(ref IEnumerable<BeatmapLevel> levels, bool ascending)
         {
-            SongScriptBeatmapIndexService indexService = SongScriptBeatmapIndexService.Instance;
+            SongScriptBeatmapIndexService indexService = IndexService;
             if (indexService == null || levels == null)
             {
                 return;

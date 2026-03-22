@@ -24,11 +24,11 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionDefault };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
                 {
                     try
                     {
-                        var scenes = Plugin.CamHelper.CustomScenes;
+                        var scenes = _cameraHelper.CustomScenes;
                         if (scenes != null)
                         {
                             foreach (var scene in scenes) list.Add(scene);
@@ -67,7 +67,7 @@ namespace CameraSongScript.UI
         [UIAction("add-custom-scene")]
         public void AddCustomScene()
         {
-            if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
             {
                 var targetCam = CameraSongScriptConfig.Instance.TargetCameras;
                 IEnumerable<string> camerasToAdd;
@@ -75,20 +75,34 @@ namespace CameraSongScript.UI
                 // All または 未指定の場合は有効なすべてのカメラを追加、そうでない場合は指定カメラのみ追加
                 if (string.IsNullOrEmpty(targetCam) || targetCam == UiLocalization.OptionAll)
                 {
-                    camerasToAdd = Plugin.CamHelper.GetAvailableCameras();
+                    camerasToAdd = _cameraHelper.GetAvailableCameras();
                 }
                 else
                 {
                     camerasToAdd = new List<string> { targetCam };
                 }
 
-                Plugin.CamHelper.CreateOrUpdateCustomScene("CameraSongScript", camerasToAdd);
-                
-                // ドロップダウンのリストとUIを更新
-                NotifyPropertyChanged(nameof(CustomSceneOptions));
-                NotifyPropertyChanged(nameof(SelectedCustomScene));
-                RefreshDropdown(customSceneDropdown, CustomSceneOptions);
+                _cameraHelper.CreateOrUpdateCustomScene("CameraSongScript", camerasToAdd);
+
+                RefreshCamera2Dropdowns();
             }
+        }
+
+        [UIValue("is-camera2-list-refresh-available")]
+        public bool IsCamera2ListRefreshAvailable =>
+            CameraModDetector.IsCamera2 &&
+            _cameraHelper != null &&
+            _cameraHelper.IsInitialized;
+
+        [UIAction("refresh-camera2-lists")]
+        public void RefreshCamera2Lists()
+        {
+            if (!IsCamera2ListRefreshAvailable)
+            {
+                return;
+            }
+
+            RefreshCamera2Dropdowns();
         }
 
         [UIValue("use-audio-sync")]
@@ -104,11 +118,11 @@ namespace CameraSongScript.UI
             get
             {
                 var list = new List<string> { UiLocalization.OptionAll };
-                if (CameraModDetector.IsCamera2 && Plugin.IsCamHelperReady)
+                if (CameraModDetector.IsCamera2 && _cameraHelper != null && _cameraHelper.IsInitialized)
                 {
                     try
                     {
-                        var cams = Plugin.CamHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
+                        var cams = _cameraHelper.GetAvailableCameras()?.ToList() ?? new List<string>();
                         foreach (var cam in cams) list.Add(cam);
                     }
                     catch (Exception ex)
@@ -136,6 +150,23 @@ namespace CameraSongScript.UI
                 if (cam == UiLocalization.OptionAll) cam = string.Empty;
                 CameraSongScriptConfig.Instance.TargetCameras = cam ?? string.Empty;
             }
+        }
+
+        private void RefreshCamera2Dropdowns()
+        {
+            NotifyPropertyChanged(nameof(TargetCameraOptions));
+            NotifyPropertyChanged(nameof(TargetCameras));
+            NotifyPropertyChanged(nameof(CustomSceneOptions));
+            NotifyPropertyChanged(nameof(SelectedCustomScene));
+            NotifyPropertyChanged(nameof(CommonTargetCameraOptions));
+            NotifyPropertyChanged(nameof(CommonTargetCamera));
+            NotifyPropertyChanged(nameof(CommonCustomSceneOptions));
+            NotifyPropertyChanged(nameof(CommonCustomScene));
+
+            RefreshDropdown(targetCameraDropdown, TargetCameraOptions);
+            RefreshDropdown(customSceneDropdown, CustomSceneOptions);
+            RefreshDropdown(commonTargetCameraDropdown, CommonTargetCameraOptions);
+            RefreshDropdown(commonCustomSceneDropdown, CommonCustomSceneOptions);
         }
 
         #endregion

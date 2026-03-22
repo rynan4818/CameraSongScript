@@ -1,17 +1,22 @@
 using System;
 using BetterSongList;
-using CameraSongScript.Interfaces;
 
 namespace CameraSongScript.BetterSongList
 {
-    public class BetterSongListHelper : IBetterSongListHelper
+    internal sealed class BetterSongListHelper
     {
-        private static readonly SongScriptFilter FilterInstance = new SongScriptFilter();
-        private static readonly SongScriptSorter SorterInstance = new SongScriptSorter();
-        private static bool _filterRegistered;
-        private static bool _sorterRegistered;
+        private readonly SongScriptFilter _filter;
+        private readonly SongScriptSorter _sorter;
+        private bool _filterRegistered;
+        private bool _sorterRegistered;
 
         public bool IsInitialized { get; private set; }
+
+        internal BetterSongListHelper(SongScriptFilter filter, SongScriptSorter sorter)
+        {
+            _filter = filter;
+            _sorter = sorter;
+        }
 
         public bool Initialize()
         {
@@ -30,25 +35,28 @@ namespace CameraSongScript.BetterSongList
             {
                 if (!EnsureFilterRegistered())
                 {
+                    Plugin.Log.Warn("BetterSongList filter registration did not complete successfully.");
                     return false;
                 }
 
                 if (!EnsureSorterRegistered())
                 {
+                    Plugin.Log.Warn("BetterSongList sorter registration did not complete successfully.");
                     return false;
                 }
 
                 IsInitialized = true;
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Plugin.Log.Error($"BetterSongList helper initialization failed: {ex}");
                 IsInitialized = false;
                 return false;
             }
         }
 
-        private static bool EnsureFilterRegistered()
+        private bool EnsureFilterRegistered()
         {
             if (_filterRegistered)
             {
@@ -57,17 +65,27 @@ namespace CameraSongScript.BetterSongList
 
             try
             {
-                _filterRegistered = FilterMethods.Register(FilterInstance);
+                _filterRegistered = FilterMethods.Register(_filter);
+                if (!_filterRegistered)
+                {
+                    Plugin.Log.Warn("BetterSongList filter registration was rejected. AllowPluginSortsAndFilters may be disabled.");
+                }
+
                 return _filterRegistered;
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                _filterRegistered = true;
-                return true;
+                Plugin.Log.Warn($"BetterSongList filter registration failed: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error($"BetterSongList filter registration failed unexpectedly: {ex}");
+                return false;
             }
         }
 
-        private static bool EnsureSorterRegistered()
+        private bool EnsureSorterRegistered()
         {
             if (_sorterRegistered)
             {
@@ -76,13 +94,23 @@ namespace CameraSongScript.BetterSongList
 
             try
             {
-                _sorterRegistered = SortMethods.RegisterCustomSorter(SorterInstance);
+                _sorterRegistered = SortMethods.RegisterCustomSorter(_sorter);
+                if (!_sorterRegistered)
+                {
+                    Plugin.Log.Warn("BetterSongList sorter registration was rejected. AllowPluginSortsAndFilters may be disabled.");
+                }
+
                 return _sorterRegistered;
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
-                _sorterRegistered = true;
-                return true;
+                Plugin.Log.Warn($"BetterSongList sorter registration failed: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error($"BetterSongList sorter registration failed unexpectedly: {ex}");
+                return false;
             }
         }
     }

@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
 using CameraSongScript.Installers;
-using CameraSongScript.Interfaces;
 using CameraSongScript.Models;
 using IPA;
 using IPA.Config;
@@ -16,35 +15,7 @@ namespace CameraSongScript
     [Plugin(RuntimeOptions.SingleStartInit)]
     public class Plugin
     {
-        private static readonly Version[] SupportedHttpSiraStatusAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedBetterSongListAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedCam2AdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
-        private static readonly Version[] SupportedCamPlusAdapterVersions =
-        {
-            new Version(0, 0, 1, 0)
-        };
-
         internal static IPALogger Log { get; private set; }
-        internal static ICameraHelper CamHelper { get; private set; }
-        internal static ICameraPlusHelper CamPlusHelper { get; private set; }
-        internal static IHttpSiraStatusHelper HttpSiraStatusHelper { get; private set; }
-        internal static IBetterSongListHelper BetterSongListHelper { get; private set; }
-        internal static bool IsCamHelperReady => CamHelper != null && CamHelper.IsInitialized;
-        internal static bool IsCamPlusHelperReady => CamPlusHelper != null && CamPlusHelper.IsInitialized;
-        internal static bool IsHttpSiraStatusHelperReady => HttpSiraStatusHelper != null && HttpSiraStatusHelper.IsInitialized;
-        internal static bool IsBetterSongListHelperReady => BetterSongListHelper != null && BetterSongListHelper.IsInitialized;
         internal static event Action SongDetailsCacheInitialized;
 
         internal static SongDetailsCache.SongDetails SongDetailsInstance { get; private set; }
@@ -68,7 +39,7 @@ namespace CameraSongScript
         public void OnApplicationStart()
         {
             Log.Debug("OnApplicationStart");
-            PluginAdapterManager.ClearAllUnsupportedAdapterVersionWarnings();
+            PluginAdapterManager.NotifyAdapterStateChanged();
 
             // 1. カメラMod検出
             CameraModDetector.Detect();
@@ -83,59 +54,6 @@ namespace CameraSongScript
             // 4. CommonScriptsフォルダのスキャン・キャッシュ構築（非同期）
             var commonScriptScanTask = CommonScriptCache.ScanAsync();
             _ = ReevaluateSelectedLevelWhenReady(commonScriptScanTask, "CommonScripts");
-
-            // 5. アダプタ初期化（対応Modがインストールされている場合のみアダプタDLLをロード）
-            if (CameraModDetector.IsCamera2)
-            {
-                CamHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<ICameraHelper>(
-                    "CameraSongScript.Cam2",
-                    "CameraSongScript.Cam2.dll",
-                    SupportedCam2AdapterVersions,
-                    "CameraSongScript.Cam2.Camera2Helper");
-                if (CamHelper == null)
-                {
-                    if (!PluginAdapterManager.HasUnsupportedAdapterVersionWarning("CameraSongScript.Cam2.dll"))
-                    {
-                        Log.Error("Camera2 adapter initialization failed.");
-                    }
-
-                    CamHelper = null;
-                }
-                else if (!CamHelper.Initialize())
-                {
-                    Log.Error("Camera2 adapter initialization failed.");
-                    CamHelper = null;
-                }
-
-                CamPlusHelper = null;
-            }
-            else if (CameraModDetector.IsCameraPlus)
-            {
-                CamPlusHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<ICameraPlusHelper>(
-                    "CameraSongScript.CamPlus",
-                    "CameraSongScript.CamPlus.dll",
-                    SupportedCamPlusAdapterVersions,
-                    "CameraSongScript.CamPlus.CameraPlusHelper");
-                if (CamPlusHelper == null)
-                {
-                    if (!PluginAdapterManager.HasUnsupportedAdapterVersionWarning("CameraSongScript.CamPlus.dll"))
-                    {
-                        Log.Error("CameraPlus adapter initialization failed.");
-                    }
-
-                    CamPlusHelper = null;
-                }
-                else if (!CamPlusHelper.Initialize())
-                {
-                    Log.Error("CameraPlus adapter initialization failed.");
-                    CamPlusHelper = null;
-                }
-
-                CamHelper = null;
-            }
-
-            EnsureHttpSiraStatusHelperLoaded();
-            EnsureBetterSongListHelperLoaded();
             Log.Info("CameraSongScript started.");
         }
 
@@ -143,72 +61,6 @@ namespace CameraSongScript
         public void OnApplicationQuit()
         {
             Log.Debug("OnApplicationQuit");
-        }
-
-        internal static void EnsureHttpSiraStatusHelperLoaded()
-        {
-            if (IsHttpSiraStatusHelperReady)
-            {
-                return;
-            }
-
-            if (!PluginAdapterManager.IsAssemblyLoaded("HttpSiraStatus"))
-            {
-                return;
-            }
-
-            HttpSiraStatusHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<IHttpSiraStatusHelper>(
-                "CameraSongScript.HttpSiraStatus",
-                "CameraSongScript.HttpSiraStatus.dll",
-                SupportedHttpSiraStatusAdapterVersions,
-                "CameraSongScript.HttpSiraStatus.HttpSiraStatusHelper");
-
-            if (HttpSiraStatusHelper == null)
-            {
-                if (!PluginAdapterManager.HasUnsupportedAdapterVersionWarning("CameraSongScript.HttpSiraStatus.dll"))
-                {
-                    Log.Error("HttpSiraStatus adapter initialization failed.");
-                }
-
-                HttpSiraStatusHelper = null;
-            }
-            else if (!HttpSiraStatusHelper.Initialize())
-            {
-                Log.Error("HttpSiraStatus adapter initialization failed.");
-                HttpSiraStatusHelper = null;
-            }
-        }
-
-        internal static void EnsureBetterSongListHelperLoaded()
-        {
-            if (IsBetterSongListHelperReady)
-            {
-                return;
-            }
-
-            if (!PluginAdapterManager.IsAssemblyLoaded("BetterSongList"))
-            {
-                return;
-            }
-
-            BetterSongListHelper = PluginAdapterManager.TryCreateAdapterWithVersionCheck<IBetterSongListHelper>(
-                "CameraSongScript.BetterSongList",
-                "CameraSongScript.BetterSongList.dll",
-                SupportedBetterSongListAdapterVersions,
-                "CameraSongScript.BetterSongList.BetterSongListHelper");
-
-            if (BetterSongListHelper == null)
-            {
-                return;
-            }
-
-            if (!BetterSongListHelper.Initialize())
-            {
-                Log.Warn("BetterSongList helper initialization did not complete successfully.");
-                return;
-            }
-
-            Log.Info("BetterSongList helper initialized.");
         }
 
         internal static string GetUnsupportedAdapterVersionWarningText()

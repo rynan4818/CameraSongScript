@@ -1,8 +1,10 @@
 using System.IO;
 using CameraSongScript.Configuration;
 using CameraSongScript.Detectors;
+using CameraSongScript.Interfaces;
 using CameraSongScript.Localization;
 using CameraSongScript.Models;
+using Zenject;
 
 namespace CameraSongScript.Gameplay
 {
@@ -12,11 +14,18 @@ namespace CameraSongScript.Gameplay
     public class CameraSongScriptPlayContextResolver
     {
         private readonly CameraSongScriptDetector _scriptDetector;
+        private readonly ICameraHelper _cameraHelper;
+        private readonly ICameraPlusHelper _cameraPlusHelper;
         private CameraSongScriptPlayContext _resolvedContext;
 
-        internal CameraSongScriptPlayContextResolver(CameraSongScriptDetector scriptDetector)
+        internal CameraSongScriptPlayContextResolver(
+            CameraSongScriptDetector scriptDetector,
+            [InjectOptional] ICameraHelper cameraHelper,
+            [InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
             _scriptDetector = scriptDetector;
+            _cameraHelper = cameraHelper;
+            _cameraPlusHelper = cameraPlusHelper;
         }
 
         public CameraSongScriptPlayContext Resolve()
@@ -37,13 +46,13 @@ namespace CameraSongScript.Gameplay
                 return CameraSongScriptPlayContext.CreateNone();
             }
 
-            if (CameraModDetector.IsCamera2 && !Plugin.IsCamHelperReady)
+            if (CameraModDetector.IsCamera2 && (_cameraHelper == null || !_cameraHelper.IsInitialized))
             {
                 Plugin.Log.Error("SongScript: Camera2 adapter is not initialized.");
                 return CameraSongScriptPlayContext.CreateNone();
             }
 
-            if (CameraModDetector.IsCameraPlus && !Plugin.IsCamPlusHelperReady)
+            if (CameraModDetector.IsCameraPlus && (_cameraPlusHelper == null || !_cameraPlusHelper.IsInitialized))
             {
                 Plugin.Log.Error("SongScript: CameraPlus adapter is not initialized.");
                 return CameraSongScriptPlayContext.CreateNone();

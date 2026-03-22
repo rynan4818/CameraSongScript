@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="ValidateCameraSongScriptAssemblyVersion" AfterTargets="CoreCompile" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <_CameraSongScriptProjectReference Include="@(ProjectReference)" Condition="'%(Filename)%(Extension)' == 'CameraSongScript.csproj'" />
+      <_AdapterAssemblyPath Include="@(IntermediateAssembly)" Condition="'@(IntermediateAssembly)' != ''" />
+      <_AdapterAssemblyPath Include="$(TargetPath)" Condition="'@(_AdapterAssemblyPath)' == '' and '$(TargetPath)' != ''" />
+    </ItemGroup>
+
+    <Error Condition="'@(_CameraSongScriptProjectReference)' == ''" Text="CameraSongScript.csproj への ProjectReference が見つからないため、AssemblyVersion の整合性チェックを実行できません。" />
+
+    <MSBuild Projects="@(_CameraSongScriptProjectReference)" Targets="GetTargetPath" BuildInParallel="false" Properties="Configuration=$(Configuration);Platform=$(Platform)">
+      <Output TaskParameter="TargetOutputs" ItemName="_CameraSongScriptTargetPath" />
+    </MSBuild>
+
+    <Error Condition="'@(_AdapterAssemblyPath)' == ''" Text="$(MSBuildProjectName) の出力 DLL パスを取得できなかったため、AssemblyVersion の整合性チェックを実行できません。" />
+    <Error Condition="!Exists('@(_AdapterAssemblyPath)')" Text="$(MSBuildProjectName) の出力 DLL が見つからないため、AssemblyVersion の整合性チェックを実行できません: @(_AdapterAssemblyPath)" />
+    <Error Condition="'@(_CameraSongScriptTargetPath)' == ''" Text="CameraSongScript の出力 DLL パスを取得できなかったため、AssemblyVersion の整合性チェックを実行できません。" />
+    <Error Condition="!Exists('@(_CameraSongScriptTargetPath)')" Text="CameraSongScript の出力 DLL が見つからないため、AssemblyVersion の整合性チェックを実行できません: @(_CameraSongScriptTargetPath)" />
+
+    <GetAssemblyIdentity AssemblyFiles="@(_AdapterAssemblyPath)">
+      <Output TaskParameter="Assemblies" ItemName="_AdapterAssemblyIdentity" />
+    </GetAssemblyIdentity>
+
+    <GetAssemblyIdentity AssemblyFiles="@(_CameraSongScriptTargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="_CameraSongScriptAssemblyIdentity" />
+    </GetAssemblyIdentity>
+
+    <PropertyGroup>
+      <_AdapterAssemblyVersion>%(_AdapterAssemblyIdentity.Version)</_AdapterAssemblyVersion>
+      <_CameraSongScriptAssemblyVersion>%(_CameraSongScriptAssemblyIdentity.Version)</_CameraSongScriptAssemblyVersion>
+    </PropertyGroup>
+
+    <Error Condition="'$(_AdapterAssemblyVersion)' == ''" Text="$(MSBuildProjectName) の AssemblyVersion を取得できませんでした。" />
+    <Error Condition="'$(_CameraSongScriptAssemblyVersion)' == ''" Text="CameraSongScript の AssemblyVersion を取得できませんでした。" />
+    <Error Condition="'$(_AdapterAssemblyVersion)' != '$(_CameraSongScriptAssemblyVersion)'" Text="$(MSBuildProjectName) の AssemblyVersion ($(_AdapterAssemblyVersion)) が CameraSongScript の AssemblyVersion ($(_CameraSongScriptAssemblyVersion)) と一致しません。" />
+  </Target>
+
+  <Target Name="ValidateCameraSongScriptManifestDependencyVersion" AfterTargets="ValidateCameraSongScriptAssemblyVersion" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <_AdapterManifestPath>$(MSBuildProjectDirectory)\manifest.json</_AdapterManifestPath>
+      <_CameraSongScriptManifestPath>$(MSBuildThisFileDirectory)CameraSongScript\manifest.json</_CameraSongScriptManifestPath>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(_AdapterManifestPath)')" Text="$(MSBuildProjectName) の manifest.json が見つからないため、manifest 依存関係の整合性チェックを実行できません: $(_AdapterManifestPath)" />
+    <Error Condition="!Exists('$(_CameraSongScriptManifestPath)')" Text="CameraSongScript の manifest.json が見つからないため、manifest 依存関係の整合性チェックを実行できません: $(_CameraSongScriptManifestPath)" />
+
+    <PropertyGroup>
+      <_CameraSongScriptManifestContent>$([System.IO.File]::ReadAllText('$(_CameraSongScriptManifestPath)'))</_CameraSongScriptManifestContent>
+      <_AdapterManifestContent>$([System.IO.File]::ReadAllText('$(_AdapterManifestPath)'))</_AdapterManifestContent>
+      <_HasCameraSongScriptManifestVersion>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_CameraSongScriptManifestContent)', '\"version\"\s*:\s*\"([^\"]+)\"'))</_HasCameraSongScriptManifestVersion>
+      <_HasAdapterCameraSongScriptDependency>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_AdapterManifestContent)', '(?s)\"dependsOn\"\s*:\s*\{.*?\"CameraSongScript\"\s*:\s*\"([^\"]+)\"'))</_HasAdapterCameraSongScriptDependency>
+      <_HasCameraSongScriptGameVersion>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_CameraSongScriptManifestContent)', '\"gameVersion\"\s*:\s*\"([^\"]+)\"'))</_HasCameraSongScriptGameVersion>
+      <_HasAdapterGameVersion>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_AdapterManifestContent)', '\"gameVersion\"\s*:\s*\"([^\"]+)\"'))</_HasAdapterGameVersion>
+      <_HasCameraSongScriptBsipaDependency>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_CameraSongScriptManifestContent)', '(?s)\"dependsOn\"\s*:\s*\{.*?\"BSIPA\"\s*:\s*\"([^\"]+)\"'))</_HasCameraSongScriptBsipaDependency>
+      <_HasAdapterBsipaDependency>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_AdapterManifestContent)', '(?s)\"dependsOn\"\s*:\s*\{.*?\"BSIPA\"\s*:\s*\"([^\"]+)\"'))</_HasAdapterBsipaDependency>
+      <_HasCameraSongScriptSiraUtilDependency>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_CameraSongScriptManifestContent)', '(?s)\"dependsOn\"\s*:\s*\{.*?\"SiraUtil\"\s*:\s*\"([^\"]+)\"'))</_HasCameraSongScriptSiraUtilDependency>
+      <_HasAdapterSiraUtilDependency>$([System.Text.RegularExpressions.Regex]::IsMatch('$(_AdapterManifestContent)', '(?s)\"dependsOn\"\s*:\s*\{.*?\"SiraUtil\"\s*:\s*\"([^\"]+)\"'))</_HasAdapterSiraUtilDependency>
+      <_CameraSongScriptManifestVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_CameraSongScriptManifestContent)', '(?s).*\"version\"\s*:\s*\"([^\"]+)\".*', '$1'))</_CameraSongScriptManifestVersion>
+      <_AdapterCameraSongScriptDependencyVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_AdapterManifestContent)', '(?s).*\"dependsOn\"\s*:\s*\{.*?\"CameraSongScript\"\s*:\s*\"([^\"]+)\".*', '$1'))</_AdapterCameraSongScriptDependencyVersion>
+      <_CameraSongScriptGameVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_CameraSongScriptManifestContent)', '(?s).*\"gameVersion\"\s*:\s*\"([^\"]+)\".*', '$1'))</_CameraSongScriptGameVersion>
+      <_AdapterGameVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_AdapterManifestContent)', '(?s).*\"gameVersion\"\s*:\s*\"([^\"]+)\".*', '$1'))</_AdapterGameVersion>
+      <_CameraSongScriptBsipaDependencyVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_CameraSongScriptManifestContent)', '(?s).*\"dependsOn\"\s*:\s*\{.*?\"BSIPA\"\s*:\s*\"([^\"]+)\".*', '$1'))</_CameraSongScriptBsipaDependencyVersion>
+      <_AdapterBsipaDependencyVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_AdapterManifestContent)', '(?s).*\"dependsOn\"\s*:\s*\{.*?\"BSIPA\"\s*:\s*\"([^\"]+)\".*', '$1'))</_AdapterBsipaDependencyVersion>
+      <_CameraSongScriptSiraUtilDependencyVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_CameraSongScriptManifestContent)', '(?s).*\"dependsOn\"\s*:\s*\{.*?\"SiraUtil\"\s*:\s*\"([^\"]+)\".*', '$1'))</_CameraSongScriptSiraUtilDependencyVersion>
+      <_AdapterSiraUtilDependencyVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_AdapterManifestContent)', '(?s).*\"dependsOn\"\s*:\s*\{.*?\"SiraUtil\"\s*:\s*\"([^\"]+)\".*', '$1'))</_AdapterSiraUtilDependencyVersion>
+      <_ExpectedAdapterCameraSongScriptDependencyVersion>=$(_CameraSongScriptManifestVersion)</_ExpectedAdapterCameraSongScriptDependencyVersion>
+    </PropertyGroup>
+
+    <Error Condition="'$(_HasCameraSongScriptManifestVersion)' != 'True'" Text="CameraSongScript の manifest.json から version を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_HasAdapterCameraSongScriptDependency)' != 'True'" Text="$(MSBuildProjectName) の manifest.json に dependsOn.CameraSongScript が見つかりません。exact version の依存関係を記述してください: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_HasCameraSongScriptGameVersion)' != 'True'" Text="CameraSongScript の manifest.json から gameVersion を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_HasAdapterGameVersion)' != 'True'" Text="$(MSBuildProjectName) の manifest.json から gameVersion を取得できませんでした: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_HasCameraSongScriptBsipaDependency)' != 'True'" Text="CameraSongScript の manifest.json に dependsOn.BSIPA が見つかりません: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_HasAdapterBsipaDependency)' != 'True'" Text="$(MSBuildProjectName) の manifest.json に dependsOn.BSIPA が見つかりません: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_HasCameraSongScriptSiraUtilDependency)' != 'True'" Text="CameraSongScript の manifest.json に dependsOn.SiraUtil が見つかりません: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_CameraSongScriptManifestVersion)' == ''" Text="CameraSongScript の manifest.json から version を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_AdapterCameraSongScriptDependencyVersion)' == ''" Text="$(MSBuildProjectName) の manifest.json から dependsOn.CameraSongScript を取得できませんでした: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_CameraSongScriptGameVersion)' == ''" Text="CameraSongScript の manifest.json から gameVersion を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_AdapterGameVersion)' == ''" Text="$(MSBuildProjectName) の manifest.json から gameVersion を取得できませんでした: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_CameraSongScriptBsipaDependencyVersion)' == ''" Text="CameraSongScript の manifest.json から dependsOn.BSIPA を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_AdapterBsipaDependencyVersion)' == ''" Text="$(MSBuildProjectName) の manifest.json から dependsOn.BSIPA を取得できませんでした: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_CameraSongScriptSiraUtilDependencyVersion)' == ''" Text="CameraSongScript の manifest.json から dependsOn.SiraUtil を取得できませんでした: $(_CameraSongScriptManifestPath)" />
+    <Error Condition="'$(_HasAdapterSiraUtilDependency)' == 'True' and '$(_AdapterSiraUtilDependencyVersion)' == ''" Text="$(MSBuildProjectName) の manifest.json から dependsOn.SiraUtil を取得できませんでした: $(_AdapterManifestPath)" />
+    <Error Condition="'$(_AdapterCameraSongScriptDependencyVersion)' != '$(_ExpectedAdapterCameraSongScriptDependencyVersion)'" Text="$(MSBuildProjectName) の manifest.json に記述された dependsOn.CameraSongScript ($(_AdapterCameraSongScriptDependencyVersion)) が期待値 ($(_ExpectedAdapterCameraSongScriptDependencyVersion)) と一致しません。" />
+    <Error Condition="'$(_AdapterGameVersion)' != '$(_CameraSongScriptGameVersion)'" Text="$(MSBuildProjectName) の manifest.json に記述された gameVersion ($(_AdapterGameVersion)) が CameraSongScript の gameVersion ($(_CameraSongScriptGameVersion)) と一致しません。" />
+    <Error Condition="'$(_AdapterBsipaDependencyVersion)' != '$(_CameraSongScriptBsipaDependencyVersion)'" Text="$(MSBuildProjectName) の manifest.json に記述された dependsOn.BSIPA ($(_AdapterBsipaDependencyVersion)) が CameraSongScript の dependsOn.BSIPA ($(_CameraSongScriptBsipaDependencyVersion)) と一致しません。" />
+    <Error Condition="'$(_HasAdapterSiraUtilDependency)' == 'True' and '$(_AdapterSiraUtilDependencyVersion)' != '$(_CameraSongScriptSiraUtilDependencyVersion)'" Text="$(MSBuildProjectName) の manifest.json に記述された dependsOn.SiraUtil ($(_AdapterSiraUtilDependencyVersion)) が CameraSongScript の dependsOn.SiraUtil ($(_CameraSongScriptSiraUtilDependencyVersion)) と一致しません。" />
+  </Target>
+</Project>

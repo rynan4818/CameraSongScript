@@ -9,13 +9,17 @@ namespace CameraSongScript.BetterSongList
 {
     internal sealed class SongScriptFilter : IFilter, ITransformerPlugin
     {
+        internal SongScriptFilter()
+        {
+        }
+
+        private static SongScriptBeatmapIndexService IndexService => SongScriptBeatmapIndexService.Current;
+
         public string name => "SongScript";
 
         public bool visible { get; private set; }
 
-        public bool isReady =>
-            SongScriptBeatmapIndexService.Instance != null &&
-            SongScriptBeatmapIndexService.Instance.CanFilter;
+        public bool isReady => IndexService != null && IndexService.CanFilter;
 
         public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
@@ -26,7 +30,7 @@ namespace CameraSongScript.BetterSongList
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                var indexService = SongScriptBeatmapIndexService.Instance;
+                SongScriptBeatmapIndexService indexService = IndexService;
                 if (indexService != null && indexService.CanFilter)
                 {
                     return;
@@ -38,7 +42,7 @@ namespace CameraSongScript.BetterSongList
 
         public bool GetValueFor(BeatmapLevel level)
         {
-            var indexService = SongScriptBeatmapIndexService.Instance;
+            SongScriptBeatmapIndexService indexService = IndexService;
             return indexService != null && indexService.HasAnySongScript(level);
         }
     }
