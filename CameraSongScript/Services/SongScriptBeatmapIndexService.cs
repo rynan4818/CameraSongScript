@@ -38,6 +38,8 @@ namespace CameraSongScript.Services
         private const int CacheVersion = 1;
         private const string CacheFormatVersion = "1.0";
 
+        public static SongScriptBeatmapIndexService Current { get; private set; }
+
         private sealed class BeatmapWorkItem
         {
             public string FolderPath { get; set; }
@@ -118,6 +120,7 @@ namespace CameraSongScript.Services
 
         public void Initialize()
         {
+            Current = this;
             LoadPersistentCache();
 
             SongCore.Loader.LoadingStartedEvent += HandleLoadingStarted;
@@ -134,6 +137,11 @@ namespace CameraSongScript.Services
             if (_disposed)
             {
                 return;
+            }
+
+            if (ReferenceEquals(Current, this))
+            {
+                Current = null;
             }
 
             _disposed = true;
