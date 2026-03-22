@@ -76,6 +76,11 @@ namespace CameraSongScript.Detectors
             {
                 _scriptDetector.ProcessLevel(controller.beatmapLevel);
             }
+            else
+            {
+                _scriptDetector.ClearSelectedLevel(allowCommonScript: true);
+            }
+
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
             _scriptDetector.SyncCameraPlusPath();
