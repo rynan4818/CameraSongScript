@@ -1,10 +1,9 @@
 using System;
 using BetterSongList;
-using CameraSongScript.Interfaces;
 
 namespace CameraSongScript.BetterSongList
 {
-    public class BetterSongListHelper : IBetterSongListHelper
+    internal sealed class BetterSongListHelper
     {
         private readonly SongScriptFilter _filter;
         private readonly SongScriptSorter _sorter;

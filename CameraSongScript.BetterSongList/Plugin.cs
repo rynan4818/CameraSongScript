@@ -1,5 +1,4 @@
 using IPA;
-using SiraUtil.Zenject;
 using IPALogger = IPA.Logging.Logger;
 
 namespace CameraSongScript.BetterSongList
@@ -10,12 +9,19 @@ namespace CameraSongScript.BetterSongList
         internal static IPALogger Log { get; private set; }
 
         [Init]
-        public void Init(IPALogger logger, Zenjector zenjector)
+        public void Init(IPALogger logger)
         {
             Log = logger;
             Log.Info("CameraSongScript.BetterSongList initialized.");
 
-            zenjector.Install<Installers.BetterSongListAppInstaller>(Location.App);
+            var helper = new BetterSongListHelper(new SongScriptFilter(), new SongScriptSorter());
+            if (helper.IsInitialized || helper.Initialize())
+            {
+                Log.Info("BetterSongList adapter initialized.");
+                return;
+            }
+
+            Log.Warn("BetterSongList adapter initialization did not complete successfully.");
         }
 
         [OnStart]

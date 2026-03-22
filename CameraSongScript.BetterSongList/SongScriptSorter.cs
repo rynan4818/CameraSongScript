@@ -13,12 +13,11 @@ namespace CameraSongScript.BetterSongList
 {
     internal sealed class SongScriptSorter : ISorterCustom, ITransformerPlugin
     {
-        private readonly SongScriptBeatmapIndexService _indexService;
-
-        internal SongScriptSorter(SongScriptBeatmapIndexService indexService)
+        internal SongScriptSorter()
         {
-            _indexService = indexService;
         }
+
+        private static SongScriptBeatmapIndexService IndexService => SongScriptBeatmapIndexService.Current;
 
         private sealed class IndexedLevel
         {
@@ -31,7 +30,7 @@ namespace CameraSongScript.BetterSongList
 
         public bool visible { get; private set; }
 
-        public bool isReady => _indexService != null && _indexService.CanFilter;
+        public bool isReady => IndexService != null && IndexService.CanFilter;
 
         public void ContextSwitch(LevelCategory levelCategory, BeatmapLevelPack playlist)
         {
@@ -42,7 +41,8 @@ namespace CameraSongScript.BetterSongList
         {
             while (!cancelToken.IsCancellationRequested)
             {
-                if (_indexService != null && _indexService.CanFilter)
+                SongScriptBeatmapIndexService indexService = IndexService;
+                if (indexService != null && indexService.CanFilter)
                 {
                     return;
                 }
@@ -53,7 +53,8 @@ namespace CameraSongScript.BetterSongList
 
         public void DoSort(ref IEnumerable<BeatmapLevel> levels, bool ascending)
         {
-            if (_indexService == null || levels == null)
+            SongScriptBeatmapIndexService indexService = IndexService;
+            if (indexService == null || levels == null)
             {
                 return;
             }
@@ -63,7 +64,7 @@ namespace CameraSongScript.BetterSongList
                 {
                     Level = level,
                     OriginalIndex = originalIndex,
-                    SortInfo = _indexService.GetLevelSortInfo(level)
+                    SortInfo = indexService.GetLevelSortInfo(level)
                 })
                 .ToArray();
 

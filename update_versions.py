@@ -268,7 +268,11 @@ def validate_manifest_structure(spec: ProjectSpec, path: Path, manifest_data: Mu
     require_manifest_string(manifest_data, "gameVersion", path)
     depends_on = require_manifest_object(manifest_data, "dependsOn", path)
     require_manifest_string(depends_on, "BSIPA", path)
-    require_manifest_string(depends_on, "SiraUtil", path)
+
+    if spec.is_adapter:
+        get_optional_manifest_string(depends_on, "SiraUtil", path)
+    else:
+        require_manifest_string(depends_on, "SiraUtil", path)
 
     if spec.is_adapter:
         require_manifest_string(depends_on, "CameraSongScript", path)
@@ -292,6 +296,12 @@ def require_manifest_string(source: MutableMapping[str, object], key: str, path:
     return value
 
 
+def get_optional_manifest_string(source: MutableMapping[str, object], key: str, path: Path) -> Optional[str]:
+    if key not in source:
+        return None
+    return require_manifest_string(source, key, path)
+
+
 def display_current_values(project_states: List[ProjectState]) -> None:
     print("現在の値:")
 
@@ -306,10 +316,9 @@ def display_current_values(project_states: List[ProjectState]) -> None:
             )
             depends_on = require_manifest_object(state.manifest_data, "dependsOn", state.manifest_file.path)
             print(f"  manifest.dependsOn.BSIPA = {require_manifest_string(depends_on, 'BSIPA', state.manifest_file.path)}")
-            print(
-                "  manifest.dependsOn.SiraUtil = "
-                f"{require_manifest_string(depends_on, 'SiraUtil', state.manifest_file.path)}"
-            )
+            sirautil_dependency = get_optional_manifest_string(depends_on, "SiraUtil", state.manifest_file.path)
+            if sirautil_dependency is not None:
+                print(f"  manifest.dependsOn.SiraUtil = {sirautil_dependency}")
             if state.spec.is_adapter:
                 print(
                     "  manifest.dependsOn.CameraSongScript = "
@@ -379,8 +388,8 @@ def collect_alignment_warnings(project_states: List[ProjectState]) -> List[str]:
                 f"CameraSongScript ({core_bsipa}) と一致しません。"
             )
 
-        adapter_sirautil = get_manifest_dependency(state, "SiraUtil")
-        if adapter_sirautil != core_sirautil:
+        adapter_sirautil = get_optional_manifest_dependency(state, "SiraUtil")
+        if adapter_sirautil is not None and adapter_sirautil != core_sirautil:
             warnings.append(
                 f"{state.spec.name} の dependsOn.SiraUtil ({adapter_sirautil}) が "
                 f"CameraSongScript ({core_sirautil}) と一致しません。"
@@ -462,14 +471,16 @@ def build_change_plan(
 
             if sirautil_input:
                 depends_on = require_manifest_object(updated_manifest, "dependsOn", state.manifest_file.path)
-                manifest_changed |= update_manifest_value(
-                    depends_on,
-                    "SiraUtil",
-                    sirautil_input,
-                    project_changes,
-                    "manifest.dependsOn.SiraUtil",
-                    state.manifest_file.path,
-                )
+                current_sirautil = get_optional_manifest_string(depends_on, "SiraUtil", state.manifest_file.path)
+                if current_sirautil is not None:
+                    manifest_changed |= update_manifest_value(
+                        depends_on,
+                        "SiraUtil",
+                        sirautil_input,
+                        project_changes,
+                        "manifest.dependsOn.SiraUtil",
+                        state.manifest_file.path,
+                    )
 
             if manifest_changed:
                 new_manifest_text = json.dumps(updated_manifest, indent=2, ensure_ascii=False)
@@ -582,6 +593,13 @@ def get_manifest_dependency(project_state: ProjectState, dependency_name: str) -
         raise ValueError(f"manifest.json を持たないプロジェクトです: {project_state.spec.name}")
     depends_on = require_manifest_object(project_state.manifest_data, "dependsOn", project_state.manifest_file.path)
     return require_manifest_string(depends_on, dependency_name, project_state.manifest_file.path)
+
+
+def get_optional_manifest_dependency(project_state: ProjectState, dependency_name: str) -> Optional[str]:
+    if project_state.manifest_data is None or project_state.manifest_file is None:
+        raise ValueError(f"manifest.json を持たないプロジェクトです: {project_state.spec.name}")
+    depends_on = require_manifest_object(project_state.manifest_data, "dependsOn", project_state.manifest_file.path)
+    return get_optional_manifest_string(depends_on, dependency_name, project_state.manifest_file.path)
 
 
 if __name__ == "__main__":
