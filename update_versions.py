@@ -84,6 +84,7 @@ def main() -> int:
         version_input = prompt_value("version", get_core_manifest_value(project_states, "version"))
         game_version_input = prompt_value("gameVersion", get_core_manifest_value(project_states, "gameVersion"))
         bsipa_input = prompt_value("BSIPA", get_core_manifest_dependency(project_states, "BSIPA"))
+        sirautil_input = prompt_value("SiraUtil", get_core_manifest_dependency(project_states, "SiraUtil"))
 
         if version_input:
             validate_version(version_input)
@@ -93,6 +94,7 @@ def main() -> int:
             version_input=version_input,
             game_version_input=game_version_input,
             bsipa_input=bsipa_input,
+            sirautil_input=sirautil_input,
         )
 
         if not prepared_writes:
@@ -266,6 +268,7 @@ def validate_manifest_structure(spec: ProjectSpec, path: Path, manifest_data: Mu
     require_manifest_string(manifest_data, "gameVersion", path)
     depends_on = require_manifest_object(manifest_data, "dependsOn", path)
     require_manifest_string(depends_on, "BSIPA", path)
+    require_manifest_string(depends_on, "SiraUtil", path)
 
     if spec.is_adapter:
         require_manifest_string(depends_on, "CameraSongScript", path)
@@ -303,6 +306,10 @@ def display_current_values(project_states: List[ProjectState]) -> None:
             )
             depends_on = require_manifest_object(state.manifest_data, "dependsOn", state.manifest_file.path)
             print(f"  manifest.dependsOn.BSIPA = {require_manifest_string(depends_on, 'BSIPA', state.manifest_file.path)}")
+            print(
+                "  manifest.dependsOn.SiraUtil = "
+                f"{require_manifest_string(depends_on, 'SiraUtil', state.manifest_file.path)}"
+            )
             if state.spec.is_adapter:
                 print(
                     "  manifest.dependsOn.CameraSongScript = "
@@ -335,6 +342,7 @@ def collect_alignment_warnings(project_states: List[ProjectState]) -> List[str]:
     core_manifest_version = get_manifest_value(core_state, "version")
     core_game_version = get_manifest_value(core_state, "gameVersion")
     core_bsipa = get_manifest_dependency(core_state, "BSIPA")
+    core_sirautil = get_manifest_dependency(core_state, "SiraUtil")
     core_assembly_version = core_state.assembly_info.assembly_version
 
     warnings: List[str] = []
@@ -371,6 +379,13 @@ def collect_alignment_warnings(project_states: List[ProjectState]) -> List[str]:
                 f"CameraSongScript ({core_bsipa}) と一致しません。"
             )
 
+        adapter_sirautil = get_manifest_dependency(state, "SiraUtil")
+        if adapter_sirautil != core_sirautil:
+            warnings.append(
+                f"{state.spec.name} の dependsOn.SiraUtil ({adapter_sirautil}) が "
+                f"CameraSongScript ({core_sirautil}) と一致しません。"
+            )
+
     return warnings
 
 
@@ -388,6 +403,7 @@ def build_change_plan(
     version_input: str,
     game_version_input: str,
     bsipa_input: str,
+    sirautil_input: str,
 ) -> Tuple["OrderedDict[str, List[str]]", List[Tuple[TextFileState, str]]]:
     changes_by_project: "OrderedDict[str, List[str]]" = OrderedDict()
     prepared_writes: List[Tuple[TextFileState, str]] = []
@@ -441,6 +457,17 @@ def build_change_plan(
                     bsipa_input,
                     project_changes,
                     "manifest.dependsOn.BSIPA",
+                    state.manifest_file.path,
+                )
+
+            if sirautil_input:
+                depends_on = require_manifest_object(updated_manifest, "dependsOn", state.manifest_file.path)
+                manifest_changed |= update_manifest_value(
+                    depends_on,
+                    "SiraUtil",
+                    sirautil_input,
+                    project_changes,
+                    "manifest.dependsOn.SiraUtil",
                     state.manifest_file.path,
                 )
 
