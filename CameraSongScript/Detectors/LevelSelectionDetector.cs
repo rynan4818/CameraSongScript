@@ -62,10 +62,17 @@ namespace CameraSongScript.Detectors
         {
             UpdateCurrentSongSettings(beatmap);
             _scriptDetector.ResolveProfileName();
-            if (beatmap?.level is CustomPreviewBeatmapLevel customLevel)
+
+            IPreviewBeatmapLevel previewLevel = GetSelectedPreviewLevel(controller, beatmap);
+            if (previewLevel is CustomPreviewBeatmapLevel customLevel)
             {
                 _scriptDetector.ProcessLevel(customLevel);
             }
+            else
+            {
+                _scriptDetector.ClearSelectedLevel(allowCommonScript: true);
+            }
+
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
             _scriptDetector.SyncCameraPlusPath();
@@ -75,10 +82,23 @@ namespace CameraSongScript.Detectors
         {
             UpdateCurrentSongSettings(controller?.selectedDifficultyBeatmap);
             _scriptDetector.ResolveProfileName();
-            if (controller?.selectedDifficultyBeatmap?.level is CustomPreviewBeatmapLevel customLevel)
+
+            if (controller == null || contentType == StandardLevelDetailViewController.ContentType.Inactive)
+            {
+                _scriptDetector.SyncCameraPlusPath();
+                return;
+            }
+
+            IPreviewBeatmapLevel previewLevel = GetSelectedPreviewLevel(controller, controller.selectedDifficultyBeatmap);
+            if (previewLevel is CustomPreviewBeatmapLevel customLevel)
             {
                 _scriptDetector.ProcessLevel(customLevel);
             }
+            else
+            {
+                _scriptDetector.ClearSelectedLevel(allowCommonScript: true);
+            }
+
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
             _scriptDetector.SyncCameraPlusPath();
@@ -103,6 +123,25 @@ namespace CameraSongScript.Detectors
             {
                 SongSettingsManager.ClearCurrentSong();
             }
+        }
+
+        private static IPreviewBeatmapLevel GetSelectedPreviewLevel(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
+        {
+            if (controller != null)
+            {
+                IPreviewBeatmapLevel selectedPreviewLevel = controller._previewBeatmapLevel;
+                if (selectedPreviewLevel != null)
+                {
+                    return selectedPreviewLevel;
+                }
+            }
+
+            if (beatmap?.level is IPreviewBeatmapLevel previewBeatmapLevel)
+            {
+                return previewBeatmapLevel;
+            }
+
+            return null;
         }
     }
 }

@@ -202,6 +202,54 @@ namespace CameraSongScript.Detectors
         }
 
         /// <summary>
+        /// 現在の曲専用スクリプト状態をクリアする。
+        /// 公式譜面選択時はallowCommonScript=trueで呼び、汎用スクリプトのみ再評価する。
+        /// </summary>
+        public void ClearSelectedLevel(bool allowCommonScript)
+        {
+            DispatchToMainThread(() =>
+            {
+                lock (_scanLock)
+                {
+                    _scanCts?.Cancel();
+                    _scanCts?.Dispose();
+                    _scanCts = null;
+                }
+
+                _latestSelectedSong = string.Empty;
+                _currentLevelId = string.Empty;
+                CurrentLevelPath = string.Empty;
+                SelectedScriptPath = string.Empty;
+                SelectedScriptDisplayName = string.Empty;
+                EffectiveScriptPath = string.Empty;
+                CurrentMetadata = null;
+                SelectedScriptContainsCameraEffect = false;
+                SelectedScriptContainsWindowControl = false;
+                AvailableScriptFiles = new List<string>();
+                _candidateMap = new Dictionary<string, ScriptCandidate>();
+                IsUsingCommonScript = false;
+                ResolvedCommonScriptPath = string.Empty;
+                ResolvedCommonScriptDisplayName = string.Empty;
+                ResolvedCommonMetadata = null;
+                ResolvedCommonScriptContainsCameraEffect = false;
+                ResolvedCommonScriptContainsWindowControl = false;
+
+                if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
+                {
+                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
+                }
+
+                if (allowCommonScript)
+                {
+                    DetermineCommonScriptUsage(0);
+                }
+
+                SyncCameraPlusPath();
+                ScanCompleted?.Invoke();
+            });
+        }
+
+        /// <summary>
         /// 非同期スキャンを開始する。前回のスキャンが実行中であればキャンセルする
         /// </summary>
         private void StartScanAsync(string levelPath, string levelId)
