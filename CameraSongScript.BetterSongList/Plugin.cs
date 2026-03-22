@@ -16,12 +16,6 @@ namespace CameraSongScript.BetterSongList
         {
             Log = logger;
             Log.Info("CameraSongScript.BetterSongList initialized.");
-        }
-
-        [OnStart]
-        public void OnApplicationStart()
-        {
-            Log.Debug("OnApplicationStart");
 
             var helper = new BetterSongListHelper();
             _helper = helper;
@@ -33,8 +27,14 @@ namespace CameraSongScript.BetterSongList
             }
             else
             {
-                Log.Warn("BetterSongList adapter registered but initialization will be retried later.");
+                Log.Warn("BetterSongList adapter registration did not complete successfully.");
             }
+        }
+
+        [OnStart]
+        public void OnApplicationStart()
+        {
+            Log.Debug("OnApplicationStart");
         }
 
         [OnExit]
