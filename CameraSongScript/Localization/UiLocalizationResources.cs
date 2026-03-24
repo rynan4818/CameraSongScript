@@ -238,10 +238,35 @@ namespace CameraSongScript.Localization
                 [HoverHintLocalization.Lang_EN] = "Rotation",
                 [HoverHintLocalization.Lang_JA] = "回転角度"
             },
+            ["label-status-panel-canvas-width"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Canvas Width",
+                [HoverHintLocalization.Lang_JA] = "キャンバス幅"
+            },
+            ["label-status-panel-canvas-height"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Canvas Height",
+                [HoverHintLocalization.Lang_JA] = "キャンバス高さ"
+            },
+            ["label-status-panel-scale"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Panel Scale",
+                [HoverHintLocalization.Lang_JA] = "パネルスケール"
+            },
+            ["label-status-panel-font-size"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Font Size",
+                [HoverHintLocalization.Lang_JA] = "フォントサイズ"
+            },
             ["button-status-panel-transform-reset"] = new Dictionary<string, string>
             {
                 [HoverHintLocalization.Lang_EN] = "Reset Position/Rotation",
                 [HoverHintLocalization.Lang_JA] = "位置/回転角度をリセット"
+            },
+            ["button-status-panel-visual-settings-reset"] = new Dictionary<string, string>
+            {
+                [HoverHintLocalization.Lang_EN] = "Reset Visual Settings",
+                [HoverHintLocalization.Lang_JA] = "表示設定をリセット"
             },
             ["button-rerun-songscript-caches"] = new Dictionary<string, string>
             {

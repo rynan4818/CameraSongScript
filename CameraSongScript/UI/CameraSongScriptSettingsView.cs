@@ -50,6 +50,14 @@ namespace CameraSongScript.UI
         private const float PreviewSliderStep = 0.05f;
         private const float StatusPanelPositionStep = 0.05f;
         private const float StatusPanelRotationStep = 1f;
+        private const float StatusPanelCanvasWidthStep = 1f;
+        private const float StatusPanelCanvasHeightStep = 1f;
+        private const float StatusPanelScaleStep = 0.001f;
+        private const float StatusPanelFontSizeStep = 0.1f;
+        private const float MinimumStatusPanelCanvasWidth = 10f;
+        private const float MinimumStatusPanelCanvasHeight = 1f;
+        private const float MinimumStatusPanelScale = 0.001f;
+        private const float MinimumStatusPanelFontSize = 0.1f;
         private bool _needsRefresh = false;
         private bool _suppressPreviewSeek = false;
         private float _lastPreviewUiTime = float.NegativeInfinity;
@@ -115,8 +123,10 @@ namespace CameraSongScript.UI
             GameplaySetup.instance?.RemoveTab(TabName);
         }
 
-        protected void OnEnable()
+        protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
+            base.DidActivate(firstActivation, addedToHierarchy, screenSystemEnabling);
+
             if (_needsRefresh)
             {
                 _needsRefresh = false;
@@ -133,17 +143,26 @@ namespace CameraSongScript.UI
             EnqueueMissingBeatmapStatusRefresh();
         }
 
-        protected void OnDisable()
+        protected override void DidDeactivate(bool removedFromHierarchy, bool screenSystemDisabling)
         {
+            if (_refreshLayoutCoroutine != null)
+            {
+                _needsRefresh = true;
+            }
+
             CancelPendingLayoutRefresh();
             CancelPendingScriptFileDropdownTextRefresh();
             CancelPendingCommonScriptDropdownTextRefresh();
+            DetachScriptFileDropdownButtonHandler();
+            DetachCommonScriptDropdownButtonHandler();
+
+            base.DidDeactivate(removedFromHierarchy, screenSystemDisabling);
         }
 
-        protected void Update()
+        private void OnPreviewStateChanged()
         {
             var previewController = _previewController;
-            if (!isActiveAndEnabled || previewController == null)
+            if (previewController == null)
                 return;
 
             float currentTime = previewController.CurrentTime;
@@ -154,23 +173,23 @@ namespace CameraSongScript.UI
                 isVisible != _lastPreviewVisible ||
                 isPlaying != _lastPreviewPlaying ||
                 speedMultiplier != _lastPreviewSpeed;
+            bool timeChanged = Mathf.Abs(currentTime - _lastPreviewUiTime) >= 0.001f;
 
-            if (isVisible || Mathf.Abs(currentTime - _lastPreviewUiTime) >= 0.001f || stateChanged)
-            {
-                _lastPreviewUiTime = currentTime;
-                _lastPreviewVisible = isVisible;
-                _lastPreviewPlaying = isPlaying;
-                _lastPreviewSpeed = speedMultiplier;
-                RefreshPreviewRuntimeUi();
-            }
-        }
-
-        private void OnPreviewStateChanged()
-        {
-            if (_previewController == null)
+            if (!timeChanged && !stateChanged)
                 return;
 
-            RefreshPreviewBindings();
+            _lastPreviewUiTime = currentTime;
+            _lastPreviewVisible = isVisible;
+            _lastPreviewPlaying = isPlaying;
+            _lastPreviewSpeed = speedMultiplier;
+
+            if (stateChanged)
+            {
+                RefreshPreviewBindings();
+                return;
+            }
+
+            RefreshPreviewRuntimeUi();
         }
 
         private void OnLanguageChanged()
@@ -334,6 +353,7 @@ namespace CameraSongScript.UI
             }
 
             EnsureScriptFileDropdownTextPresentation();
+            SyncScriptFileDropdownHoverHint();
             _statusView?.UpdateContent();
             HandlePreviewSelectionChanged();
         }
@@ -385,7 +405,12 @@ namespace CameraSongScript.UI
             NotifyPropertyChanged(nameof(LabelPanelPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustPosition));
             NotifyPropertyChanged(nameof(LabelPanelAdjustRotation));
+            NotifyPropertyChanged(nameof(LabelStatusPanelCanvasWidth));
+            NotifyPropertyChanged(nameof(LabelStatusPanelCanvasHeight));
+            NotifyPropertyChanged(nameof(LabelStatusPanelScale));
+            NotifyPropertyChanged(nameof(LabelStatusPanelFontSize));
             NotifyPropertyChanged(nameof(ButtonStatusPanelTransformReset));
+            NotifyPropertyChanged(nameof(ButtonStatusPanelVisualSettingsReset));
             NotifyPropertyChanged(nameof(StatusPanelTransformSummary));
             NotifyPropertyChanged(nameof(ButtonRerunSongScriptCaches));
             NotifyPropertyChanged(nameof(ButtonDownloadMissingBeatmaps));
@@ -430,6 +455,8 @@ namespace CameraSongScript.UI
             EnsureScriptFileDropdownTextPresentation();
             EnsureCommonScriptDropdownTextPresentation();
             RefreshHoverHintBindings();
+            SyncScriptFileDropdownHoverHint();
+            SyncCommonScriptDropdownHoverHint();
             RefreshLayout();
             _statusView?.UpdateContent();
         }
@@ -471,8 +498,11 @@ namespace CameraSongScript.UI
 
         private void HandleScriptFileDropdownButtonClicked()
         {
+            if (scriptFileDropdown == null || !scriptFileDropdown.isActiveAndEnabled || !scriptFileDropdown.gameObject.activeInHierarchy)
+                return;
+
             CancelPendingScriptFileDropdownTextRefresh();
-            _scriptFileDropdownTextRefreshCoroutine = StartCoroutine(RefreshScriptFileDropdownTextPresentationCoroutine());
+            _scriptFileDropdownTextRefreshCoroutine = StartManagedCoroutine(RefreshScriptFileDropdownTextPresentationCoroutine());
         }
 
         private System.Collections.IEnumerator RefreshScriptFileDropdownTextPresentationCoroutine()
@@ -488,7 +518,7 @@ namespace CameraSongScript.UI
             if (_scriptFileDropdownTextRefreshCoroutine == null)
                 return;
 
-            StopCoroutine(_scriptFileDropdownTextRefreshCoroutine);
+            StopManagedCoroutine(_scriptFileDropdownTextRefreshCoroutine);
             _scriptFileDropdownTextRefreshCoroutine = null;
         }
 
@@ -519,8 +549,11 @@ namespace CameraSongScript.UI
 
         private void HandleCommonScriptDropdownButtonClicked()
         {
+            if (commonScriptDropdown == null || !commonScriptDropdown.isActiveAndEnabled || !commonScriptDropdown.gameObject.activeInHierarchy)
+                return;
+
             CancelPendingCommonScriptDropdownTextRefresh();
-            _commonScriptDropdownTextRefreshCoroutine = StartCoroutine(RefreshCommonScriptDropdownTextPresentationCoroutine());
+            _commonScriptDropdownTextRefreshCoroutine = StartManagedCoroutine(RefreshCommonScriptDropdownTextPresentationCoroutine());
         }
 
         private System.Collections.IEnumerator RefreshCommonScriptDropdownTextPresentationCoroutine()
@@ -536,7 +569,7 @@ namespace CameraSongScript.UI
             if (_commonScriptDropdownTextRefreshCoroutine == null)
                 return;
 
-            StopCoroutine(_commonScriptDropdownTextRefreshCoroutine);
+            StopManagedCoroutine(_commonScriptDropdownTextRefreshCoroutine);
             _commonScriptDropdownTextRefreshCoroutine = null;
         }
 
@@ -555,11 +588,42 @@ namespace CameraSongScript.UI
             }
         }
 
+        private void SyncScriptFileDropdownHoverHint()
+        {
+            SyncDropdownHoverHint(scriptFileDropdown, HintScriptFile);
+        }
+
+        private void SyncCommonScriptDropdownHoverHint()
+        {
+            SyncDropdownHoverHint(commonScriptDropdown, HintCommonScriptFile);
+        }
+
+        private static void SyncDropdownHoverHint(DropDownListSetting dropdown, string text)
+        {
+            if (dropdown == null)
+                return;
+
+            HoverHint[] hoverHints = dropdown.GetComponents<HoverHint>();
+            HoverHint primary = hoverHints.FirstOrDefault();
+            if (primary == null)
+            {
+                primary = dropdown.gameObject.AddComponent<HoverHint>();
+                primary.SetField("_hoverHintController", BeatSaberMarkupLanguage.BeatSaberUI.HoverHintController);
+                hoverHints = new[] { primary };
+            }
+
+            string latestText = text ?? string.Empty;
+            primary.text = latestText;
+
+            for (int i = 1; i < hoverHints.Length; i++)
+            {
+                hoverHints[i].text = latestText;
+                UnityEngine.Object.Destroy(hoverHints[i]);
+            }
+        }
+
         private string GetDefaultOrFullScriptNameHoverHint(string canonicalName, string defaultHintKey, params string[] fallbackValues)
         {
-            if (!CameraSongScriptConfig.Instance.ShowHoverHints)
-                return string.Empty;
-
             if (string.IsNullOrEmpty(canonicalName))
                 return HoverHintLocalization.Get(defaultHintKey);
 
@@ -796,8 +860,23 @@ namespace CameraSongScript.UI
         [UIValue("label-panel-adjust-rotation")]
         public string LabelPanelAdjustRotation => UiLocalization.Get("label-panel-adjust-rotation");
 
+        [UIValue("label-status-panel-canvas-width")]
+        public string LabelStatusPanelCanvasWidth => UiLocalization.Get("label-status-panel-canvas-width");
+
+        [UIValue("label-status-panel-canvas-height")]
+        public string LabelStatusPanelCanvasHeight => UiLocalization.Get("label-status-panel-canvas-height");
+
+        [UIValue("label-status-panel-scale")]
+        public string LabelStatusPanelScale => UiLocalization.Get("label-status-panel-scale");
+
+        [UIValue("label-status-panel-font-size")]
+        public string LabelStatusPanelFontSize => UiLocalization.Get("label-status-panel-font-size");
+
         [UIValue("button-status-panel-transform-reset")]
         public string ButtonStatusPanelTransformReset => UiLocalization.Get("button-status-panel-transform-reset");
+
+        [UIValue("button-status-panel-visual-settings-reset")]
+        public string ButtonStatusPanelVisualSettingsReset => UiLocalization.Get("button-status-panel-visual-settings-reset");
 
         [UIValue("status-panel-transform-summary")]
         public string StatusPanelTransformSummary
@@ -1036,14 +1115,14 @@ namespace CameraSongScript.UI
 
         private void RefreshLayout()
         {
-            if (!gameObject.activeInHierarchy || !isActiveAndEnabled)
+            if (!isActivated)
             {
                 _needsRefresh = true;
                 return;
             }
 
             CancelPendingLayoutRefresh();
-            _refreshLayoutCoroutine = StartCoroutine(RefreshLayoutCoroutine());
+            _refreshLayoutCoroutine = StartManagedCoroutine(RefreshLayoutCoroutine());
         }
 
         private System.Collections.IEnumerator RefreshLayoutCoroutine()
@@ -1093,8 +1172,26 @@ namespace CameraSongScript.UI
                 return;
             }
 
-            StopCoroutine(_refreshLayoutCoroutine);
+            StopManagedCoroutine(_refreshLayoutCoroutine);
             _refreshLayoutCoroutine = null;
+        }
+
+        private static Coroutine StartManagedCoroutine(System.Collections.IEnumerator coroutine)
+        {
+            if (coroutine == null)
+                return null;
+
+            return HMMainThreadDispatcher.instance != null
+                ? HMMainThreadDispatcher.instance.StartCoroutine(coroutine)
+                : null;
+        }
+
+        private static void StopManagedCoroutine(Coroutine coroutine)
+        {
+            if (coroutine == null)
+                return;
+
+            HMMainThreadDispatcher.instance?.StopCoroutine(coroutine);
         }
 
         private static void RebuildLayoutHierarchy(RectTransform rectTransform)
@@ -1382,6 +1479,26 @@ namespace CameraSongScript.UI
             get => UiLocalization.GetStatusPanelPositionOptions();
         }
 
+        [UIValue("status-panel-canvas-width-value")]
+        public string StatusPanelCanvasWidthValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.StatusCanvasWidth : 0f,
+            "0");
+
+        [UIValue("status-panel-canvas-height-value")]
+        public string StatusPanelCanvasHeightValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.StatusCanvasHeight : 0f,
+            "0");
+
+        [UIValue("status-panel-scale-value")]
+        public string StatusPanelScaleValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.StatusScale : 0f,
+            "0.000");
+
+        [UIValue("status-panel-font-size-value")]
+        public string StatusPanelFontSizeValue => FormatPreviewConfigValue(
+            CameraSongScriptConfig.Instance != null ? CameraSongScriptConfig.Instance.StatusFontSize : 0f,
+            "0.0");
+
         [UIValue("status-panel-position")]
         public object StatusPanelPosition
         {
@@ -1471,6 +1588,54 @@ namespace CameraSongScript.UI
             AdjustSelectedStatusPanelRotation(new Vector3(0f, 0f, -StatusPanelRotationStep));
         }
 
+        [UIAction("status-panel-canvas-width-decrease")]
+        private void StatusPanelCanvasWidthDecrease()
+        {
+            AdjustStatusPanelCanvasWidth(-StatusPanelCanvasWidthStep);
+        }
+
+        [UIAction("status-panel-canvas-width-increase")]
+        private void StatusPanelCanvasWidthIncrease()
+        {
+            AdjustStatusPanelCanvasWidth(StatusPanelCanvasWidthStep);
+        }
+
+        [UIAction("status-panel-canvas-height-decrease")]
+        private void StatusPanelCanvasHeightDecrease()
+        {
+            AdjustStatusPanelCanvasHeight(-StatusPanelCanvasHeightStep);
+        }
+
+        [UIAction("status-panel-canvas-height-increase")]
+        private void StatusPanelCanvasHeightIncrease()
+        {
+            AdjustStatusPanelCanvasHeight(StatusPanelCanvasHeightStep);
+        }
+
+        [UIAction("status-panel-scale-decrease")]
+        private void StatusPanelScaleDecrease()
+        {
+            AdjustStatusPanelScale(-StatusPanelScaleStep);
+        }
+
+        [UIAction("status-panel-scale-increase")]
+        private void StatusPanelScaleIncrease()
+        {
+            AdjustStatusPanelScale(StatusPanelScaleStep);
+        }
+
+        [UIAction("status-panel-font-size-decrease")]
+        private void StatusPanelFontSizeDecrease()
+        {
+            AdjustStatusPanelFontSize(-StatusPanelFontSizeStep);
+        }
+
+        [UIAction("status-panel-font-size-increase")]
+        private void StatusPanelFontSizeIncrease()
+        {
+            AdjustStatusPanelFontSize(StatusPanelFontSizeStep);
+        }
+
         [UIAction("reset-status-panel-transform")]
         private void ResetStatusPanelTransform()
         {
@@ -1493,6 +1658,35 @@ namespace CameraSongScript.UI
             }
 
             SaveAndApplySelectedStatusPanelTransform(index, defaultPosition, defaultRotation);
+        }
+
+        [UIAction("reset-status-panel-visual-settings")]
+        private void ResetStatusPanelVisualSettings()
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            var defaults = new CameraSongScriptConfig();
+            bool changed =
+                !Mathf.Approximately(config.StatusCanvasWidth, defaults.StatusCanvasWidth) ||
+                !Mathf.Approximately(config.StatusCanvasHeight, defaults.StatusCanvasHeight) ||
+                !Mathf.Approximately(config.StatusScale, defaults.StatusScale) ||
+                !Mathf.Approximately(config.StatusFontSize, defaults.StatusFontSize);
+
+            if (!changed)
+                return;
+
+            config.StatusCanvasWidth = defaults.StatusCanvasWidth;
+            config.StatusCanvasHeight = defaults.StatusCanvasHeight;
+            config.StatusScale = defaults.StatusScale;
+            config.StatusFontSize = defaults.StatusFontSize;
+
+            RefreshStatusPanelVisualSettingUi(
+                nameof(StatusPanelCanvasWidthValue),
+                nameof(StatusPanelCanvasHeightValue),
+                nameof(StatusPanelScaleValue),
+                nameof(StatusPanelFontSizeValue));
         }
 
         private void AdjustSelectedStatusPanelPosition(Vector3 delta)
@@ -1535,6 +1729,80 @@ namespace CameraSongScript.UI
                 return;
 
             SaveAndApplySelectedStatusPanelTransform(index, currentPosition, updatedRotation);
+        }
+
+        private void AdjustStatusPanelCanvasWidth(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumStatusPanelCanvasWidth,
+                RoundToDecimals(config.StatusCanvasWidth + delta, 0));
+            if (Mathf.Approximately(config.StatusCanvasWidth, newValue))
+                return;
+
+            config.StatusCanvasWidth = newValue;
+            RefreshStatusPanelVisualSettingUi(nameof(StatusPanelCanvasWidthValue));
+        }
+
+        private void AdjustStatusPanelCanvasHeight(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumStatusPanelCanvasHeight,
+                RoundToDecimals(config.StatusCanvasHeight + delta, 0));
+            if (Mathf.Approximately(config.StatusCanvasHeight, newValue))
+                return;
+
+            config.StatusCanvasHeight = newValue;
+            RefreshStatusPanelVisualSettingUi(nameof(StatusPanelCanvasHeightValue));
+        }
+
+        private void AdjustStatusPanelScale(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumStatusPanelScale,
+                RoundToDecimals(config.StatusScale + delta, 3));
+            if (Mathf.Approximately(config.StatusScale, newValue))
+                return;
+
+            config.StatusScale = newValue;
+            RefreshStatusPanelVisualSettingUi(nameof(StatusPanelScaleValue));
+        }
+
+        private void AdjustStatusPanelFontSize(float delta)
+        {
+            var config = CameraSongScriptConfig.Instance;
+            if (config == null)
+                return;
+
+            float newValue = Mathf.Max(
+                MinimumStatusPanelFontSize,
+                RoundToDecimals(config.StatusFontSize + delta, 1));
+            if (Mathf.Approximately(config.StatusFontSize, newValue))
+                return;
+
+            config.StatusFontSize = newValue;
+            RefreshStatusPanelVisualSettingUi(nameof(StatusPanelFontSizeValue));
+        }
+
+        private void RefreshStatusPanelVisualSettingUi(params string[] propertyNames)
+        {
+            foreach (string propertyName in propertyNames)
+            {
+                NotifyPropertyChanged(propertyName);
+            }
+
+            _statusView?.ApplyVisualConfig();
         }
 
         private bool TryGetSelectedStatusPanelTransform(

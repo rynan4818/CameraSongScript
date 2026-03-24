@@ -170,7 +170,7 @@ namespace CameraSongScript.UI
         /// <summary>
         /// コンフィグの全ビジュアルプロパティを現在のキャンバスに適用する
         /// </summary>
-        private void ApplyVisualConfig()
+        public void ApplyVisualConfig()
         {
             if (_rootObject == null || _canvas == null || _statusText == null) return;
 
