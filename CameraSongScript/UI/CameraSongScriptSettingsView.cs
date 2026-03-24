@@ -58,6 +58,7 @@ namespace CameraSongScript.UI
         private const float MinimumStatusPanelCanvasHeight = 1f;
         private const float MinimumStatusPanelScale = 0.001f;
         private const float MinimumStatusPanelFontSize = 0.1f;
+        private const float HeightOffsetApplyDelaySeconds = 0.2f;
         private bool _needsRefresh = false;
         private bool _suppressPreviewSeek = false;
         private float _lastPreviewUiTime = float.NegativeInfinity;
@@ -69,6 +70,7 @@ namespace CameraSongScript.UI
         private Coroutine _refreshLayoutCoroutine;
         private Coroutine _scriptFileDropdownTextRefreshCoroutine;
         private Coroutine _commonScriptDropdownTextRefreshCoroutine;
+        private Coroutine _heightOffsetApplyCoroutine;
         private Button _scriptFileDropdownButton;
         private Button _commonScriptDropdownButton;
 
@@ -118,6 +120,7 @@ namespace CameraSongScript.UI
                 _previewController.StateChanged -= OnPreviewStateChanged;
             PluginAdapterManager.AdapterVersionWarningsChanged -= OnAdapterVersionWarningsChanged;
             UiLocalization.LanguageChanged -= OnLanguageChanged;
+            ApplyPendingHeightOffsetChangeImmediately();
             DetachScriptFileDropdownButtonHandler();
             DetachCommonScriptDropdownButtonHandler();
             GameplaySetup.instance?.RemoveTab(TabName);
@@ -153,6 +156,7 @@ namespace CameraSongScript.UI
             CancelPendingLayoutRefresh();
             CancelPendingScriptFileDropdownTextRefresh();
             CancelPendingCommonScriptDropdownTextRefresh();
+            ApplyPendingHeightOffsetChangeImmediately();
             DetachScriptFileDropdownButtonHandler();
             DetachCommonScriptDropdownButtonHandler();
 
@@ -1208,6 +1212,61 @@ namespace CameraSongScript.UI
             }
         }
 
+        private void QueueHeightOffsetChangeApply()
+        {
+            if (!CameraModDetector.IsCameraPlus)
+            {
+                ApplyHeightOffsetChange();
+                return;
+            }
+
+            CancelPendingHeightOffsetChangeApply();
+            _heightOffsetApplyCoroutine = StartManagedCoroutine(ApplyHeightOffsetChangeDelayedCoroutine());
+        }
+
+        private System.Collections.IEnumerator ApplyHeightOffsetChangeDelayedCoroutine()
+        {
+            yield return new WaitForSecondsRealtime(HeightOffsetApplyDelaySeconds);
+
+            _heightOffsetApplyCoroutine = null;
+            ApplyHeightOffsetChange();
+        }
+
+        private void ApplyPendingHeightOffsetChangeImmediately()
+        {
+            if (_heightOffsetApplyCoroutine == null)
+            {
+                return;
+            }
+
+            CancelPendingHeightOffsetChangeApply();
+            ApplyHeightOffsetChange();
+        }
+
+        private void CancelPendingHeightOffsetChangeApply()
+        {
+            if (_heightOffsetApplyCoroutine == null)
+            {
+                return;
+            }
+
+            StopManagedCoroutine(_heightOffsetApplyCoroutine);
+            _heightOffsetApplyCoroutine = null;
+        }
+
+        private void ApplyHeightOffsetChange()
+        {
+            if (_scriptDetector.HasSongScript)
+            {
+                _scriptDetector.UpdateEffectiveScriptPath();
+                _scriptDetector.SyncCameraPlusPath();
+            }
+            else if (_scriptDetector.IsUsingCommonScript)
+            {
+                _scriptDetector.SyncCameraPlusPath();
+            }
+        }
+
         #endregion
 
         #region 高さオフセット
@@ -1264,18 +1323,9 @@ namespace CameraSongScript.UI
                     }
                     CameraSongScriptConfig.Instance.CameraHeightOffsetCm = value;
 
-                    if (_scriptDetector.HasSongScript)
-                    {
-                        _scriptDetector.UpdateEffectiveScriptPath();
-                        _scriptDetector.SyncCameraPlusPath();
-                    }
-                    else if (_scriptDetector.IsUsingCommonScript)
-                    {
-                        // 汎用スクリプト: CameraPlusモードの場合はパス再同期
-                        _scriptDetector.SyncCameraPlusPath();
-                    }
+                    QueueHeightOffsetChangeApply();
                     _statusView?.UpdateContent();
-                    HandlePreviewVisualChanged();
+                    HandlePreviewHeightOffsetChanged();
                 }
             }
         }
@@ -1292,8 +1342,9 @@ namespace CameraSongScript.UI
             {
                 cameraHeightOffsetSlider.ReceiveValue();
             }
+            ApplyPendingHeightOffsetChangeImmediately();
             _statusView?.UpdateContent();
-            HandlePreviewVisualChanged();
+            HandlePreviewHeightOffsetChanged();
         }
 
         #endregion
