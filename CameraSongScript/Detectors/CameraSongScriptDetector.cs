@@ -177,6 +177,9 @@ namespace CameraSongScript.Detectors
         {
             if (level is CustomPreviewBeatmapLevel customLevel)
             {
+                CurrentLevelPath = customLevel.customLevelPath;
+                _currentLevelId = customLevel.levelID;
+
                 if (customLevel.customLevelPath != _latestSelectedSong)
                 {
                     _latestSelectedSong = customLevel.customLevelPath;
@@ -184,6 +187,10 @@ namespace CameraSongScript.Detectors
                     Plugin.Log.Notice($"Selected CustomLevel Path:\n {customLevel.customLevelPath}");
 #endif
                     RequestScan(customLevel.customLevelPath, customLevel.levelID);
+                }
+                else if (TryApplyCurrentSongSelectionWithoutRescan())
+                {
+                    ScanCompleted?.Invoke();
                 }
             }
         }
@@ -279,7 +286,7 @@ namespace CameraSongScript.Detectors
                 ct = _scanCts.Token;
             }
 
-            string configuredSelectedScript = CameraSongScriptConfig.Instance.SelectedScriptFile;
+            string configuredSelectedScript = GetConfiguredSelectedScriptForCurrentSong();
             Task.Run(() =>
             {
                 try
@@ -593,6 +600,15 @@ namespace CameraSongScript.Detectors
             return $"{SongScriptDisplayPrefix} {GetSongScriptDisplayPath(entry)}";
         }
 
+        private string GetConfiguredSelectedScriptForCurrentSong()
+        {
+            var specificSettings = SongSettingsManager.GetCurrentSettings();
+            if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
+                return specificSettings.SelectedScriptFileName;
+
+            return CameraSongScriptConfig.Instance.SelectedScriptFile ?? string.Empty;
+        }
+
         public string ResolveAvailableScriptDisplayName(string requestedDisplayName)
         {
             return ResolveAvailableScriptDisplayName(requestedDisplayName, _candidateMap);
@@ -715,11 +731,47 @@ namespace CameraSongScript.Detectors
         /// </summary>
         public void UpdateSelectedScript(string displayName)
         {
-            if (!AvailableScriptFiles.Contains(displayName))
+            if (!TryApplySelectedScriptInternal(displayName, persistConfigSelection: true, syncCameraPlus: true))
                 return;
 
+#if DEBUG
+            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
+#endif
+        }
+
+        private bool TryApplyCurrentSongSelectionWithoutRescan()
+        {
+            if (AvailableScriptFiles == null || AvailableScriptFiles.Count == 0 || _candidateMap == null || _candidateMap.Count == 0)
+                return false;
+
+            DefaultScriptSelection selection = SelectConfiguredDefaultScript(
+                AvailableScriptFiles,
+                _candidateMap,
+                GetConfiguredSelectedScriptForCurrentSong());
+
+            if (string.IsNullOrEmpty(selection.DisplayName))
+                return false;
+
+            if (string.Equals(SelectedScriptDisplayName, selection.DisplayName, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrEmpty(selection.ConfigSelection))
+                {
+                    CameraSongScriptConfig.Instance.SelectedScriptFile = selection.ConfigSelection;
+                }
+
+                return false;
+            }
+
+            return TryApplySelectedScriptInternal(selection.DisplayName, persistConfigSelection: true, syncCameraPlus: true);
+        }
+
+        private bool TryApplySelectedScriptInternal(string displayName, bool persistConfigSelection, bool syncCameraPlus)
+        {
+            if (string.IsNullOrEmpty(displayName) || AvailableScriptFiles == null || !AvailableScriptFiles.Contains(displayName))
+                return false;
+
             if (!_candidateMap.TryGetValue(displayName, out var candidate))
-                return;
+                return false;
 
             try
             {
@@ -731,12 +783,8 @@ namespace CameraSongScript.Detectors
                 Plugin.Log.Error($"CameraSongScriptDetector: Failed to resolve script path for '{displayName}': {ex.Message}");
                 SelectedScriptPath = string.Empty;
                 SelectedScriptDisplayName = string.Empty;
-                return;
+                return false;
             }
-
-#if DEBUG
-            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
-#endif
 
             LoadSelectedScriptInfo(SelectedScriptPath);
 
@@ -749,10 +797,18 @@ namespace CameraSongScript.Detectors
             // 共通モードの場合はCameraSongScriptConfig.Instance.CameraHeightOffsetCmをそのまま使用
 
             UpdateEffectiveScriptPath();
-            SyncCameraPlusPath();
 
-            // Configに記録（表示名を保存）
-            CameraSongScriptConfig.Instance.SelectedScriptFile = displayName;
+            if (syncCameraPlus)
+            {
+                SyncCameraPlusPath();
+            }
+
+            if (persistConfigSelection)
+            {
+                CameraSongScriptConfig.Instance.SelectedScriptFile = displayName;
+            }
+
+            return true;
         }
 
         /// <summary>

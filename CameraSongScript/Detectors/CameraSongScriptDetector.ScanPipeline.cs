@@ -202,30 +202,34 @@ namespace CameraSongScript.Detectors
 #endif
 
                 _candidateMap = scanResult.CandidateMap;
-                SelectedScriptPath = scanResult.SelectedScriptPath;
-                SelectedScriptDisplayName = scanResult.SelectedScriptDisplayName ?? string.Empty;
                 AvailableScriptFiles = scanResult.AvailableScriptFiles;
 
-                if (!string.IsNullOrEmpty(scanResult.ResolvedSelectedScriptFile))
-                {
-                    CameraSongScriptConfig.Instance.SelectedScriptFile = scanResult.ResolvedSelectedScriptFile;
-                }
+                DefaultScriptSelection currentSelection = SelectConfiguredDefaultScript(
+                    scanResult.AvailableScriptFiles,
+                    scanResult.CandidateMap,
+                    GetConfiguredSelectedScriptForCurrentSong());
 
-                if (!string.IsNullOrEmpty(SelectedScriptPath))
+                if (!string.IsNullOrEmpty(currentSelection.DisplayName))
                 {
+                    TryApplySelectedScriptInternal(
+                        currentSelection.DisplayName,
+                        persistConfigSelection: true,
+                        syncCameraPlus: false);
+                }
+                else
+                {
+                    SelectedScriptPath = string.Empty;
+                    SelectedScriptDisplayName = string.Empty;
+
                     if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
                     {
-                        int savedOffset = ScriptOffsetManager.GetOffsetForScript(SelectedScriptPath);
-                        CameraSongScriptConfig.Instance.CameraHeightOffsetCm = savedOffset;
+                        CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
                     }
-                }
-                else if (CameraSongScriptConfig.Instance.UsePerScriptHeightOffset)
-                {
-                    CameraSongScriptConfig.Instance.CameraHeightOffsetCm = 0;
+
+                    LoadSelectedScriptInfo(SelectedScriptPath);
+                    UpdateEffectiveScriptPath();
                 }
 
-                LoadSelectedScriptInfo(SelectedScriptPath);
-                UpdateEffectiveScriptPath();
                 DetermineCommonScriptUsage(scanResult.TotalCount);
                 SyncCameraPlusPath();
                 ScanCompleted?.Invoke();
