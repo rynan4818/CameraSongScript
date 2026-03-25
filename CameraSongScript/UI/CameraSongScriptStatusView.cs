@@ -362,8 +362,9 @@ namespace CameraSongScript.UI
             if (string.IsNullOrEmpty(value))
                 return value;
 
-            if (CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath)
-                value = SongScriptDisplayLabelFormatter.Format(value);
+            value = CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath
+                ? SongScriptDisplayLabelFormatter.Format(value)
+                : SongScriptDisplayLabelFormatter.GetDisplayText(value);
 
             return MakeWrapFriendly(value);
         }

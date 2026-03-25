@@ -1064,11 +1064,14 @@ namespace CameraSongScript.UI
                     var specificSettings = SongSettingsManager.GetCurrentSettings();
                     if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
                     {
+                        string resolvedSelectedScriptName =
+                            _scriptDetector.ResolveAvailableScriptDisplayName(specificSettings.SelectedScriptFileName);
+
                         // 譜面個別設定があれば、それに合わせて内部選択も更新しておく
-                        if (_scriptDetector.AvailableScriptFiles.Contains(specificSettings.SelectedScriptFileName) &&
-                            _scriptDetector.SelectedScriptDisplayName != specificSettings.SelectedScriptFileName)
+                        if (!string.IsNullOrEmpty(resolvedSelectedScriptName) &&
+                            _scriptDetector.SelectedScriptDisplayName != resolvedSelectedScriptName)
                         {
-                            _scriptDetector.UpdateSelectedScript(specificSettings.SelectedScriptFileName);
+                            _scriptDetector.UpdateSelectedScript(resolvedSelectedScriptName);
                         }
                     }
                     return GetSelectedScriptFileValue(_scriptDetector.SelectedScriptDisplayName);

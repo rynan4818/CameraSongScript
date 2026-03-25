@@ -58,7 +58,7 @@ namespace CameraSongScript.Detectors
 
         /// <summary>
         /// 現在選択中の曲で利用可能なカメラスクリプトの表示名リスト
-        /// 譜面フォルダ: ファイル名のみ / SongScriptsフォルダ: "[SS] filename" 形式
+        /// 譜面フォルダ: ファイル名のみ / SongScriptsフォルダ: "[SS] <SongScriptsルート相対パス>" 形式
         /// </summary>
         public List<string> AvailableScriptFiles { get; private set; } = new List<string>();
 
@@ -164,6 +164,8 @@ namespace CameraSongScript.Detectors
             "BPMInfo.dat",
             "cinema-video.json"
         };
+
+        private const string SongScriptDisplayPrefix = "[SS]";
 
         public CameraSongScriptDetector([InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
@@ -313,6 +315,7 @@ namespace CameraSongScript.Detectors
                 try
                 {
                     jsonFiles = Directory.GetFiles(levelPath, "*.json");
+                    Array.Sort(jsonFiles, StringComparer.OrdinalIgnoreCase);
                 }
                 catch (Exception ex)
                 {
@@ -326,8 +329,8 @@ namespace CameraSongScript.Detectors
 
                     string fileName = Path.GetFileName(filePath);
 
-                    // Beat Saberの既知ファイルをスキップ
-                    if (_skipFileNames.Contains(fileName))
+                    // Beat Saber既知ファイルとSongScripts予約プレフィックスをスキップ
+                    if (ShouldSkipChartFolderScriptFile(fileName))
                         continue;
 
                     // フォーマット検証
@@ -356,7 +359,10 @@ namespace CameraSongScript.Detectors
 
             if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
-                var entries = SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash);
+                var entries = SongScriptFolderCache
+                    .GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash)
+                    .OrderBy(GetSongScriptDisplayPath, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
                 foreach (var entry in entries)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -464,7 +470,7 @@ namespace CameraSongScript.Detectors
                 return string.Empty;
             }
 
-            string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
+            string configFileName = ResolveAvailableScriptDisplayName(CameraSongScriptConfig.Instance.SelectedScriptFile, candidateMap);
 
             // 1. Configに記録されている表示名が存在すれば優先
             if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName) && candidateMap.ContainsKey(configFileName))
@@ -584,12 +590,106 @@ namespace CameraSongScript.Detectors
         /// </summary>
         private string FormatSongScriptDisplayName(SongScriptEntry entry)
         {
-            if (entry.IsZipEntry)
+            return $"{SongScriptDisplayPrefix} {GetSongScriptDisplayPath(entry)}";
+        }
+
+        public string ResolveAvailableScriptDisplayName(string requestedDisplayName)
+        {
+            return ResolveAvailableScriptDisplayName(requestedDisplayName, _candidateMap);
+        }
+
+        private bool ShouldSkipChartFolderScriptFile(string fileName)
+        {
+            return string.IsNullOrEmpty(fileName) ||
+                _skipFileNames.Contains(fileName) ||
+                fileName.StartsWith(SongScriptDisplayPrefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ResolveAvailableScriptDisplayName(
+            string requestedDisplayName,
+            IReadOnlyDictionary<string, ScriptCandidate> candidateMap)
+        {
+            if (string.IsNullOrEmpty(requestedDisplayName) || candidateMap == null || candidateMap.Count == 0)
+                return string.Empty;
+
+            if (candidateMap.ContainsKey(requestedDisplayName))
+                return requestedDisplayName;
+
+            foreach (var pair in candidateMap)
             {
-                string zipName = Path.GetFileNameWithoutExtension(entry.FilePath);
-                return $"[SS] {zipName}/{entry.ZipEntryName}";
+                if (string.Equals(GetLegacySongScriptDisplayName(pair.Value), requestedDisplayName, StringComparison.Ordinal))
+                    return pair.Key;
             }
-            return $"[SS] {entry.FileName}";
+
+            return string.Empty;
+        }
+
+        private static string GetSongScriptDisplayPath(SongScriptEntry entry)
+        {
+            if (entry == null)
+                return string.Empty;
+
+            string sourceRelativePath = GetSongScriptsRelativeSourcePath(entry.FilePath);
+            if (!entry.IsZipEntry)
+                return sourceRelativePath;
+
+            string zipEntryPath = NormalizeDisplayPath(entry.ZipEntryName);
+            return CombineDisplayPaths(sourceRelativePath, zipEntryPath);
+        }
+
+        private static string GetSongScriptsRelativeSourcePath(string fullPath)
+        {
+            if (string.IsNullOrEmpty(fullPath))
+                return string.Empty;
+
+            string songScriptsRoot = ScriptFolderPathResolver.GetSongScriptsFolderPath();
+            if (!string.IsNullOrEmpty(songScriptsRoot) &&
+                fullPath.Length > songScriptsRoot.Length &&
+                fullPath.StartsWith(songScriptsRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                return NormalizeDisplayPath(
+                    fullPath.Substring(songScriptsRoot.Length)
+                        .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            }
+
+            return NormalizeDisplayPath(Path.GetFileName(fullPath));
+        }
+
+        private static string NormalizeDisplayPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return string.Empty;
+
+            return path
+                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar);
+        }
+
+        private static string CombineDisplayPaths(string left, string right)
+        {
+            left = NormalizeDisplayPath(left);
+            right = NormalizeDisplayPath(right);
+
+            if (string.IsNullOrEmpty(left))
+                return right;
+
+            if (string.IsNullOrEmpty(right))
+                return left;
+
+            return $"{left}{Path.DirectorySeparatorChar}{right}";
+        }
+
+        private static string GetLegacySongScriptDisplayName(ScriptCandidate candidate)
+        {
+            if (candidate == null ||
+                candidate.Source != ScriptSource.SongScriptFolder ||
+                string.IsNullOrEmpty(candidate.ZipEntryName))
+            {
+                return candidate?.DisplayName ?? string.Empty;
+            }
+
+            string zipName = Path.GetFileNameWithoutExtension(candidate.FilePath);
+            return $"{SongScriptDisplayPrefix} {zipName}/{candidate.ZipEntryName}";
         }
 
         /// <summary>

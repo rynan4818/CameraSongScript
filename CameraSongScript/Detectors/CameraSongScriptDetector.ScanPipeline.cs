@@ -66,6 +66,7 @@ namespace CameraSongScript.Detectors
                 try
                 {
                     jsonFiles = Directory.GetFiles(levelPath, "*.json");
+                    Array.Sort(jsonFiles, StringComparer.OrdinalIgnoreCase);
                 }
                 catch (Exception ex)
                 {
@@ -77,7 +78,7 @@ namespace CameraSongScript.Detectors
                 {
                     ct.ThrowIfCancellationRequested();
                     string fileName = Path.GetFileName(filePath);
-                    if (_skipFileNames.Contains(fileName))
+                    if (ShouldSkipChartFolderScriptFile(fileName))
                         continue;
 
                     if (IsValidMovementScript(filePath))
@@ -98,7 +99,9 @@ namespace CameraSongScript.Detectors
             SongScriptLevelReference levelReference = ResolveSongScriptLevelReference(levelId, levelPath);
             if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
-                foreach (var entry in SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash))
+                foreach (var entry in SongScriptFolderCache
+                    .GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash)
+                    .OrderBy(GetSongScriptDisplayPath, StringComparer.OrdinalIgnoreCase))
                 {
                     ct.ThrowIfCancellationRequested();
                     string displayName = FormatSongScriptDisplayName(entry);
@@ -145,11 +148,12 @@ namespace CameraSongScript.Detectors
             if (validFiles.Count == 0)
                 return selection;
 
-            if (!string.IsNullOrEmpty(configuredSelectedScript) && validFiles.Contains(configuredSelectedScript) && candidateMap.ContainsKey(configuredSelectedScript))
+            string resolvedConfiguredScript = ResolveAvailableScriptDisplayName(configuredSelectedScript, candidateMap);
+            if (!string.IsNullOrEmpty(resolvedConfiguredScript) && validFiles.Contains(resolvedConfiguredScript) && candidateMap.ContainsKey(resolvedConfiguredScript))
             {
-                selection.DisplayName = configuredSelectedScript;
-                selection.ConfigSelection = configuredSelectedScript;
-                selection.ResolvedPath = ResolveScriptPath(candidateMap[configuredSelectedScript]);
+                selection.DisplayName = resolvedConfiguredScript;
+                selection.ConfigSelection = resolvedConfiguredScript;
+                selection.ResolvedPath = ResolveScriptPath(candidateMap[resolvedConfiguredScript]);
                 return selection;
             }
 
