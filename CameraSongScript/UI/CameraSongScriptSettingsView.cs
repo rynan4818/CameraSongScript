@@ -1185,22 +1185,20 @@ namespace CameraSongScript.UI
             _refreshLayoutCoroutine = null;
         }
 
-        private static Coroutine StartManagedCoroutine(System.Collections.IEnumerator coroutine)
+        private Coroutine StartManagedCoroutine(System.Collections.IEnumerator coroutine)
         {
             if (coroutine == null)
                 return null;
 
-            return HMMainThreadDispatcher.instance != null
-                ? HMMainThreadDispatcher.instance.StartCoroutine(coroutine)
-                : null;
+            return StartCoroutine(coroutine);
         }
 
-        private static void StopManagedCoroutine(Coroutine coroutine)
+        private void StopManagedCoroutine(Coroutine coroutine)
         {
             if (coroutine == null)
                 return;
 
-            HMMainThreadDispatcher.instance?.StopCoroutine(coroutine);
+            StopCoroutine(coroutine);
         }
 
         private static void RebuildLayoutHierarchy(RectTransform rectTransform)
