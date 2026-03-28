@@ -4,6 +4,12 @@ Beat Saber のカメラ Mod である [Camera2](https://github.com/kinsi55/CS_Be
 
 譜面フォルダ内のスクリプト、または `UserData/CameraSongScript/SongScripts` に置いたスクリプトを自動検出し、プレイ開始時にカメラへ適用します。さらに、汎用スクリプト、プレビュー再生、BetterSongListへのフィルタ・ソート追加、HttpSiraStatusで情報送信、未導入譜面の BeatSaver ダウンロードまでをひとまとめに扱えます。
 
+## 簡単な説明
+<img width="1101" height="837" alt="image" src="https://github.com/user-attachments/assets/d26e9581-174e-481c-819b-f823c0b08f70" />
+<img width="1079" height="841" alt="image" src="https://github.com/user-attachments/assets/94818e60-9fae-45cd-a5d8-e46fbbe44bd5" />
+<img width="968" height="694" alt="image" src="https://github.com/user-attachments/assets/cd3ef77a-02f2-4244-b0f2-0703827b635b" />
+<img width="962" height="1006" alt="image" src="https://github.com/user-attachments/assets/c97bc4c8-bbfb-4d15-8081-13279f796303" />
+
 ## 主な機能
 
 - Camera2 / CameraPlus 両対応で 曲専用のスクリプト を適用します
