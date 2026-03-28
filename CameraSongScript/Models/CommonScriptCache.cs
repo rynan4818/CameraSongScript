@@ -86,6 +86,7 @@ namespace CameraSongScript.Models
             try
             {
                 var jsonFiles = Directory.GetFiles(CommonScriptFolderPath, "*.json", SearchOption.AllDirectories);
+                Array.Sort(jsonFiles, StringComparer.OrdinalIgnoreCase);
                 foreach (var filePath in jsonFiles)
                 {
                     if (IsValidMovementScript(filePath))

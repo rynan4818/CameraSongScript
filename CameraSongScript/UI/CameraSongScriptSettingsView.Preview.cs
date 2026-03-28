@@ -344,6 +344,13 @@ namespace CameraSongScript.UI
             RefreshPreviewBindings();
         }
 
+        private void HandlePreviewHeightOffsetChanged()
+        {
+            _previewController?.HandleHeightOffsetChange();
+            _lastPreviewUiTime = float.NegativeInfinity;
+            RefreshPreviewBindings();
+        }
+
         private void AdjustPreviewMiniatureScale(float delta)
         {
             var config = CameraSongScriptConfig.Instance;
