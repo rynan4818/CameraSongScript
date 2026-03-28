@@ -3,7 +3,7 @@
   "id": "CameraSongScript",
   "name": "CameraSongScript",
   "author": "rynan4818",
-  "version": "0.1.3",
+  "version": "0.2.3",
   "description": "Adds SongScript functionality to Camera2 and CameraPlus",
   "gameVersion": "1.37.4",
   "dependsOn": {
