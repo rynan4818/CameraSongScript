@@ -131,7 +131,7 @@ Beat Saber/UserData/CameraSongScript/CommonScripts/[任意のサブフォルダ]
 
 本ModからCameraPLusのLoad profile on scene change機能のSongScriptの設定を曲専用と汎用で切り替えることができます。
 
-<img width="818" height="751" alt="image" src="https://github.com/user-attachments/assets/cffab2b0-5a46-484c-a139-281a043942be" />
+<img width="800" height="758" alt="image" src="https://github.com/user-attachments/assets/89fb1c68-44d6-40d7-b739-70abea302d20" />
 <img width="883" height="1037" alt="image" src="https://github.com/user-attachments/assets/ae05db7d-e3b2-4ff9-b8cc-d958b87984fc" />
 
 #### Camera2の場合
