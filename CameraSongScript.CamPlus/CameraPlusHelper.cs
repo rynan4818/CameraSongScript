@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using CameraPlus;
+using CameraPlus.Behaviours;
 using CameraPlus.Configuration;
 using CameraPlus.Utilities;
 using CameraSongScript.Interfaces;
@@ -30,6 +32,47 @@ namespace CameraSongScript.CamPlus
         public void SetScriptPath(string fullPath)
         {
             PendingScriptPath = fullPath ?? string.Empty;
+        }
+
+        /// <summary>
+        /// SongScript が見つからないケースで、すでに MovementScript 実行中の
+        /// songSpecificScript カメラだけを CameraPlus 本来の分岐へ戻す。
+        /// </summary>
+        internal static void RefreshActiveSongSpecificCameras()
+        {
+            if (!string.IsNullOrEmpty(PendingScriptPath))
+                return;
+
+            var controller = GetController();
+            if (controller == null)
+                return;
+
+            CameraPlusBehaviour[] cameras = controller.Cameras.Values
+                .Where(camera =>
+                    camera != null &&
+                    camera.isActiveAndEnabled &&
+                    camera.Config?.movementScript != null &&
+                    camera.Config.movementScript.songSpecificScript &&
+                    camera.GetComponentInChildren<CameraMovement>(true) != null)
+                .ToArray();
+
+            foreach (var camera in cameras)
+            {
+                try
+                {
+                    camera.ClearMovementScript();
+                    string result = camera.AddMovementScript();
+                    Plugin.Log.Debug(
+                        $"CameraPlusHelper: Refreshed songSpecificScript camera '{Path.GetFileName(camera.Config.FilePath)}' with pending path '{PendingScriptPath}'. Result: {result}");
+                }
+                catch (Exception ex)
+                {
+                    string cameraName = camera?.Config?.FilePath != null
+                        ? Path.GetFileName(camera.Config.FilePath)
+                        : "(unknown)";
+                    Plugin.Log.Warn($"CameraPlusHelper: Failed to refresh songSpecificScript camera '{cameraName}': {ex.Message}");
+                }
+            }
         }
 
         public string GetCurrentPath()

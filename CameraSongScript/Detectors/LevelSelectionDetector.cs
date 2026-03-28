@@ -65,14 +65,27 @@ namespace CameraSongScript.Detectors
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType contentType)
         {
-            HandleLevelSelectionChanged(controller);
-        }
-
-        private void HandleLevelSelectionChanged(StandardLevelDetailViewController controller)
-        {
             UpdateCurrentSongSettings(controller?.beatmapKey);
             _scriptDetector.ResolveProfileName();
-            if (controller?.beatmapLevel != null)
+
+            if (controller == null || contentType == StandardLevelDetailViewController.ContentType.Inactive)
+            {
+                _scriptDetector.SyncCameraPlusPath();
+                return;
+            }
+
+            HandleLevelSelectionChanged(controller, updateSongSettings: false);
+        }
+
+        private void HandleLevelSelectionChanged(StandardLevelDetailViewController controller, bool updateSongSettings = true)
+        {
+            if (updateSongSettings)
+            {
+                UpdateCurrentSongSettings(controller?.beatmapKey);
+            }
+
+            _scriptDetector.ResolveProfileName();
+            if (IsCustomLevel(controller?.beatmapLevel))
             {
                 _scriptDetector.ProcessLevel(controller.beatmapLevel);
             }
@@ -84,6 +97,13 @@ namespace CameraSongScript.Detectors
             // ProcessLevelが同一曲ガードでスキップされた場合でも、
             // プロファイル名のキャッシュを更新して再同期する
             _scriptDetector.SyncCameraPlusPath();
+        }
+
+        private static bool IsCustomLevel(BeatmapLevel beatmapLevel)
+        {
+            return beatmapLevel != null &&
+                !string.IsNullOrEmpty(beatmapLevel.levelID) &&
+                beatmapLevel.levelID.StartsWith("custom_level_", StringComparison.OrdinalIgnoreCase);
         }
 
         private void OnLevelDetailDeactivated(bool removedFromHierarchy, bool screenSystemDisabling)
