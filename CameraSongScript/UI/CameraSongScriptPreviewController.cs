@@ -204,6 +204,28 @@ namespace CameraSongScript.UI
             ReloadPreviewFromCurrentSelection(true, _isPlaying, _speedMultiplier, true);
         }
 
+        public void HandleHeightOffsetChange()
+        {
+            if (!IsVisible)
+                return;
+
+            if (_isPathRevealActive)
+            {
+                float normalizedProgress = PathRevealDuration > 0f
+                    ? Mathf.Clamp01(_pathRevealElapsed / PathRevealDuration)
+                    : 1f;
+                float scaledProgress = normalizedProgress * _pathLineRenderers.Count;
+                for (int i = 0; i < _pathLineRenderers.Count; i++)
+                    UpdatePathSegmentReveal(i, Mathf.Clamp01(scaledProgress - i));
+            }
+            else
+            {
+                ShowFullPath();
+            }
+
+            ApplyCurrentPose(false);
+        }
+
         private void StartAtSpeedInternal(int speedMultiplier)
         {
             if (!IsVisible)

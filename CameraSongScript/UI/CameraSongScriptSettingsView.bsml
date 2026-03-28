@@ -11,7 +11,7 @@
       <text text="~song-script-status" font-size="3.5" rich-text="true"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="script-file-dropdown" text="~label-script-file" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true" hover-hint="~hint-script-file"/>
+      <dropdown-list-setting id="script-file-dropdown" text="~label-script-file" size-delta-x="70" value="selected-script-file" options="script-file-options" bind-value="true" apply-on-change="true"/>
     </horizontal>
     <horizontal active="~has-metadata">
       <vertical bg="round-rect-panel" pad="1" vertical-fit="PreferredSize" child-expand-height="false">
@@ -107,7 +107,7 @@
       <toggle-setting text="~toggle-force-common-script" value="force-common-script" apply-on-change="true" hover-hint="~hint-force-common"/>
     </horizontal>
     <horizontal>
-      <dropdown-list-setting id="common-script-dropdown" text="~label-common-script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true" hover-hint="~hint-common-script-file"/>
+      <dropdown-list-setting id="common-script-dropdown" text="~label-common-script" value="selected-common-script" size-delta-x="70" options="common-script-options" apply-on-change="true"/>
     </horizontal>
     <horizontal pad-top="2" active="~show-camera-mod-settings-section">
       <text text="~section-camera-mod-settings" font-size="3.5" color="#66CC88" align="Center"/>
@@ -158,6 +158,31 @@
     <horizontal>
       <text text="~status-panel-transform-summary" font-size="2.8" color="#AAAAAA" align="Left" word-wrapping="true" />
       <button text="~button-status-panel-transform-reset" on-click="reset-status-panel-transform" min-width="28" />
+    </horizontal>
+    <horizontal pad-top="2">
+      <text text="~label-status-panel-canvas-width" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <text text="~label-status-panel-canvas-height" font-size="3.2" color="#CCCCCC" align="Left"/>
+      <text text="~label-status-panel-scale" font-size="3.2" color="#CCCCCC" align="Left"/>
+    </horizontal>
+    <horizontal>
+      <button text="-" on-click="status-panel-canvas-width-decrease" min-width="10" />
+      <text text="~status-panel-canvas-width-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="status-panel-canvas-width-increase" min-width="10" />
+      <button text="-" on-click="status-panel-canvas-height-decrease" min-width="10" />
+      <text text="~status-panel-canvas-height-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="status-panel-canvas-height-increase" min-width="10" />
+      <button text="-" on-click="status-panel-scale-decrease" min-width="10" />
+      <text text="~status-panel-scale-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="status-panel-scale-increase" min-width="10" />
+    </horizontal>
+    <horizontal pad-top="1">
+      <text text="~label-status-panel-font-size" font-size="3.2" color="#CCCCCC" align="Left"/>
+    </horizontal>
+    <horizontal>
+      <button text="-" on-click="status-panel-font-size-decrease" min-width="10" />
+      <text text="~status-panel-font-size-value" font-size="3.2" align="Center" />
+      <button text="+" on-click="status-panel-font-size-increase" min-width="10" />
+      <button text="~button-status-panel-visual-settings-reset" on-click="reset-status-panel-visual-settings" min-width="28" />
     </horizontal>
     <horizontal pad-top="2">
       <text text="~section-preview-visual-settings" font-size="3.5" color="#AAAAAA" align="Center"/>

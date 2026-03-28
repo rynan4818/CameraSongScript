@@ -186,7 +186,7 @@ namespace CameraSongScript.UI
         /// <summary>
         /// コンフィグの全ビジュアルプロパティを現在のキャンバスに適用する
         /// </summary>
-        private void ApplyVisualConfig()
+        public void ApplyVisualConfig()
         {
             if (_rootObject == null || _canvas == null || _statusText == null) return;
 
@@ -378,8 +378,9 @@ namespace CameraSongScript.UI
             if (string.IsNullOrEmpty(value))
                 return value;
 
-            if (CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath)
-                value = SongScriptDisplayLabelFormatter.Format(value);
+            value = CameraSongScriptConfig.Instance.ShortenStatusPanelScriptPath
+                ? SongScriptDisplayLabelFormatter.Format(value)
+                : SongScriptDisplayLabelFormatter.GetDisplayText(value);
 
             return MakeWrapFriendly(value);
         }

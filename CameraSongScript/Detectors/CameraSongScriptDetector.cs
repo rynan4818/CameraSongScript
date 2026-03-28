@@ -59,7 +59,7 @@ namespace CameraSongScript.Detectors
 
         /// <summary>
         /// 現在選択中の曲で利用可能なカメラスクリプトの表示名リスト
-        /// 譜面フォルダ: ファイル名のみ / SongScriptsフォルダ: "[SS] filename" 形式
+        /// 譜面フォルダ: ファイル名のみ / SongScriptsフォルダ: "[SS] <SongScriptsルート相対パス>" 形式
         /// </summary>
         public List<string> AvailableScriptFiles { get; private set; } = new List<string>();
 
@@ -166,6 +166,8 @@ namespace CameraSongScript.Detectors
             "cinema-video.json"
         };
 
+        private const string SongScriptDisplayPrefix = "[SS]";
+
         public CameraSongScriptDetector([InjectOptional] ICameraPlusHelper cameraPlusHelper)
         {
             _cameraPlusHelper = cameraPlusHelper;
@@ -182,6 +184,9 @@ namespace CameraSongScript.Detectors
         {
             if (level is CustomPreviewBeatmapLevel customLevel)
             {
+                CurrentLevelPath = customLevel.customLevelPath;
+                _currentLevelId = customLevel.levelID;
+
                 if (customLevel.customLevelPath != _latestSelectedSong)
                 {
                     _latestSelectedSong = customLevel.customLevelPath;
@@ -189,6 +194,10 @@ namespace CameraSongScript.Detectors
                     Plugin.Log.Notice($"Selected CustomLevel Path:\n {customLevel.customLevelPath}");
 #endif
                     RequestScan(customLevel.customLevelPath, customLevel.levelID);
+                }
+                else if (TryApplyCurrentSongSelectionWithoutRescan())
+                {
+                    ScanCompleted?.Invoke();
                 }
             }
         }
@@ -284,7 +293,7 @@ namespace CameraSongScript.Detectors
                 ct = _scanCts.Token;
             }
 
-            string configuredSelectedScript = CameraSongScriptConfig.Instance.SelectedScriptFile;
+            string configuredSelectedScript = GetConfiguredSelectedScriptForCurrentSong();
             Task.Run(() =>
             {
                 try
@@ -320,6 +329,7 @@ namespace CameraSongScript.Detectors
                 try
                 {
                     jsonFiles = Directory.GetFiles(levelPath, "*.json");
+                    Array.Sort(jsonFiles, StringComparer.OrdinalIgnoreCase);
                 }
                 catch (Exception ex)
                 {
@@ -333,8 +343,8 @@ namespace CameraSongScript.Detectors
 
                     string fileName = Path.GetFileName(filePath);
 
-                    // Beat Saberの既知ファイルをスキップ
-                    if (_skipFileNames.Contains(fileName))
+                    // Beat Saber既知ファイルとSongScripts予約プレフィックスをスキップ
+                    if (ShouldSkipChartFolderScriptFile(fileName))
                         continue;
 
                     // フォーマット検証
@@ -363,7 +373,10 @@ namespace CameraSongScript.Detectors
 
             if (levelReference.HasAnyValue && SongScriptFolderCache.IsReady)
             {
-                var entries = SongScriptFolderCache.GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash);
+                var entries = SongScriptFolderCache
+                    .GetScriptsByLevelReference(levelReference.MapId, levelReference.Hash)
+                    .OrderBy(GetSongScriptDisplayPath, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
                 foreach (var entry in entries)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -471,7 +484,7 @@ namespace CameraSongScript.Detectors
                 return string.Empty;
             }
 
-            string configFileName = CameraSongScriptConfig.Instance.SelectedScriptFile;
+            string configFileName = ResolveAvailableScriptDisplayName(CameraSongScriptConfig.Instance.SelectedScriptFile, candidateMap);
 
             // 1. Configに記録されている表示名が存在すれば優先
             if (!string.IsNullOrEmpty(configFileName) && validFiles.Contains(configFileName) && candidateMap.ContainsKey(configFileName))
@@ -591,12 +604,115 @@ namespace CameraSongScript.Detectors
         /// </summary>
         private string FormatSongScriptDisplayName(SongScriptEntry entry)
         {
-            if (entry.IsZipEntry)
+            return $"{SongScriptDisplayPrefix} {GetSongScriptDisplayPath(entry)}";
+        }
+
+        private string GetConfiguredSelectedScriptForCurrentSong()
+        {
+            var specificSettings = SongSettingsManager.GetCurrentSettings();
+            if (specificSettings != null && !string.IsNullOrEmpty(specificSettings.SelectedScriptFileName))
+                return specificSettings.SelectedScriptFileName;
+
+            return CameraSongScriptConfig.Instance.SelectedScriptFile ?? string.Empty;
+        }
+
+        public string ResolveAvailableScriptDisplayName(string requestedDisplayName)
+        {
+            return ResolveAvailableScriptDisplayName(requestedDisplayName, _candidateMap);
+        }
+
+        private bool ShouldSkipChartFolderScriptFile(string fileName)
+        {
+            return string.IsNullOrEmpty(fileName) ||
+                _skipFileNames.Contains(fileName) ||
+                fileName.StartsWith(SongScriptDisplayPrefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string ResolveAvailableScriptDisplayName(
+            string requestedDisplayName,
+            IReadOnlyDictionary<string, ScriptCandidate> candidateMap)
+        {
+            if (string.IsNullOrEmpty(requestedDisplayName) || candidateMap == null || candidateMap.Count == 0)
+                return string.Empty;
+
+            if (candidateMap.ContainsKey(requestedDisplayName))
+                return requestedDisplayName;
+
+            foreach (var pair in candidateMap)
             {
-                string zipName = Path.GetFileNameWithoutExtension(entry.FilePath);
-                return $"[SS] {zipName}/{entry.ZipEntryName}";
+                if (string.Equals(GetLegacySongScriptDisplayName(pair.Value), requestedDisplayName, StringComparison.Ordinal))
+                    return pair.Key;
             }
-            return $"[SS] {entry.FileName}";
+
+            return string.Empty;
+        }
+
+        private static string GetSongScriptDisplayPath(SongScriptEntry entry)
+        {
+            if (entry == null)
+                return string.Empty;
+
+            string sourceRelativePath = GetSongScriptsRelativeSourcePath(entry.FilePath);
+            if (!entry.IsZipEntry)
+                return sourceRelativePath;
+
+            string zipEntryPath = NormalizeDisplayPath(entry.ZipEntryName);
+            return CombineDisplayPaths(sourceRelativePath, zipEntryPath);
+        }
+
+        private static string GetSongScriptsRelativeSourcePath(string fullPath)
+        {
+            if (string.IsNullOrEmpty(fullPath))
+                return string.Empty;
+
+            string songScriptsRoot = ScriptFolderPathResolver.GetSongScriptsFolderPath();
+            if (!string.IsNullOrEmpty(songScriptsRoot) &&
+                fullPath.Length > songScriptsRoot.Length &&
+                fullPath.StartsWith(songScriptsRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                return NormalizeDisplayPath(
+                    fullPath.Substring(songScriptsRoot.Length)
+                        .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            }
+
+            return NormalizeDisplayPath(Path.GetFileName(fullPath));
+        }
+
+        private static string NormalizeDisplayPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return string.Empty;
+
+            return path
+                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                .TrimStart(Path.DirectorySeparatorChar);
+        }
+
+        private static string CombineDisplayPaths(string left, string right)
+        {
+            left = NormalizeDisplayPath(left);
+            right = NormalizeDisplayPath(right);
+
+            if (string.IsNullOrEmpty(left))
+                return right;
+
+            if (string.IsNullOrEmpty(right))
+                return left;
+
+            return $"{left}{Path.DirectorySeparatorChar}{right}";
+        }
+
+        private static string GetLegacySongScriptDisplayName(ScriptCandidate candidate)
+        {
+            if (candidate == null ||
+                candidate.Source != ScriptSource.SongScriptFolder ||
+                string.IsNullOrEmpty(candidate.ZipEntryName))
+            {
+                return candidate?.DisplayName ?? string.Empty;
+            }
+
+            string zipName = Path.GetFileNameWithoutExtension(candidate.FilePath);
+            return $"{SongScriptDisplayPrefix} {zipName}/{candidate.ZipEntryName}";
         }
 
         /// <summary>
@@ -622,11 +738,47 @@ namespace CameraSongScript.Detectors
         /// </summary>
         public void UpdateSelectedScript(string displayName)
         {
-            if (!AvailableScriptFiles.Contains(displayName))
+            if (!TryApplySelectedScriptInternal(displayName, persistConfigSelection: true, syncCameraPlus: true))
                 return;
 
+#if DEBUG
+            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
+#endif
+        }
+
+        private bool TryApplyCurrentSongSelectionWithoutRescan()
+        {
+            if (AvailableScriptFiles == null || AvailableScriptFiles.Count == 0 || _candidateMap == null || _candidateMap.Count == 0)
+                return false;
+
+            DefaultScriptSelection selection = SelectConfiguredDefaultScript(
+                AvailableScriptFiles,
+                _candidateMap,
+                GetConfiguredSelectedScriptForCurrentSong());
+
+            if (string.IsNullOrEmpty(selection.DisplayName))
+                return false;
+
+            if (string.Equals(SelectedScriptDisplayName, selection.DisplayName, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrEmpty(selection.ConfigSelection))
+                {
+                    CameraSongScriptConfig.Instance.SelectedScriptFile = selection.ConfigSelection;
+                }
+
+                return false;
+            }
+
+            return TryApplySelectedScriptInternal(selection.DisplayName, persistConfigSelection: true, syncCameraPlus: true);
+        }
+
+        private bool TryApplySelectedScriptInternal(string displayName, bool persistConfigSelection, bool syncCameraPlus)
+        {
+            if (string.IsNullOrEmpty(displayName) || AvailableScriptFiles == null || !AvailableScriptFiles.Contains(displayName))
+                return false;
+
             if (!_candidateMap.TryGetValue(displayName, out var candidate))
-                return;
+                return false;
 
             try
             {
@@ -638,12 +790,8 @@ namespace CameraSongScript.Detectors
                 Plugin.Log.Error($"CameraSongScriptDetector: Failed to resolve script path for '{displayName}': {ex.Message}");
                 SelectedScriptPath = string.Empty;
                 SelectedScriptDisplayName = string.Empty;
-                return;
+                return false;
             }
-
-#if DEBUG
-            Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
-#endif
 
             LoadSelectedScriptInfo(SelectedScriptPath);
 
@@ -656,10 +804,18 @@ namespace CameraSongScript.Detectors
             // 共通モードの場合はCameraSongScriptConfig.Instance.CameraHeightOffsetCmをそのまま使用
 
             UpdateEffectiveScriptPath();
-            SyncCameraPlusPath();
 
-            // Configに記録（表示名を保存）
-            CameraSongScriptConfig.Instance.SelectedScriptFile = displayName;
+            if (syncCameraPlus)
+            {
+                SyncCameraPlusPath();
+            }
+
+            if (persistConfigSelection)
+            {
+                CameraSongScriptConfig.Instance.SelectedScriptFile = displayName;
+            }
+
+            return true;
         }
 
         /// <summary>
