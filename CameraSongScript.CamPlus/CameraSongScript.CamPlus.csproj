@@ -78,6 +78,7 @@
   <ItemGroup>
     <Compile Include="CameraPlusHelper.cs" />
     <Compile Include="CameraSongScriptCamPlusBootstrap.cs" />
+    <Compile Include="HarmonyPatches\DelayedActiveSceneChangedPatch.cs" />
     <Compile Include="HarmonyPatches\OnActiveSceneChangedPatch.cs" />
     <Compile Include="Installers\CameraSongScriptCamPlusAppInstaller.cs" />
     <Compile Include="Plugin.cs" />

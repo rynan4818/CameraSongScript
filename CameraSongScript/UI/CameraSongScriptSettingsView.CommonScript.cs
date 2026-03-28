@@ -152,6 +152,7 @@ namespace CameraSongScript.UI
 
                     RefreshLayout();
                     EnsureCommonScriptDropdownTextPresentation();
+                    SyncCommonScriptDropdownHoverHint();
                     _statusView?.UpdateContent();
                     HandlePreviewSelectionChanged();
                 }
