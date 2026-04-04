@@ -159,6 +159,7 @@
     <Compile Include="Installers\CameraSongScriptPlayerInstaller.cs" />
     <Compile Include="Models\MovementScriptJson.cs" />
     <Compile Include="Models\CameraSongScriptPlayContext.cs" />
+    <Compile Include="Models\CameraSongScriptStatusSnapshot.cs" />
     <Compile Include="Models\CameraSongScriptData.cs" />
     <Compile Include="Models\SongSpecificSettings.cs" />
     <Compile Include="Utilities\NumericStringParser.cs" />
@@ -172,6 +173,7 @@
     <Compile Include="Services\SongScriptBeatmapIndexService.cs" />
     <Compile Include="Services\SongScriptMissingBeatmapDownloadService.cs" />
     <Compile Include="Services\SongScriptMapIdResolver.cs" />
+    <Compile Include="Services\CameraSongScriptMenuHttpSiraStatusSender.cs" />
     <Compile Include="Localization\HoverHintLocalization.cs" />
     <Compile Include="Localization\HoverHintLocalizationResources.cs" />
     <Compile Include="Localization\UiLocalization.cs" />
