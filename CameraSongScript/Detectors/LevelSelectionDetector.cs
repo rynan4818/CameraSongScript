@@ -56,6 +56,10 @@ namespace CameraSongScript.Detectors
         private void OnLevelDetailActivated(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
             _statusView?.SetLevelDetailVisible(true);
+            _scriptDetector.RefreshStatusSnapshot(
+                string.IsNullOrEmpty(_scriptDetector.CurrentLevelPath)
+                    ? CameraSongScriptStatusSnapshot.UpdateReasonSelectionCleared
+                    : CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
         }
 
         private void OnDifficultyChanged(StandardLevelDetailViewController controller)
