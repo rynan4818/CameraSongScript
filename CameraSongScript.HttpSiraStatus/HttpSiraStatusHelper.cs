@@ -26,33 +26,36 @@ namespace CameraSongScript.HttpSiraStatus
             return IsInitialized;
         }
 
-        public void SendPlayContext(CameraSongScriptPlayContext playContext)
+        public void SendStatusSnapshot(CameraSongScriptStatusSnapshot snapshot)
         {
-            if (!IsInitialized || playContext == null)
+            if (!IsInitialized || snapshot == null)
             {
                 return;
             }
 
             var rootObject = new JSONObject();
-            rootObject["status"] = playContext.StatusKey;
+            rootObject["sceneContext"] = snapshot.SceneContext ?? string.Empty;
+            rootObject["updateReason"] = snapshot.UpdateReason ?? string.Empty;
+            rootObject["status"] = snapshot.StatusKey;
+            rootObject["isResolved"] = snapshot.IsResolved;
+            rootObject["scriptFileName"] = snapshot.ScriptFileName ?? string.Empty;
+            rootObject["cameraHeightOffsetCm"] = snapshot.CameraHeightOffsetCm;
 
             var metadataObject = new JSONObject();
-            if (playContext.HasScript)
+            var metadata = snapshot.Metadata;
+            if (metadata != null)
             {
-                var metadata = playContext.Metadata;
-                AddString(metadataObject, "cameraScriptAuthorName", metadata?.cameraScriptAuthorName);
-                AddString(metadataObject, "songName", metadata?.songName);
-                AddString(metadataObject, "songSubName", metadata?.songSubName);
-                AddString(metadataObject, "songAuthorName", metadata?.songAuthorName);
-                AddString(metadataObject, "levelAuthorName", metadata?.levelAuthorName);
-                AddString(metadataObject, "mapId", metadata?.mapId);
-                AddString(metadataObject, "hash", metadata?.hash);
-                AddNumber(metadataObject, "bpm", metadata?.bpm);
-                AddNumber(metadataObject, "duration", metadata?.duration);
-                AddNumber(metadataObject, "avatarHeight", metadata?.avatarHeight);
-                AddString(metadataObject, "description", metadata?.description);
-                metadataObject["cameraHeightOffsetCm"] = playContext.CameraHeightOffsetCm;
-                AddString(metadataObject, "scriptFileName", playContext.ScriptFileName);
+                AddString(metadataObject, "cameraScriptAuthorName", metadata.cameraScriptAuthorName);
+                AddString(metadataObject, "songName", metadata.songName);
+                AddString(metadataObject, "songSubName", metadata.songSubName);
+                AddString(metadataObject, "songAuthorName", metadata.songAuthorName);
+                AddString(metadataObject, "levelAuthorName", metadata.levelAuthorName);
+                AddString(metadataObject, "mapId", metadata.mapId);
+                AddString(metadataObject, "hash", metadata.hash);
+                AddNumber(metadataObject, "bpm", metadata.bpm);
+                AddNumber(metadataObject, "duration", metadata.duration);
+                AddNumber(metadataObject, "avatarHeight", metadata.avatarHeight);
+                AddString(metadataObject, "description", metadata.description);
             }
 
             rootObject["metadata"] = metadataObject;

@@ -10,6 +10,6 @@ namespace CameraSongScript.Interfaces
     {
         bool Initialize();
         bool IsInitialized { get; }
-        void SendPlayContext(CameraSongScriptPlayContext playContext);
+        void SendStatusSnapshot(CameraSongScriptStatusSnapshot snapshot);
     }
 }

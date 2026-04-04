@@ -1,5 +1,6 @@
 using System;
 using CameraSongScript.Interfaces;
+using CameraSongScript.Models;
 using Zenject;
 
 namespace CameraSongScript.Gameplay
@@ -29,11 +30,14 @@ namespace CameraSongScript.Gameplay
                     return;
                 }
 
-                _httpSiraStatusHelper.SendPlayContext(_playContextResolver.Resolve());
+                _httpSiraStatusHelper.SendStatusSnapshot(
+                    CameraSongScriptStatusSnapshot.CreatePlayerSnapshot(
+                        CameraSongScriptStatusSnapshot.UpdateReasonPlayStart,
+                        _playContextResolver.Resolve()));
             }
             catch (Exception ex)
             {
-                Plugin.Log.Warn($"SongScript: Failed to send HttpSiraStatus metadata: {ex.Message}");
+                Plugin.Log.Warn($"SongScript: Failed to send play HttpSiraStatus snapshot: {ex.Message}");
             }
         }
     }
