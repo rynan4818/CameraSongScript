@@ -233,6 +233,7 @@ namespace CameraSongScript.Detectors
                 DetermineCommonScriptUsage(scanResult.TotalCount);
                 SyncCameraPlusPath();
                 ScanCompleted?.Invoke();
+                NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
             });
         }
     }

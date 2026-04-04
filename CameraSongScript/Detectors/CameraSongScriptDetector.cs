@@ -53,6 +53,11 @@ namespace CameraSongScript.Detectors
         public event Action ScanCompleted;
 
         /// <summary>
+        /// HttpSiraStatus 用の状態スナップショットが更新されたときに発火する
+        /// </summary>
+        public event Action<string> StatusSnapshotChanged;
+
+        /// <summary>
         /// 現在選択中の曲フォルダのパス
         /// </summary>
         public string CurrentLevelPath { get; private set; } = string.Empty;
@@ -202,6 +207,7 @@ namespace CameraSongScript.Detectors
             else if (TryApplyCurrentSongSelectionWithoutRescan())
             {
                 ScanCompleted?.Invoke();
+	                NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
             }
         }
 
@@ -258,6 +264,7 @@ namespace CameraSongScript.Detectors
 
                 SyncCameraPlusPath();
                 ScanCompleted?.Invoke();
+                NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionCleared);
             });
         }
 
@@ -744,6 +751,8 @@ namespace CameraSongScript.Detectors
             if (!TryApplySelectedScriptInternal(displayName, persistConfigSelection: true, syncCameraPlus: true))
                 return;
 
+            NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
+
 #if DEBUG
             Plugin.Log.Info($"CameraSongScriptDetector: Script selection changed to: {displayName}");
 #endif
@@ -898,6 +907,59 @@ namespace CameraSongScript.Detectors
             int songScriptCount = AvailableScriptFiles?.Count ?? 0;
             DetermineCommonScriptUsage(songScriptCount);
             SyncCameraPlusPath();
+            NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonCommonScriptChanged);
+        }
+
+        public CameraSongScriptStatusSnapshot CreateMenuStatusSnapshot(string updateReason)
+        {
+            string reason = string.IsNullOrEmpty(updateReason)
+                ? CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged
+                : updateReason;
+
+            if (!CameraModDetector.IsCamera2 && !CameraModDetector.IsCameraPlus)
+            {
+                return CameraSongScriptStatusSnapshot.CreateNone(
+                    CameraSongScriptStatusSnapshot.SceneContextMenu,
+                    reason);
+            }
+
+            if (IsUsingCommonScript)
+            {
+                bool isRandomCommonScriptForCamera2 =
+                    CameraModDetector.IsCamera2 &&
+                    CameraSongScriptConfig.Instance.SelectedCommonScript == UiLocalization.OptionRandom;
+                bool isResolved = !isRandomCommonScriptForCamera2 &&
+                    !string.IsNullOrEmpty(ResolvedCommonScriptPath);
+                return CameraSongScriptStatusSnapshot.Create(
+                    CameraSongScriptStatusSnapshot.SceneContextMenu,
+                    reason,
+                    CameraSongScriptPlaybackStatus.CommonScript,
+                    isResolved,
+                    isResolved ? GetResolvedCommonScriptFileName() : string.Empty,
+                    isResolved ? CameraSongScriptConfig.Instance.CameraHeightOffsetCm : 0,
+                    isResolved ? ResolvedCommonMetadata : null);
+            }
+
+            if (!CameraSongScriptConfig.Instance.Enabled || !HasSongScript)
+            {
+                return CameraSongScriptStatusSnapshot.CreateNone(
+                    CameraSongScriptStatusSnapshot.SceneContextMenu,
+                    reason);
+            }
+
+            return CameraSongScriptStatusSnapshot.Create(
+                CameraSongScriptStatusSnapshot.SceneContextMenu,
+                reason,
+                CameraSongScriptPlaybackStatus.SongScript,
+                true,
+                GetSelectedScriptFileName(),
+                CameraSongScriptConfig.Instance.CameraHeightOffsetCm,
+                CurrentMetadata);
+        }
+
+        public void RefreshStatusSnapshot(string updateReason)
+        {
+            NotifyStatusSnapshotChanged(updateReason);
         }
 
         /// <summary>
@@ -1045,6 +1107,11 @@ namespace CameraSongScript.Detectors
             ResolvedCommonScriptContainsCameraEffect = false;
             ResolvedCommonScriptContainsWindowControl = false;
             ResolvedProfileName = string.Empty;
+        }
+
+        private void NotifyStatusSnapshotChanged(string updateReason)
+        {
+            StatusSnapshotChanged?.Invoke(updateReason ?? string.Empty);
         }
 
         private void LoadSelectedScriptInfo(string filePath)
