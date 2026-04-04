@@ -3,12 +3,12 @@
   "id": "CameraSongScript.BetterSongList",
   "name": "CameraSongScript.BetterSongList",
   "author": "rynan4818",
-  "version": "0.2.4",
+  "version": "0.3.4",
   "description": "BetterSongList adapter plugin for CameraSongScript",
   "gameVersion": "1.42.0",
   "dependsOn": {
     "BSIPA": "^4.3.7",
-    "CameraSongScript": "=0.2.4",
+    "CameraSongScript": "=0.3.4",
     "BetterSongList": "^0.4.3"
   }
 }
