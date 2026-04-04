@@ -196,7 +196,7 @@ namespace CameraSongScript.Detectors
                 else if (TryApplyCurrentSongSelectionWithoutRescan())
                 {
                     ScanCompleted?.Invoke();
-	                NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
+                    NotifyStatusSnapshotChanged(CameraSongScriptStatusSnapshot.UpdateReasonSelectionChanged);
                 }
             }
         }
